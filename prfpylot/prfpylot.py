@@ -2,11 +2,11 @@ import yaml
 
 
 class PRFpylot():
-    """docstring for PRFpylot"""
+    """PROFAST wrapper."""
     def __init__(self, input_path="input.yml"):
         # read input file
         with open(input_path, "r") as f:
-            args = yaml.load(f)
+            args = yaml.load(f, Loader=yaml.FullLoader)
 
         # set parameters from input file
         self.coordinates = args["coordinates"]
