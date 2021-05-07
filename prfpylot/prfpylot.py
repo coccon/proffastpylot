@@ -1,3 +1,4 @@
+import os
 import yaml
 
 
@@ -10,6 +11,12 @@ class PRFpylot():
 
         # set parameters from input file
         self.coordinates = args["coordinates"]
+
+        self.root_path = args["root_path"]
+        if self.root_path == "default":
+            cwd = os.getcwd()
+            cwd = os.path.split(cwd)
+            self.root_path = os.path.join(*cwd[:-1])
 
         self.map_path = args["map_path"]
         if self.map_path == "default":
