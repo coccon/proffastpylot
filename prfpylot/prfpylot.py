@@ -4,6 +4,7 @@ import yaml
 
 class PRFpylot():
     """PROFAST wrapper."""
+
     def __init__(self, input_path="input.yml"):
         # read input file
         with open(input_path, "r") as f:
@@ -20,12 +21,15 @@ class PRFpylot():
 
         self.map_path = args["map_path"]
         if self.map_path == "default":
-            # Insert the default map path!
-            pass
+            self.map_path = os.path.join(cwd, 'data',
+                                         args['instrument_number'], 'map-Files'
+                                         )
         self.pt_path = args["pt_path"]
         if self.pt_path == "default":
-            # Insert the default pt path!
-            pass
+            # todo: decide if folder is 'log-Files', or 'met-Files'
+            self.pt_path = os.path.join(cwd, 'data',
+                                        args['instrument_number'], 'log-Files'
+                                        )
 
         # set general parameters
         self.tempfiles = {
