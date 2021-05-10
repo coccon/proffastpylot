@@ -1,18 +1,25 @@
-instrument_number: SN036
+instrument_number: SN039
 
 # path to profast directory, automaticaly determined
 root_path: default
 
-# default: ${root_path}\auxil\map-files\${site}
+# default: ${root_path}\data\${}map-files\${site}
 map_path: default
 
-#default ${root_path}\auxil\log-files\${site}
+# default ${root_path}\auxil\log-files\${site}
 pt_path: default
 
-coordinates:
-  longitude: 20
-  latitude: 20
-  altitude: 0.3  # in km
+# full path and name of the coord file. This file contains the coorindates
+# of the spectrometer.
+# defualt: ${root_path}\data\
+coord_file: default
+
+#default: data\ILSList.csv
+ils_file: default
+
+#informations of the side, like site name
+site_name : Sodankyla
+
 
 # optional comment included in bin-files, False or string
 note: False
