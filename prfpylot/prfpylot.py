@@ -60,7 +60,7 @@ class PRFpylot():
             "pcxs": os.path.join(binary_path, 'pcxs10.inp')
         }
 
-    def fill_template_file(self, dict, template):
+    def fill_template_file(self, parameters, template):
         '''
         This methods generates a site specific input file by using a template.
         '''
@@ -70,8 +70,8 @@ class PRFpylot():
         input_stream = open(input_file, 'w')
         for line in templ_stream:
             new_line = line
-            for key in dict:
-                new_line = new_line.replace('%{}%'.format(key), str(dict[key]))
+            for name, parameter in parameters.items():
+                new_line = new_line.replace('%{}%'.format(name), parameter)
             input_stream.write(new_line)
         templ_stream.close()
         input_stream.close()
@@ -125,7 +125,7 @@ class PRFpylot():
         lat, lon, alt = self.get_coords_from_file(currDate)
         comment = 'Spectra were generated using preprocess 4, a part of ' \
                   + 'proffast and PRFpylot.'
-        parameter = {
+        parameters = {
             'ILS_Channel1': ILS_Channel1,
             'ILS_Channel2': ILS_Channel2,
             'site_name': self.site_name,
@@ -135,4 +135,4 @@ class PRFpylot():
             'utc_offset': '0',
             'comment': comment
                      }
-        self.fill_template_file(parameter, 'prep')
+        self.fill_template_file(parameters, 'prep')
