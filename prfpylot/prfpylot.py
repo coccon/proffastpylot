@@ -2,79 +2,16 @@ import os
 import yaml
 import datetime as dt
 import pandas as pd
+from prepare import Preparation
 
 
-class PRFpylot():
-    """PROFAST wrapper."""
+class Pylot(Prepare):
+    """Start all Profast processes."""
 
-    def __init__(self, input_path="input.yml"):
-        # read input file
-        with open(input_path, "r") as f:
-            args = yaml.load(f, Loader=yaml.FullLoader)
+    def __init__(self, input_file):
+        super(Pylot, self).__init__(input_file)
 
-        # set parameters from input file
-        self.instrument_number = args["instrument_number"]
-        self.site_name = args["site_name"]
-        self.root_path = args["root_path"]
-        if self.root_path == "default":
-            cwd = os.getcwd()
-            cwd = os.path.split(cwd)
-            self.root_path = os.path.join(*cwd[:-1], '..')
-
-        self.map_path = args["map_path"]
-        if self.map_path == "default":
-            self.map_path = os.path.join(self.root_path, 'data',
-                                         args['instrument_number'], 'map-Files'
-                                         )
-        self.pt_path = args["pt_path"]
-        if self.pt_path == "default":
-            # todo: decide if folder is 'log-Files', or 'met-Files'
-            self.pt_path = os.path.join(self.root_path, 'data',
-                                        args['instrument_number'], 'log-Files'
-                                        )
-
-        self.coord_file = args["coord_file"]
-        if self.coord_file == "default":
-            # todo: decide if folder is 'log-Files', or 'met-Files'
-            self.coord_file = os.path.join(self.root_path, 'data',
-                                           args['instrument_number'],
-                                           'CoordFile.txt'
-                                           )
-        self.ils_file = args["ils_file"]
-        if self.ils_file == "default":
-            self.ils_file = os.path.join(self.root_path, 'data', 'ILSList.csv')
-        # set general parameters
-        template_path = os.path.join(self.root_path, 'prf', 'templates')
-        self.tempfiles = {
-            "prep": os.path.join(template_path, 'template_preprocess4.inp'),
-            "pt": os.path.join(template_path, 'template_pT_intraday.inp'),
-            "inv": os.path.join(template_path, 'template_invers10.inp'),
-            "pcxs": os.path.join(template_path, 'template_pcxs10.inp')
-        }
-        # generate the paths of the input files:
-        binary_path = os.path.join(self.root_path, 'prf')
-        self.inputfiles = {
-            "prep": os.path.join(binary_path, 'preprocess4.inp'),
-            "pt": os.path.join(binary_path, 'pT_intraday.inp'),
-            "inv": os.path.join(binary_path, 'invers10.inp'),
-            "pcxs": os.path.join(binary_path, 'pcxs10.inp')
-        }
-
-    def fill_template_file(self, parameters, template):
-        '''
-        This methods generates a site specific input file by using a template.
-        '''
-        templ_file = self.tempfiles[template]
-        input_file = self.inputfiles[template]
-        templ_stream = open(templ_file, 'r')
-        input_stream = open(input_file, 'w')
-        for line in templ_stream:
-            new_line = line
-            for name, parameter in parameters.items():
-                new_line = new_line.replace('%{}%'.format(name), parameter)
-            input_stream.write(new_line)
-        templ_stream.close()
-        input_stream.close()
+    
 
     def get_coords_from_file(self, currDate):
         '''

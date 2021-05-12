@@ -3,8 +3,22 @@
 
 instrument_number: SN039
 
+# time range to process, format: YYMMDD
+# leave empty to process all dates of this instrument
+start_time:
+end_time:
+
+
+# give coordinates if the instrument was
+# can be left empty if coordinates are specified in data/coords.csv
+coords:
+  lat:
+  lon:
+  height: # km
+
+
 # path to profast directory, automaticaly determined
-root_path: default
+base_path: default
 
 # default: ${root_path}\data\${}map-files\${site}
 map_path: default
