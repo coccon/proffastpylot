@@ -1,4 +1,4 @@
-from prfpylot.prfpylot import PRFpylot
+from prfpylot.prfpylot import Pylot
 
-MyPRFpylot = PRFpylot()
-MyPRFpylot.generate_preproces_template()
+MyPRFpylot = Pylot()
+MyPRFpylot.generate_prf_input("prep")
