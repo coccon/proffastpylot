@@ -1,23 +1,28 @@
-# Input to run Profast
-# Leave out, or type default for Values to be set automatcally
+# input to run PRFpylot
+# enter "default" for values to be set automatcally
 
 instrument_number: SN039
 
-# time range to process, format: YYMMDD
-# leave empty to process all dates of this instrument
-start_time:
-end_time:
+#SITE INFORMATION
+site_name: Sodankyla
 
-
-# give coordinates if the instrument was
-# can be left empty if coordinates are specified in data/coords.csv
+# give coordinates
+# leave empty if coordinates should be taken from file
 coords:
   lat:
   lon:
-  height: # km
+  alt:  # km over sea level
+
+# full path and name of the coord file. This file contains the coorindates
+# of the sites.
+# defualt: ${root_path}\data\coords.csv
+coord_file: default
 
 
-# path to profast directory, automaticaly determined
+# OPTIONAL INFORMATION
+# The following values can be set to default, or specified concretly
+
+# path to profast directory (default: current directory)
 base_path: default
 
 # default: ${root_path}\data\${}map-files\${site}
@@ -26,20 +31,9 @@ map_path: default
 # default ${root_path}\auxil\log-files\${site}
 pt_path: default
 
-# full path and name of the coord file. This file contains the coorindates
-# of the spectrometer.
-# defualt: ${root_path}\data\
-coord_file: default
-
 #default: data\ILSList.csv
 ils_file: default
-
-#informations of the side, like site name
-site_name: Sodankyla
-
 
 # optional comment included in bin-files, string
 # Leave empty adding no comment
 note:
-
-
