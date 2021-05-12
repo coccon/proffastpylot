@@ -1,3 +1,6 @@
+# Input to run Profast
+# Leave out, or type default for Values to be set automatcally
+
 instrument_number: SN039
 
 # path to profast directory, automaticaly determined
@@ -18,16 +21,11 @@ coord_file: default
 ils_file: default
 
 #informations of the side, like site name
-site_name : Sodankyla
+site_name: Sodankyla
 
 
-# optional comment included in bin-files, False or string
-note: False
+# optional comment included in bin-files, string
+# Leave empty adding no comment
+note:
 
-# parameters to generate template files ...
 
-# site:
-# prep_tempfile: template_preprocess4.inp
-# pcxs10_tempfile = template_pcxs10.inp
-# inv_tempfile = template_invers10.inp
-# pt_tempfile = template_pT_intraday.inp

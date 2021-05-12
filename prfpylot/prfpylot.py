@@ -123,8 +123,11 @@ class PRFpylot():
         # TODO: Change this line to a correct date
         currDate = dt.datetime.now()
         lat, lon, alt = self.get_coords_from_file(currDate)
-        comment = 'Spectra were generated using preprocess 4, a part of ' \
-                  + 'proffast and PRFpylot.'
+        comment = 'Spectra were generated using preprocess 4, a part of '
+        'proffast and PRFpylot.'
+        if self.note is not None:
+            comment = "\n".join([comment, self.note])
+
         parameters = {
             'ILS_Channel1': ILS_Channel1,
             'ILS_Channel2': ILS_Channel2,
