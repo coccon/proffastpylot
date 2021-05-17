@@ -1,6 +1,6 @@
 import os
 import yaml
-import datetime as dt
+from datetime import datetime as dt
 import pandas as pd
 from glob import glob
 
@@ -51,11 +51,11 @@ class Preparation():
 
         # generate relevant parameters
         # all dates to be processed
-        date_paths = glob(os.join(self.data_path, "*"))
+        date_paths = glob(os.path.join(self.data_path, "interferograms", "*"))
         self.dates = []
         for date_path in date_paths:
-            date = date_path.split()[-1]
-            date = dt.strp_time(date)
+            date = os.path.split(date_path)[1]
+            date = dt.strptime(date, "%y%m%d")
             self.dates.append(date)
 
         # coordinates
@@ -95,6 +95,7 @@ class Preparation():
             template_type (str): Can be "prep", "pt", "inv" or "pcxc"
         """
         if template_type == "prep":
+            print("generating preprocess4.inp ...")
             parameters = self.get_prep_parameters()
             self.replace_params_in_template(parameters, template_type)
         else:
@@ -111,7 +112,7 @@ class Preparation():
         for line in templ_stream:
             new_line = line
             for name, parameter in parameters.items():
-                new_line = new_line.replace('%{}%'.format(name), parameter)
+                new_line = new_line.replace('%{}%'.format(name), str(parameter))
             prf_input_stream.write(new_line)
         templ_stream.close()
         prf_input_stream.close()
@@ -124,8 +125,9 @@ class Preparation():
         ILS_Channel1, ILS_Channel2 = self.get_ils_from_file()
         # TODO: Change this line to a correct date
         lat, lon, alt = self.coords
-        comment = 'Spectra were generated using preprocess 4, a part of '
-        'proffast and PRFpylot.'
+        comment = (
+            "The spectra were generated using preprocess4, a part of "
+            "PROFAST and PRFpylot.")
         if self.note is not None:
             comment = "\n".join([comment, self.note])
 
@@ -174,6 +176,6 @@ class Preparation():
         alt = row["Altitude_kmasl"]
 
         if lat == 0. or lon == 0. or alt == 0:
-            raise Exception('Error reading CoordFile. Please check format'
-                            + ' and path.')
+            raise Exception(
+                "Error reading CoordFile. Please check format and path.")
         return lat, lon, alt
