@@ -2,6 +2,7 @@ import os
 import yaml
 import datetime as dt
 import pandas as pd
+from glob import glob
 
 
 class Preparation():
@@ -21,7 +22,9 @@ class Preparation():
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
         self.site_name = args["site_name"]
+        self.note = args["note"]
 
+        # generate paths
         # path to profast base directory
         self.base_path = args["base_path"]
         if self.base_path == "default":
@@ -41,7 +44,21 @@ class Preparation():
             self.pt_path = os.path.join(self.base_path, 'data',
                                         args['instrument_number'], 'log-Files'
                                         )
+        # path to ils file
+        self.ils_file = args["ils_file"]
+        if self.ils_file == "default":
+            self.ils_file = os.path.join(self.base_path, 'data', 'ILSList.csv')
 
+        # generate relevant parameters
+        # all dates to be processed
+        date_paths = glob(os.join(self.data_path, "*"))
+        self.dates = []
+        for date_path in date_paths:
+            date = date_path.split()[-1]
+            date = dt.strp_time(date)
+            self.dates.append(date)
+
+        # coordinates
         if None not in args["coords"].values():
             self.coords = args["coords"]
             self.coord_file = None  # to avoid overriding given coords
@@ -53,22 +70,6 @@ class Preparation():
                     self.base_path, "data",
                     self.instrument_number, "coords.csv")
             self.coords = self.get_coords_from_file(coord_file)
-
-        self.ils_file = args["ils_file"]
-        if self.ils_file == "default":
-            self.ils_file = os.path.join(self.base_path, 'data', 'ILSList.csv')
-
-        self.note = args["note"]
-
-    # date as property to be able to get and set it frequently
-    @property
-    def date(self):
-        return self._date
-
-    @date.setter
-    def date(self, date):
-        """Set date (datetime object)"""
-        self._date = date
 
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
