@@ -11,9 +11,9 @@ is adjusted to the specified pressure value. If the required pressure
 adjustment at observer altitude is larger than 10 hPa, a warning will
 be generated)
 $
-0.181
-67.366
-26.630
+%ALT%
+%LAT%
+%LON%
 9999.9
 
 
@@ -25,11 +25,11 @@ pT file
 construct H2O and HDO from pT file (True/False)
 n_Tdisturb
 $
-analysis\%SITE%\%DATUM%
+data\%INSTRUMENT%\%SITE%\%DATE%
 %SITE%
-%DATUM%
+%DATE%
 .false.
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
+data\atmospheric\%SITE%\map\%SITE_ABBREV%%DATE_LONG%.map
 .true.
 6
 
@@ -85,14 +85,14 @@ inp_fwd\hitran\linedata\14_hit12.par
 for each species:
   VMR file
 $
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
-analysis\%SITE%\%DATUM%\pT\so20%DATUM%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
 
 
 for AVK calculation

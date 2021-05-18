@@ -6,10 +6,10 @@ date
 absco file
 pT detail dec (True/False)
 $
-analysis\%SITE%\%DATUM%
+date\%INSTRUMENT%\%SITE%\%DATE%
 %SITE%
-%DATUM%
-%SITE%%DATUM%-abscos.bin
+%DATE%
+%SITE%%DATE%-abscos.bin
 .true.
 
 

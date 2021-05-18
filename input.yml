@@ -3,8 +3,11 @@
 
 instrument_number: SN039
 
-#SITE INFORMATION
+# SITE INFORMATION
 site_name: Sodankyla
+# abbreviation of the site name in map file:
+# <site_abbrev><date>.map
+site_abbrev: so
 
 # give coordinates
 # leave empty if coordinates should be taken from file
