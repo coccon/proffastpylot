@@ -1,2 +1,0 @@
-Date,Latitude,Longitude,Alt_kmasl,Descrip_opt
-20140101,67.366,26.630,0.181,Sondankyla

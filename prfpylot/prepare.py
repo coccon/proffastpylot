@@ -22,6 +22,7 @@ class Preparation():
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
         self.site_name = args["site_name"]
+        self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
 
         # generate paths
@@ -35,15 +36,19 @@ class Preparation():
 
         self.map_path = args["map_path"]
         if self.map_path == "default":
-            self.map_path = os.path.join(self.base_path, 'data',
-                                         args['instrument_number'], 'map-Files'
-                                         )
+            self.map_path = os.path.join(
+                self.base_path, 'data', "atmospheric", self.site_name, "map")
+
+        self.log_path = args["log_path"]
+        if self.log_path == "default":
+            self.log_path = os.path.join(
+                self.base_path, "data", "atmospheric", self.site_name, "log")
+
         self.pt_path = args["pt_path"]
         if self.pt_path == "default":
-            # todo: decide if folder is 'log-Files', or 'met-Files'
-            self.pt_path = os.path.join(self.base_path, 'data',
-                                        args['instrument_number'], 'log-Files'
-                                        )
+            self.pt_path = os.path.join(
+                self.base_path, "data", "atmospheric", self.site_name, "pt")
+
         # path to ils file
         self.ils_file = args["ils_file"]
         if self.ils_file == "default":
@@ -85,7 +90,7 @@ class Preparation():
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
-    def generate_prf_input(self, template_type):
+    def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
 
         Calling the corresponding collect parameters function
@@ -97,9 +102,15 @@ class Preparation():
         if template_type == "prep":
             print("generating preprocess4.inp ...")
             parameters = self.get_prep_parameters()
-            self.replace_params_in_template(parameters, template_type)
+        elif template_type == "pcxs":
+            print("generating pcxs10.inp ...")
+            parameters = self.get_pcxs_and_inv_parameters(date)
+        elif template_type == "inv":
+            print("generating invers10.inp ...")
+            parameters = self.get_pcxs_and_inv_parameters(date)
         else:
-            return NotImplementedError("Implement other prf input files.")
+            raise NotImplementedError("Implement other prf input files.")
+        self.replace_params_in_template(parameters, template_type)
 
     def replace_params_in_template(self, parameters, template_type):
         '''
@@ -142,6 +153,23 @@ class Preparation():
             'comment': comment
                      }
 
+        return parameters
+
+    def get_pcxs_and_inv_parameters(self, date):
+        """Return Parameters to replace in the pcxs10.inp
+        or invers10.inp files."""
+        lat, lon, alt = self.coords
+
+        parameters = {
+            "ALT": alt,
+            "LAT": lat,
+            "LON": lon,
+            "INSTRUMENT": self.instrument_number,
+            "SITE": self.site_name,
+            "DATE": date.strftime("%y%m%d"),
+            "DATE_LONG": date.strftime("%Y%m%d"),
+            "SITE_ABBREV": self.site_abbrev,
+        }
         return parameters
 
     def get_ils_from_file(self, return_string=True):
