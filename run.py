@@ -2,6 +2,8 @@
 # python run.py --start xxx --stop xxx --input input.yml --sitename Sodankyla
 
 from prfpylot.pylot import Pylot
+from datetime import datetime as dt
 
 MyPRFpylot = Pylot("input.yml")
 MyPRFpylot.generate_prf_input("prep")
+MyPRFpylot.generate_prf_input("inv", dt.now())
