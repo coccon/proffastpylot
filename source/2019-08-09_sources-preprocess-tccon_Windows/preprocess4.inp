@@ -1,0 +1,39 @@
+Input file for COCCON PROCEEDS preprocessor
+
+Generate ASCII output for testing
+DCmin
+DCvar
+$
+.false.
+0.05
+0.10
+
+
+ILS parameter: apo + phase error
+primary channel
+secondary channel
+$
+1.0  0.0
+1.0  0.0
+
+
+T/F: fixed or variable observer coordinates
+specify site name
+specify time offset of OPUS time versus UT (hours+decimals)
+if fixed observer coordinates: specify fixed observer coords (lat_rad,long_rad (East pos),alt_km)
+$
+.true.
+Karlsruhe
+0.0
+49.1002  8.4385  0.119
+
+
+input for comments added to file header (up to 150 characters)
+$
+"demo spectrum generated with preprocess 4"
+
+
+list of raw measurements (path and filename, end marker ***)
+$
+C:\prf96-EM27-fast\preprocess-tccon\125HR-karlsruhe\190724\190724SN+SM-EM27.20
+***

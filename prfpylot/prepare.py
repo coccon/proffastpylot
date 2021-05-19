@@ -54,10 +54,24 @@ class Preparation():
         if self.ils_file == "default":
             self.ils_file = os.path.join(self.base_path, 'data', 'ILSList.csv')
 
+        # path to preprocess folder and to preprocess log-folder
+        self.prep_path = os.path.join(self.base_path, "prf", "preprocess")
+        if args["prep4_logpath"] == "default":
+            self.prep4_logpath = os.path.join(self.prep_path, "log-files")
+        else:
+            self.prep4_logpath = args["prep4_logpath"]
+
+        # safe the path where the igrams and spectra are safed as class
+        # variable since it is needed often.
+        self.igram_path = os.path.join(self.data_path, "interferograms")
+        self.spectra_path = os.path.join(self.data_path, "spectra")
         # generate relevant parameters
-        # all dates to be processed
-        date_paths = glob(os.path.join(self.data_path, "interferograms", "*"))
+        # all dates to be processed:
+        date_paths = glob(os.path.join(self.igram_path, "*"))
         self.dates = []
+        # TODO: Implement a possibility to specify startDate and endDate.
+        #       If implemented, a list like the one below can be generated
+        #       artificially.
         for date_path in date_paths:
             date = os.path.split(date_path)[1]
             date = dt.strptime(date, "%y%m%d")
@@ -78,14 +92,17 @@ class Preparation():
 
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
-        folder_path = os.path.join(self.base_path, 'prf', 'templates')
+        folder_path = os.path.join(self.base_path, "prf", "templates")
         filename = "template_{}.inp".format(self.template_types[template_type])
         template_path = os.path.join(folder_path, filename)
         return template_path
 
     def get_prf_input_path(self, template_type):
         """Return path to the corresponding prf_input_file."""
-        folder_path = os.path.join(self.base_path, 'prf')
+        folder_path = os.path.join(self.base_path, "prf")
+        # preprocess is in an other folder than the rest:
+        if template_type == "prep":
+            folder_path = os.path.join(folder_path, "preprocess")
         filename = self.template_types[template_type] + ".inp"
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
@@ -112,35 +129,74 @@ class Preparation():
             raise NotImplementedError("Implement other prf input files.")
         self.replace_params_in_template(parameters, template_type)
 
+    def add_spectra_to_preprocess(self):
+        """
+        Search for spectra on disk an add them to the preprocess input file.
+        """
+        # TODO: Implement start and endDate
+        igram_list = []
+        for date in self.dates:
+            date_str = date.strftime("%y%m%d")
+            igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
+
+            if igrams == []:
+                print(f"Warning: Interferogram at day {date} not found.")
+            else:
+                igram_list += igrams
+        with open(self.get_prf_input_path("prep"), "a") as input_file:
+            for igram in igram_list:
+                input_file.write(igram + "\n")
+            input_file.write("***")
+        # since the igram list which is processed is necessary in other
+        # steps as well, it is returned by this method
+        # TODO: Think about, if it would not be more usefull to safe it in a
+        #       class variable.
+        # return igram_list
+
     def replace_params_in_template(self, parameters, template_type):
-        '''
+        """
         This methods generates a site specific input file by using a template.
-        '''
+        params:
+            parameters(dict): containing keys which match the variable
+                              names in the template file. They are replaced by
+                              the entries.
+
+            template_type(str): Can be "prep", "pt", "inv" or "pcxc"
+        """
         templ_file = self.get_template_path(template_type)
         prf_input_file = self.get_prf_input_path(template_type)
         templ_stream = open(templ_file, 'r')
         prf_input_stream = open(prf_input_file, 'w')
         for line in templ_stream:
             new_line = line
-            for name, parameter in parameters.items():
-                new_line = new_line.replace('%{}%'.format(name), str(parameter))
+            for key, parameter in parameters.items():
+                if isinstance(parameter, list):
+                    # some files need to be filled with a list of files.
+                    # hence check if the parameter is a list. Then add each
+                    # entry as an extra line.
+                    if key in new_line:
+                        new_line = '\n'.join(parameter)
+                else:
+                    new_line = new_line.replace('%{}%'.format(key),
+                                                str(parameter)
+                                                )
             prf_input_stream.write(new_line)
         templ_stream.close()
         prf_input_stream.close()
 
     def get_prep_parameters(self):
         '''
-        Return Parameters to replace in the pereprocess input file.
+        Return Parameters to be replace in the pereprocess input file.
         '''
 
         ILS_Channel1, ILS_Channel2 = self.get_ils_from_file()
         # TODO: Change this line to a correct date
         lat, lon, alt = self.coords
         comment = (
-            "The spectra were generated using preprocess4, a part of "
-            "PROFAST and PRFpylot.")
+            "This spectrum is generated using preprocess4, a part of "
+            "PROFAST controlled by PRFpylot.")
         if self.note is not None:
-            comment = "\n".join([comment, self.note])
+            comment = " ".join([comment, self.note])
 
         parameters = {
             'ILS_Channel1': ILS_Channel1,
@@ -149,9 +205,11 @@ class Preparation():
             'lat': lat,
             'lon': lon,
             'alt': alt,
-            'utc_offset': '0',
+            'utc_offset': '0.0',
             'comment': comment
                      }
+        # TODO: Add key 'raw_measurement_list' to dict
+        #       this dict contains  a list of all raw measurements.
 
         return parameters
 
@@ -173,9 +231,12 @@ class Preparation():
         return parameters
 
     def get_ils_from_file(self, return_string=True):
-        '''
-        This methods reads the ILS from the Instrument_list
-        '''
+        """
+        This methods reads the ILS from the Instrument_list.
+        If return_string=True, it returns a string which is already
+        preformatted such that it can be inserted into the template file
+        directly.
+        """
         ils_df = pd.read_csv(self.ils_file)
         try:
             temp = ils_df[ils_df['Instrument'] == self.instrument_number]

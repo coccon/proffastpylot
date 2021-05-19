@@ -42,3 +42,12 @@ ils_file: default
 # optional comment included in bin-files, string
 # Leave empty adding no comment
 note:
+
+# log file where the output of preprocess4 is stored in:
+prep4_logpath: default
+
+# TODO: path of the spectra:
+#spectra_path: default
+
+# TODO: path of the interfergorams:
+#igram_path: default
