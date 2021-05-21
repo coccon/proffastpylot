@@ -6,4 +6,6 @@ from datetime import datetime as dt
 
 MyPRFpylot = Pylot("input.yml")
 MyPRFpylot.generate_prf_input("prep")
-MyPRFpylot.generate_prf_input("inv", dt.now())
+day = dt.strptime("170608", "%y%m%d")
+MyPRFpylot.generate_prf_input("inv", day)
+
