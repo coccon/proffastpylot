@@ -72,7 +72,7 @@ class Pylot(FileMover):
             # startet without retardation.
             # Hence the loop would be executed before the p's are filled
             # into the list
-            time.sleep(0.1)
+            time.sleep(0.5)
             for p in pList:
                 p.wait()
         # Finally move the files to the spectra folder:

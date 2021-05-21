@@ -27,7 +27,6 @@ class FileMover(Preparation):
             date_str = date.strftime("%y%m%d")
             bin_files = glob(os.path.join(self.igram_path, date_str,
                              "cal", "*.BIN"))
-            print((bin_files))
             # they should be in self.spectra_path/YYMMDD/cal/*.bin:
             target_folder = os.path.join(self.spectra_path, date_str, "cal")
             if os.path.exists(target_folder) and deleteExistingFolders:

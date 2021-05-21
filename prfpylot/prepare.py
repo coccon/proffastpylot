@@ -14,6 +14,7 @@ class Preparation():
     }
 
     """Import input parameters, and create input files."""
+
     def __init__(self, input_path="input.yml"):
         # read input file
         with open(input_path, "r") as f:
@@ -76,6 +77,48 @@ class Preparation():
             date = os.path.split(date_path)[1]
             date = dt.strptime(date, "%y%m%d")
             self.dates.append(date)
+
+        def find_closest(list, item):
+            '''Find the closest entry in a list copared to item'''
+            i = 0
+            diff1 = abs(list[0] - item)
+            for j, entry in enumerate(list):
+                diff0 = abs(entry - item)
+                if diff0 < diff1:
+                    i = j
+                    diff1 = diff0
+            return i
+
+        if args['start_date'] != 'default':
+
+            self.start_date = dt.combine(args["start_date"],
+                                                  dt.min.time())
+            if self.start_date < self.dates[0]:
+                i = 0
+                print("WARNING: start_date given in input file is earlier"
+                      + " than earliest date on disk.")
+            elif self.start_date > self.dates[-1]:
+                print("ERROR: The start date is later than the date of the "
+                      + "last interferogram on disk.\nTerminate program.")
+                quit()
+            else:
+                i = find_closest(self.dates, self.start_date)
+            self.dates = self.dates[i:]
+
+        if args['end_date'] != 'default':
+            self.end_date = dt.combine(args["end_date"],
+                                                  dt.min.time())
+            if self.end_date > self.dates[-1]:
+                i = len(self.dates)
+                print("WARNING: end_date is larger than the date of the last "
+                      + "interferogram on disk.")
+            elif self.end_date < self.dates[0]:
+                print("ERROR: The end date is earlyer than the date of the "
+                      + "first interferogram on disk.\nTerminate program.")
+                quit()
+            else:
+                i = find_closest(self.dates, self.end_date)
+            self.dates = self.dates[:i]
 
         # coordinates
         if None not in args["coords"].values():

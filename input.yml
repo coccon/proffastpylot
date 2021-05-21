@@ -16,9 +16,16 @@ coords:
   lon:
   alt:  # km over sea level
 
+# If you want to process only a ceratain date interval it is possible to give
+# here the start_date and end_date of this intervall
+# Otherwise all files which are found on the disk are going to be processed.
+# The date must be given in ISO8601 format. I.e. YYYY-MM-DD
+start_date: default
+end_date: default
+
 # full path and name of the coord file. This file contains the coorindates
 # of the sites.
-# defualt: ${root_path}\data\coords.csv
+# default: ${root_path}\data\coords.csv
 coord_file: default
 
 
