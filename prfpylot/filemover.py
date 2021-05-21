@@ -20,7 +20,7 @@ class FileMover(Preparation):
     def move_bin_files(self, deleteExistingFolders=True):
         """Move binary files after running preprocessing"""
         # loop over all days which where processed:
-        print("INFO: Start Moving files")
+        self.logger.info("Start Moving files")
         for date in self.dates:
             # the *.BIN files are currently in the self.igram_path/YYMMDD/cal
             # folder. search for them:
@@ -36,10 +36,10 @@ class FileMover(Preparation):
                 os.makedirs(target_folder, exist_ok=True)
             else:
                 os.makedirs(target_folder, exist_ok=True)
-            print(f"INFO: Move files of date {date_str}")
+            self.logger.info(f"Move files of date {date_str}")
             for bin_file in bin_files:
                 file_name = os.path.basename(bin_file)
-                print(f"DEBUG:\n{bin_file}\n{file_name}")
+                self.logger.debug(f"{bin_file}\n{file_name}")
                 shutil.move(bin_file, os.path.join(target_folder, file_name))
 
     def remove_temporary_files_from_prf():

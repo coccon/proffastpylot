@@ -10,6 +10,7 @@ class Pylot(FileMover):
 
     def __init__(self, input_file):
         super(Pylot, self).__init__(input_file)
+        self.logger.debug('Initialized the FileMover')
 
     def run(self):
         # run all processes
@@ -38,7 +39,7 @@ class Pylot(FileMover):
             preprocess = os.path.join(self.prep_path, "preprocess4.exe")
             # subprocess.Popen(["start", "/wait", "cmd", "/c", preprocess],
             #                  shell=False, cwd=prep_path)
-            print("INFO: Starting preprocess4 without parallelisation.")
+            self.logger.info("Starting preprocess4 without parallelisation.")
             p = subprocess.Popen([preprocess],
                                  shell=False, cwd=self.prep_path,
                                  stdout=subprocess.PIPE,
@@ -48,7 +49,8 @@ class Pylot(FileMover):
             out = out.decode('utf-8')
             err = err.decode('utf-8')
             if len(err) != 0:
-                print('WARNING: Error while running preprocess\n' + err)
+                self.logger.warning('WARNING: Error while running preprocess\n'
+                                    + err)
             logfile = "LogFilePreprocess_" + self.site_name + '_'\
                       + self.dates[0].strftime('%y%m%d') + '_'\
                       + self.dates[-1].strftime('%y%m%d') + '.txt'

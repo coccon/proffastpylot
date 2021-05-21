@@ -5,5 +5,5 @@ from prfpylot.pylot import Pylot
 from datetime import datetime as dt
 
 MyPRFpylot = Pylot("input.yml")
-MyPRFpylot.run_preprocess(NumberOfProcesses=2)
+#MyPRFpylot.run_preprocess(NumberOfProcesses=2)
 # MyPRFpylot.generate_prf_input("inv", dt.now())

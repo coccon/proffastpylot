@@ -3,6 +3,7 @@ import yaml
 from datetime import datetime as dt
 import pandas as pd
 from glob import glob
+import logging
 
 
 class Preparation():
@@ -20,6 +21,8 @@ class Preparation():
         with open(input_path, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
 
+        # Create a logger
+        self.set_logger()
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
         self.site_name = args["site_name"]
@@ -91,30 +94,30 @@ class Preparation():
 
         if args['start_date'] != 'default':
 
-            self.start_date = dt.combine(args["start_date"],
-                                                  dt.min.time())
+            self.start_date = dt.combine(args["start_date"], dt.min.time())
             if self.start_date < self.dates[0]:
                 i = 0
-                print("WARNING: start_date given in input file is earlier"
-                      + " than earliest date on disk.")
+                self.logger.warning("Start_date given in input file is earlier"
+                                    + " than earliest date on disk.")
             elif self.start_date > self.dates[-1]:
-                print("ERROR: The start date is later than the date of the "
-                      + "last interferogram on disk.\nTerminate program.")
+                self.logger.error("The start date is later than the"
+                                  + " date of the last interferogram on disk."
+                                  + "\nTerminate program.")
                 quit()
             else:
                 i = find_closest(self.dates, self.start_date)
             self.dates = self.dates[i:]
 
         if args['end_date'] != 'default':
-            self.end_date = dt.combine(args["end_date"],
-                                                  dt.min.time())
+            self.end_date = dt.combine(args["end_date"], dt.min.time())
             if self.end_date > self.dates[-1]:
                 i = len(self.dates)
-                print("WARNING: end_date is larger than the date of the last "
-                      + "interferogram on disk.")
+                self.logger.warning("End_date is larger than the date"
+                                    "of the last interferogram on disk.")
             elif self.end_date < self.dates[0]:
-                print("ERROR: The end date is earlyer than the date of the "
-                      + "first interferogram on disk.\nTerminate program.")
+                self.logger.error("The end date is earlier than the"
+                                  + " date of the first interferogram on disk."
+                                  + "\nTerminate program.")
                 quit()
             else:
                 i = find_closest(self.dates, self.end_date)
@@ -132,6 +135,26 @@ class Preparation():
                     self.base_path, "data",
                     self.instrument_number, "coords.csv")
             self.coords = self.get_coords_from_file(coord_file)
+
+    def set_logger(self):
+        # Create a logger
+        self.logger = logging.getLogger('Preparation')
+        # set logging to debug to record everythin in the first place
+        self.logger.setLevel(logging.DEBUG)
+        StreamHandler = logging.StreamHandler()
+        FHandler = logging.FileHandler('Logfile.txt', mode='w')
+        StreamHandler.setLevel(logging.DEBUG)
+        FHandler.setLevel(logging.DEBUG)
+        self.logger.addHandler(StreamHandler)
+        self.logger.addHandler(FHandler)
+        StreamFormat = logging.Formatter(
+            '{asctime}: {filename},line {lineno} -> {levelname}: {message}',
+            style='{')
+        StreamHandler.setFormatter(StreamFormat)
+        FHandler.setFormatter(StreamFormat)
+
+
+
 
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
@@ -160,13 +183,13 @@ class Preparation():
             template_type (str): Can be "prep", "pt", "inv" or "pcxc"
         """
         if template_type == "prep":
-            print("generating preprocess4.inp ...")
+            self.logger.info("generating preprocess4.inp ...")
             parameters = self.get_prep_parameters()
         elif template_type == "pcxs":
-            print("generating pcxs10.inp ...")
+            self.logger.info("generating pcxs10.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         elif template_type == "inv":
-            print("generating invers10.inp ...")
+            self.logger.info("generating invers10.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         else:
             raise NotImplementedError("Implement other prf input files.")
@@ -183,7 +206,7 @@ class Preparation():
             igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
 
             if igrams == []:
-                print(f"Warning: Interferogram at day {date} not found.")
+                self.logger.warning(f"Interferogram at day {date} not found.")
             else:
                 igram_list += igrams
         with open(self.get_prf_input_path("prep"), "a") as input_file:
@@ -288,7 +311,7 @@ class Preparation():
             MEChan2 = temp.iloc[0]['Channel2ME']
             PEChan2 = temp.iloc[0]['Channel2PE']
         except KeyError as e:
-            print('Error: it was not possible to get ILS from file')
+            self.logger.error('It was not possible to get ILS from file')
             raise (e)
         if return_string:
             return ('{} {}'.format(MEChan1, PEChan1),
