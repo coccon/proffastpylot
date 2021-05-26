@@ -25,7 +25,7 @@ pT file
 construct H2O and HDO from pT file (True/False)
 n_Tdisturb
 $
-data\%INSTRUMENT%\%SITE%\%DATE%
+data\%INSTRUMENT%\%SITE%\spectra\%DATE%
 %SITE%
 %DATE%
 .false.

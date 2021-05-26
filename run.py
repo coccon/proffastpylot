@@ -5,7 +5,7 @@ from prfpylot.pylot import Pylot
 from datetime import datetime as dt
 
 MyPRFpylot = Pylot("input.yml")
-MyPRFpylot.generate_prf_input("prep")
-day = dt.strptime("170608", "%y%m%d")
-MyPRFpylot.generate_prf_input("inv", day)
 
+# MyPRFpylot.run_preprocess(NumberOfProcesses=1)
+date = dt.strptime("170608", "%y%m%d")
+MyPRFpylot.generate_prf_input("pcxs", date)
