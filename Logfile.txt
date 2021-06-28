@@ -1,0 +1,2 @@
+2021-05-21 13:44:37,919: prepare.py,line 26 -> INFO: Test
+2021-05-21 13:44:37,923: pylot.py,line 13 -> DEBUG: Initialized the FileMover
