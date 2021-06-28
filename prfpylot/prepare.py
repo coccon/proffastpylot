@@ -22,7 +22,7 @@ class Preparation():
             args = yaml.load(f, Loader=yaml.FullLoader)
 
         # Create a logger
-        self.set_logger()
+        self.logger = self.get_logger()
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
         self.site_name = args["site_name"]
@@ -136,25 +136,23 @@ class Preparation():
                     self.instrument_number, "coords.csv")
             self.coords = self.get_coords_from_file(coord_file)
 
-    def set_logger(self):
+    def get_logger(self):
         # Create a logger
-        self.logger = logging.getLogger('Preparation')
+        logger = logging.getLogger('Preparation')
         # set logging to debug to record everythin in the first place
-        self.logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
         FHandler = logging.FileHandler('Logfile.txt', mode='w')
         StreamHandler.setLevel(logging.DEBUG)
         FHandler.setLevel(logging.DEBUG)
-        self.logger.addHandler(StreamHandler)
-        self.logger.addHandler(FHandler)
+        logger.addHandler(StreamHandler)
+        logger.addHandler(FHandler)
         StreamFormat = logging.Formatter(
             '{asctime}: {filename},line {lineno} -> {levelname}: {message}',
             style='{')
         StreamHandler.setFormatter(StreamFormat)
         FHandler.setFormatter(StreamFormat)
-
-
-
+        return logger
 
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
@@ -195,7 +193,7 @@ class Preparation():
             raise NotImplementedError("Implement other prf input files.")
         self.replace_params_in_template(parameters, template_type)
 
-    def add_spectra_to_preprocess(self):
+    def get_igrams(self):
         """
         Search for spectra on disk an add them to the preprocess input file.
         """
@@ -207,17 +205,7 @@ class Preparation():
 
             if igrams == []:
                 self.logger.warning(f"Interferogram at day {date} not found.")
-            else:
-                igram_list += igrams
-        with open(self.get_prf_input_path("prep"), "a") as input_file:
-            for igram in igram_list:
-                input_file.write(igram + "\n")
-            input_file.write("***")
-        # since the igram list which is processed is necessary in other
-        # steps as well, it is returned by this method
-        # TODO: Think about, if it would not be more usefull to safe it in a
-        #       class variable.
-        # return igram_list
+        return igram_list
 
     def replace_params_in_template(self, parameters, template_type):
         """
@@ -264,6 +252,7 @@ class Preparation():
         if self.note is not None:
             comment = " ".join([comment, self.note])
 
+        igrams = "\n".join(self.get_igrams())
         parameters = {
             'ILS_Channel1': ILS_Channel1,
             'ILS_Channel2': ILS_Channel2,
@@ -272,7 +261,8 @@ class Preparation():
             'lon': lon,
             'alt': alt,
             'utc_offset': '0.0',
-            'comment': comment
+            'comment': comment,
+            'igrams': igrams,
                      }
         # TODO: Add key 'raw_measurement_list' to dict
         #       this dict contains  a list of all raw measurements.

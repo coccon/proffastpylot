@@ -30,18 +30,17 @@ class Pylot(FileMover):
             cal_path = os.path.join(igram_folder, 'cal')
             if os.path.exists(cal_path):
                 shutil.rmtree(cal_path)
-            else:
-                os.mkdir(cal_path)
+            os.mkdir(cal_path)
 
         # Now we can make us ready for finally running preprocess:
-        self.prep_path = os.path.join(self.base_path, "prf", "preprocess")
+        prep_path = os.path.join(self.base_path, "prf", "preprocess")
         if NumberOfProcesses == 1:
-            preprocess = os.path.join(self.prep_path, "preprocess4.exe")
+            preprocess = os.path.join(prep_path, "preprocess4.exe")
             # subprocess.Popen(["start", "/wait", "cmd", "/c", preprocess],
             #                  shell=False, cwd=prep_path)
             self.logger.info("Starting preprocess4 without parallelisation.")
             p = subprocess.Popen([preprocess],
-                                 shell=False, cwd=self.prep_path,
+                                 shell=False, cwd=prep_path,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
             out, err = p.communicate()
@@ -49,8 +48,8 @@ class Pylot(FileMover):
             out = out.decode('utf-8')
             err = err.decode('utf-8')
             if len(err) != 0:
-                self.logger.warning('WARNING: Error while running preprocess\n'
-                                    + err)
+                self.logger.error(
+                    'Error while running preprocess\n' + err)
             logfile = "LogFilePreprocess_" + self.site_name + '_'\
                       + self.dates[0].strftime('%y%m%d') + '_'\
                       + self.dates[-1].strftime('%y%m%d') + '.txt'
@@ -60,14 +59,14 @@ class Pylot(FileMover):
         else:
             # TODO: Change this or the single thread method such that only one
             #       version is used.
-            preprocess = os.path.join(self.prep_path, "preprocess4.exe {} {}")
+            preprocess = os.path.join(prep_path, "preprocess4.exe {} {}")
             pList = []
             for n in range(NumberOfProcesses):
                 pList.append(
                  subprocess.Popen(["start", "/wait", "cmd", "/c",
                                    preprocess.format(NumberOfProcesses, n)
                                    ],
-                                  shell=True, cwd=self.prep_path
+                                  shell=True, cwd=prep_path
                                   )
                              )
             # the sleep here is necessary, since the subprocesses are
