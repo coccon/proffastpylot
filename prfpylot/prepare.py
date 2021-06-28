@@ -163,20 +163,13 @@ class Preparation():
 
     def get_prf_input_path(self, template_type, date=None):
         """Return path to the corresponding prf_input_file."""
-<<<<<<< HEAD
         folder_path = os.path.join(self.base_path, 'prf')
         if template_type in ["pcxs", "inv"]:
             date_str = dt.strftime(date, "%y%m%d")
-        else:
-            date_str = ""
-        filename = self.template_types[template_type] + date_str + ".inp"
-=======
-        folder_path = os.path.join(self.base_path, "prf")
-        # preprocess is in an other folder than the rest:
+            filename = self.template_types[template_type] + date_str + ".inp"
         if template_type == "prep":
             folder_path = os.path.join(folder_path, "preprocess")
-        filename = self.template_types[template_type] + ".inp"
->>>>>>> master
+            filename = self.template_types[template_type] + ".inp"
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
@@ -195,17 +188,10 @@ class Preparation():
             self.logger.info("generating preprocess4.inp ...")
             parameters = self.get_prep_parameters()
         elif template_type == "pcxs":
-<<<<<<< HEAD
-            print(f"generating pcxs10_{date_str}.inp ...")
+            self.logger.info(f"generating pcxs10_{date_str}.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         elif template_type == "inv":
-            print(f"generating invers10_{date_str}.inp ...")
-=======
-            self.logger.info("generating pcxs10.inp ...")
-            parameters = self.get_pcxs_and_inv_parameters(date)
-        elif template_type == "inv":
-            self.logger.info("generating invers10.inp ...")
->>>>>>> master
+            self.logger.info(f"generating invers10_{date_str}.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         else:
             raise NotImplementedError("Implement other prf input files.")
