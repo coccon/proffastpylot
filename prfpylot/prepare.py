@@ -83,10 +83,14 @@ class Preparation():
         template_path = os.path.join(folder_path, filename)
         return template_path
 
-    def get_prf_input_path(self, template_type):
+    def get_prf_input_path(self, template_type, date=None):
         """Return path to the corresponding prf_input_file."""
         folder_path = os.path.join(self.base_path, 'prf')
-        filename = self.template_types[template_type] + ".inp"
+        if template_type in ["pcxs", "inv"]:
+            date_str = dt.strftime(date, "%y%m%d")
+        else:
+            date_str = ""
+        filename = self.template_types[template_type] + date_str + ".inp"
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
@@ -99,14 +103,16 @@ class Preparation():
         params:
             template_type (str): Can be "prep", "pt", "inv" or "pcxc"
         """
+        if date is not None:
+            date_str = dt.strftime(date, "%y%m%d")
         if template_type == "prep":
             print("generating preprocess4.inp ...")
             parameters = self.get_prep_parameters()
         elif template_type == "pcxs":
-            print("generating pcxs10.inp ...")
+            print(f"generating pcxs10_{date_str}.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         elif template_type == "inv":
-            print("generating invers10.inp ...")
+            print(f"generating invers10_{date_str}.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         else:
             raise NotImplementedError("Implement other prf input files.")

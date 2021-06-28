@@ -1,4 +1,5 @@
 from prfpylot.filemover import FileMover
+import subprocess
 
 
 class Pylot(FileMover):
@@ -17,10 +18,13 @@ class Pylot(FileMover):
         # start preprocess
         pass
 
-    def run_pcx():
-        # move bin files with function form FileMover class
-        # run pcx.exe
-        pass
+    def run_pcx(self):
+        for date in self.dates:
+            self.run_pcx_at(date)
+
+    def run_pcx_at(self, date):
+        self.generate_prf_input("pcxs", date)
+        subprocess.run(["./pcxs10", "pcxs10.inp"])
 
     def run_inv():
         pass

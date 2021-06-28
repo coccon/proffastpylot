@@ -1,5 +1,7 @@
 import os
 from glob import glob
+import datetime as dt
+import shutil
 
 from prfpylot.prepare import Preparation
 
@@ -9,6 +11,22 @@ class FileMover(Preparation):
     def __init__(self, input_file):
         super(FileMover, self).__init__(input_file)
         self.input_file = input_file
+
+    def create_work_dirs():
+        """Create profast work directories, if non-existant."""
+        dirs = ["inp_fwd", "out_fast"]
+        for d in dirs:
+            if not os.path.exists(d):
+                shutil.makedir(d)
+
+    def create_temporary_pT_dir(self, date):
+        """Create empty directory."""
+        pt_path = os.path.join(
+            self.data_path,
+            dt.strftime(date, "%y%m%d"),
+            "pT")
+        if not os.path.exists(pt_path):
+            shutil.makedir(pt_path)
 
     def mv_spec_to_prf():
         """Move sectra to prf input folder?"""
