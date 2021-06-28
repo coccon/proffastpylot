@@ -228,16 +228,8 @@ class Preparation():
         for line in templ_stream:
             new_line = line
             for key, parameter in parameters.items():
-                if isinstance(parameter, list):
-                    # some files need to be filled with a list of files.
-                    # hence check if the parameter is a list. Then add each
-                    # entry as an extra line.
-                    if key in new_line:
-                        new_line = '\n'.join(parameter)
-                else:
-                    new_line = new_line.replace('%{}%'.format(key),
-                                                str(parameter)
-                                                )
+                new_line = new_line.replace(
+                    '%{}%'.format(key), str(parameter))
             prf_input_stream.write(new_line)
         templ_stream.close()
         prf_input_stream.close()

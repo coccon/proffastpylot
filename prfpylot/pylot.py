@@ -20,8 +20,6 @@ class Pylot(FileMover):
     def run_preprocess(self, NumberOfProcesses=1, deleteExistingFolders=True):
         # generate input file:
         self.generate_prf_input("prep")
-        # add spectra to this input file.
-        self.add_spectra_to_preprocess()
         # start preprocess
         # preprocess needs a 'cal' folder next to the input folder:
         for date in self.dates:
