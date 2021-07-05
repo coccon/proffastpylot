@@ -69,60 +69,13 @@ class Preparation():
         # variable since it is needed often.
         self.igram_path = os.path.join(self.data_path, "interferograms")
         self.spectra_path = os.path.join(self.data_path, "spectra")
-        # generate relevant parameters
-        # all dates to be processed:
-        date_paths = glob(os.path.join(self.igram_path, "*"))
-        self.dates = []
-        # TODO: Implement a possibility to specify startDate and endDate.
-        #       If implemented, a list like the one below can be generated
-        #       artificially.
-        for date_path in date_paths:
-            date = os.path.split(date_path)[1]
-            date = dt.strptime(date, "%y%m%d")
-            self.dates.append(date)
-
-        def find_closest(list, item):
-            '''Find the closest entry in a list copared to item'''
-            i = 0
-            diff1 = abs(list[0] - item)
-            for j, entry in enumerate(list):
-                diff0 = abs(entry - item)
-                if diff0 < diff1:
-                    i = j
-                    diff1 = diff0
-            return i
-
-        if args['start_date'] != 'default':
-
-            self.start_date = dt.combine(args["start_date"], dt.min.time())
-            if self.start_date < self.dates[0]:
-                i = 0
-                self.logger.warning("Start_date given in input file is earlier"
-                                    + " than earliest date on disk.")
-            elif self.start_date > self.dates[-1]:
-                self.logger.error("The start date is later than the"
-                                  + " date of the last interferogram on disk."
-                                  + "\nTerminate program.")
-                quit()
-            else:
-                i = find_closest(self.dates, self.start_date)
-            self.dates = self.dates[i:]
-
-        if args['end_date'] != 'default':
-            self.end_date = dt.combine(args["end_date"], dt.min.time())
-            if self.end_date > self.dates[-1]:
-                i = len(self.dates)
-                self.logger.warning("End_date is larger than the date"
-                                    "of the last interferogram on disk.")
-            elif self.end_date < self.dates[0]:
-                self.logger.error("The end date is earlier than the"
-                                  + " date of the first interferogram on disk."
-                                  + "\nTerminate program.")
-                quit()
-            else:
-                i = find_closest(self.dates, self.end_date)
-            self.dates = self.dates[:i]
-
+        
+        # list of dates
+        self.dates = self.get_dates(
+                start_date=args["start_date"],
+                end_date=args["end_date"]
+            )
+        
         # coordinates
         if None not in args["coords"].values():
             self.coords = args["coords"]
@@ -153,6 +106,27 @@ class Preparation():
         StreamHandler.setFormatter(StreamFormat)
         FHandler.setFormatter(StreamFormat)
         return logger
+
+    def get_dates(self, start_date, end_date):
+        """Return a list of dates for the given site, instrument and 
+        start- and end date.
+        """
+        date_paths = glob(os.path.join(self.igram_path, "*"))
+        dates = []
+
+        for date_path in date_paths:
+            date = os.path.split(date_path)[1]
+            date = dt.strptime(date, "%y%m%d")
+            dates.append(date)
+        
+        if start_date is not None:
+            i = self._get_start_date_pos(start_date, dates)
+            dates = dates[i:]
+        if end_date is not None:
+            i = self._get_end_date_pos(end_date, dates)
+            dates = dates[:i]
+
+        return dates
 
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
@@ -197,7 +171,6 @@ class Preparation():
         """
         Search for spectra on disk an add them to the preprocess input file.
         """
-        # TODO: Implement start and endDate
         igram_list = []
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
@@ -224,16 +197,10 @@ class Preparation():
         for line in templ_stream:
             new_line = line
             for key, parameter in parameters.items():
-                if isinstance(parameter, list):
-                    # some files need to be filled with a list of files.
-                    # hence check if the parameter is a list. Then add each
-                    # entry as an extra line.
-                    if key in new_line:
-                        new_line = '\n'.join(parameter)
-                else:
-                    new_line = new_line.replace('%{}%'.format(key),
-                                                str(parameter)
-                                                )
+                new_line = new_line.replace(
+                    '%{}%'.format(key),
+                    str(parameter)
+                )
             prf_input_stream.write(new_line)
         templ_stream.close()
         prf_input_stream.close()
@@ -244,7 +211,6 @@ class Preparation():
         '''
 
         ILS_Channel1, ILS_Channel2 = self.get_ils_from_file()
-        # TODO: Change this line to a correct date
         lat, lon, alt = self.coords
         comment = (
             "This spectrum is generated using preprocess4, a part of "
@@ -260,12 +226,10 @@ class Preparation():
             'lat': lat,
             'lon': lon,
             'alt': alt,
-            'utc_offset': '0.0',
+            'utc_offset': '0.0',  # TODO: make this chageable!
             'comment': comment,
             'igrams': igrams,
                      }
-        # TODO: Add key 'raw_measurement_list' to dict
-        #       this dict contains  a list of all raw measurements.
 
         return parameters
 
@@ -324,3 +288,48 @@ class Preparation():
             raise Exception(
                 "Error reading CoordFile. Please check format and path.")
         return lat, lon, alt
+
+    def _get_start_date_pos(self, start_date, dates):
+        """Return position of the start date in dates."""
+
+        start_date = dt.combine(args["start_date"], dt.min.time())
+        if start_date < dates[0]:
+            i = 0
+            self.logger.warning("Start_date given in input file is earlier"
+                                + " than earliest date on disk.")
+        elif start_date > dates[-1]:
+            self.logger.error("The start date is later than the"
+                              + " date of the last interferogram on disk."
+                              + "\nTerminate program.")
+            quit()  # better raise an error here?
+        else:
+            i = self._find_closest(dates, start_date)
+        return i
+            
+    def _get_end_date_pos(self, end_date, dates):
+        """Return position of the end date in dates."""
+
+        end_date = dt.combine(args["end_date"], dt.min.time())
+        if end_date > dates[-1]:
+            i = len(dates)
+            self.logger.warning("End_date is larger than the date"
+                                "of the last interferogram on disk.")
+        elif self.end_date < self.dates[0]:
+            self.logger.error("The end date is earlier than the"
+                              + " date of the first interferogram on disk."
+                              + "\nTerminate program.")
+            quit()  # better raise an error here?
+        else:
+            i = self._find_closest(self.dates, self.end_date)
+        return i
+
+    def _find_closest(list, item):
+        '''Find the closest entry in a list copared to item'''
+        i = 0
+        diff1 = abs(list[0] - item)
+        for j, entry in enumerate(list):
+            diff0 = abs(entry - item)
+            if diff0 < diff1:
+                i = j
+                diff1 = diff0
+        return i
