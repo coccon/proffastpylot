@@ -18,17 +18,8 @@ class Pylot(FileMover):
         pass
 
     def run_preprocess(self, NumberOfProcesses=1, deleteExistingFolders=True):
-        # generate input file:
         self.generate_prf_input("prep")
-        # start preprocess
-        # preprocess needs a 'cal' folder next to the input folder:
-        for date in self.dates:
-            date_str = date.strftime("%y%m%d")
-            igram_folder = os.path.join(self.igram_path, date_str)
-            cal_path = os.path.join(igram_folder, 'cal')
-            if os.path.exists(cal_path):
-                shutil.rmtree(cal_path)
-            os.mkdir(cal_path)
+        self.create_cal_folders()
 
         # Now we can make us ready for finally running preprocess:
         prep_path = os.path.join(self.base_path, "prf", "preprocess")

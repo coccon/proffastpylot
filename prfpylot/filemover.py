@@ -28,6 +28,15 @@ class FileMover(Preparation):
         if not os.path.exists(pt_path):
             shutil.makedir(pt_path)
 
+    def create_cal_folders(self):
+        for date in self.dates:
+            date_str = date.strftime("%y%m%d")
+            igram_folder = os.path.join(self.igram_path, date_str)
+            cal_path = os.path.join(igram_folder, 'cal')
+            if os.path.exists(cal_path):
+                shutil.rmtree(cal_path)
+            os.mkdir(cal_path)
+    
     def mv_spec_to_prf():
         """Move sectra to prf input folder?"""
         pass
