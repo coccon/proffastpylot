@@ -7,6 +7,8 @@ import logging
 
 
 class Preparation():
+    """Import input parameters, and create input files."""
+
     template_types = {
         "prep": "preprocess4",
         "pt": "pT_intraday",
@@ -14,15 +16,13 @@ class Preparation():
         "pcxs": "pcxs10"
     }
 
-    """Import input parameters, and create input files."""
-
     def __init__(self, input_path="input.yml"):
+        self.logger = self.get_logger()
+
         # read input file
         with open(input_path, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
 
-        # Create a logger
-        self.logger = self.get_logger()
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
         self.site_name = args["site_name"]
@@ -90,9 +90,9 @@ class Preparation():
             self.coords = self.get_coords_from_file(coord_file)
 
     def get_logger(self):
-        # Create a logger
+        """Create and return a logger."""
         logger = logging.getLogger('Preparation')
-        # set logging to debug to record everythin in the first place
+        # set logging to debug to record everything in the first place
         logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
         FHandler = logging.FileHandler('Logfile.txt', mode='w')
@@ -168,9 +168,7 @@ class Preparation():
         self.replace_params_in_template(parameters, template_type)
 
     def get_igrams(self):
-        """
-        Search for spectra on disk an add them to the preprocess input file.
-        """
+        """Search for interferograms disk and return a list of files."""
         igram_list = []
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
@@ -182,7 +180,7 @@ class Preparation():
 
     def replace_params_in_template(self, parameters, template_type):
         """
-        This methods generates a site specific input file by using a template.
+        Generate a site specific input file by using a template.
         params:
             parameters(dict): containing keys which match the variable
                               names in the template file. They are replaced by
@@ -207,7 +205,7 @@ class Preparation():
 
     def get_prep_parameters(self):
         '''
-        Return Parameters to be replace in the pereprocess input file.
+        Return Parameters to be replaced in the pereprocess input file.
         '''
 
         ILS_Channel1, ILS_Channel2 = self.get_ils_from_file()
@@ -230,7 +228,6 @@ class Preparation():
             'comment': comment,
             'igrams': igrams,
                      }
-
         return parameters
 
     def get_pcxs_and_inv_parameters(self, date):
@@ -275,7 +272,7 @@ class Preparation():
             return (MEChan1, PEChan1, MEChan2, PEChan2)
 
     def get_coords_from_file(self, coord_file):
-        '''This methods reads out the coordinates from the coord file.'''
+        '''Return the coordinates from the coord file.'''
         coord_df = pd.read_csv(coord_file).set_index("Site")
         lat, lon, alt = 0., 0., 0.
 
@@ -291,8 +288,7 @@ class Preparation():
 
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""
-
-        start_date = dt.combine(args["start_date"], dt.min.time())
+        start_date = dt.combine(start_date, dt.min.time())
         if start_date < dates[0]:
             i = 0
             self.logger.warning("Start_date given in input file is earlier"
@@ -308,8 +304,7 @@ class Preparation():
             
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
-
-        end_date = dt.combine(args["end_date"], dt.min.time())
+        end_date = dt.combine(end_date, dt.min.time())
         if end_date > dates[-1]:
             i = len(dates)
             self.logger.warning("End_date is larger than the date"
@@ -324,7 +319,7 @@ class Preparation():
         return i
 
     def _find_closest(list, item):
-        '''Find the closest entry in a list copared to item'''
+        '''Find the closest entry in a list compared to item.'''
         i = 0
         diff1 = abs(list[0] - item)
         for j, entry in enumerate(list):
