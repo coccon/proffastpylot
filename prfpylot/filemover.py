@@ -32,15 +32,15 @@ class FileMover(Preparation):
             if os.path.exists(target_folder) and deleteExistingFolders:
                 # delete the folder and make it new
                 shutil.rmtree(target_folder)
-                os.mkdir(target_folder)
-                os.makedirs(target_folder, exist_ok=True)
+                os.makedirs(target_folder, exist_ok=False)
             else:
                 os.makedirs(target_folder, exist_ok=True)
             self.logger.info(f"Move files of date {date_str}")
             for bin_file in bin_files:
                 file_name = os.path.basename(bin_file)
-                self.logger.debug(f"{bin_file}\n{file_name}")
-                shutil.move(bin_file, os.path.join(target_folder, file_name))
+                target = os.path.join(target_folder, file_name)
+                shutil.move(bin_file, target)
+                self.logger.debug(f"Moved {bin_file}->{target}")
 
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""

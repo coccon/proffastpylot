@@ -36,22 +36,22 @@ class Preparation():
             self.base_path = os.getcwd()
 
         self.data_path = os.path.join(
-            self.base_path, "data", self.instrument_number, self.site_name)
+            self.base_path, "data", self.site_name, self.instrument_number)
 
         self.map_path = args["map_path"]
         if self.map_path == "default":
             self.map_path = os.path.join(
-                self.base_path, 'data', "atmospheric", self.site_name, "map")
+                self.base_path, 'data', self.site_name, "map")
 
         self.log_path = args["log_path"]
         if self.log_path == "default":
             self.log_path = os.path.join(
-                self.base_path, "data", "atmospheric", self.site_name, "log")
+                self.base_path, "data", self.site_name, "log")
 
         self.pt_path = args["pt_path"]
         if self.pt_path == "default":
             self.pt_path = os.path.join(
-                self.base_path, "data", "atmospheric", self.site_name, "pt")
+                self.base_path, "data", self.site_name, "pt")
 
         # path to ils file
         self.ils_file = args["ils_file"]
@@ -67,15 +67,18 @@ class Preparation():
 
         # safe the path where the igrams and spectra are safed as class
         # variable since it is needed often.
-        self.igram_path = os.path.join(self.data_path, "interferograms")
-        self.spectra_path = os.path.join(self.data_path, "spectra")
-        
+        self.igram_path = os.path.join(self.data_path)
+        # TODO: spectra are safed in two places. Contribute to this in the code
+        self.spectra_path = os.path.join(self.base_path, "prf", "analysis",
+                                         self.site_name,
+                                         self.instrument_number)
+
         # list of dates
         self.dates = self.get_dates(
                 start_date=args["start_date"],
                 end_date=args["end_date"]
             )
-        
+
         # coordinates
         if None not in args["coords"].values():
             self.coords = args["coords"]
@@ -86,7 +89,7 @@ class Preparation():
             else:
                 coord_file = os.path.join(
                     self.base_path, "data",
-                    self.instrument_number, "coords.csv")
+                    "coords.csv")
             self.coords = self.get_coords_from_file(coord_file)
 
     def get_logger(self):
@@ -108,17 +111,18 @@ class Preparation():
         return logger
 
     def get_dates(self, start_date, end_date):
-        """Return a list of dates for the given site, instrument and 
+        """Return a list of dates for the given site, instrument and
         start- and end date.
         """
         date_paths = glob(os.path.join(self.igram_path, "*"))
         dates = []
 
+        # create a list of all dates available on the disk
         for date_path in date_paths:
             date = os.path.split(date_path)[1]
             date = dt.strptime(date, "%y%m%d")
             dates.append(date)
-        
+        # if start and/or end date is given truncate the list
         if start_date is not None:
             i = self._get_start_date_pos(start_date, dates)
             dates = dates[i:]
@@ -130,7 +134,7 @@ class Preparation():
 
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
-        folder_path = os.path.join(self.base_path, "prf", "templates")
+        folder_path = os.path.join(self.base_path, "templates")
         filename = "template_{}.inp".format(self.template_types[template_type])
         template_path = os.path.join(folder_path, filename)
         return template_path
@@ -173,9 +177,9 @@ class Preparation():
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
             igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
-
             if igrams == []:
                 self.logger.warning(f"Interferogram at day {date} not found.")
+            igram_list.extend(igrams)
         return igram_list
 
     def replace_params_in_template(self, parameters, template_type):
@@ -217,6 +221,8 @@ class Preparation():
             comment = " ".join([comment, self.note])
 
         igrams = "\n".join(self.get_igrams())
+        # add end marker of input file:
+        igrams += "\n***"
         parameters = {
             'ILS_Channel1': ILS_Channel1,
             'ILS_Channel2': ILS_Channel2,
@@ -301,7 +307,7 @@ class Preparation():
         else:
             i = self._find_closest(dates, start_date)
         return i
-            
+
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
         end_date = dt.combine(end_date, dt.min.time())

@@ -2,8 +2,9 @@
 # python run.py --start xxx --stop xxx --input input.yml --sitename Sodankyla
 
 from prfpylot.pylot import Pylot
-from datetime import datetime as dt
+import os
 
-MyPRFpylot = Pylot("input.yml")
-#MyPRFpylot.run_preprocess(NumberOfProcesses=2)
-# MyPRFpylot.generate_prf_input("inv", dt.now())
+
+input_file = os.path.join(".", "input_sodankyla_example.yml")
+MyPRFpylot = Pylot(input_file)
+MyPRFpylot.run_preprocess(NumberOfProcesses=2)

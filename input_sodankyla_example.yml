@@ -36,10 +36,10 @@ coord_file: default
 # path to profast directory (default: current directory)
 base_path: default
 
-# default: ${root_path}\data\${}map-files\${site}
+# default ${root_path}\data\${site}\map\
 map_path: default
 
-# default ${root_path}\auxil\log-files\${site}
+# default ${root_path}\data\${site}\log\
 pt_path: default
 
 log_path: default
