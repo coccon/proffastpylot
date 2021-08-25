@@ -19,9 +19,10 @@ coords:
 # If you want to process only a ceratain date interval it is possible to give
 # here the start_date and end_date of this intervall
 # Otherwise all files which are found on the disk are going to be processed.
-# The date must be given in ISO8601 format. I.e. YYYY-MM-DD
-start_date: default
-end_date: default
+# The date must be given in ISO8601 format. I.e. YYYY-MM-DD.
+# Leave empty to process all dates in the corresponding folder
+start_date:
+end_date:
 
 # full path and name of the coord file. This file contains the coorindates
 # of the sites.
@@ -35,10 +36,10 @@ coord_file: default
 # path to profast directory (default: current directory)
 base_path: default
 
-# default: ${root_path}\data\${}map-files\${site}
+# default ${root_path}\data\${site}\map\
 map_path: default
 
-# default ${root_path}\auxil\log-files\${site}
+# default ${root_path}\data\${site}\log\
 pt_path: default
 
 log_path: default

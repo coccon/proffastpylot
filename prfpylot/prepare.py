@@ -7,6 +7,8 @@ import logging
 
 
 class Preparation():
+    """Import input parameters, and create input files."""
+
     template_types = {
         "prep": "preprocess4",
         "pt": "pT_intraday",
@@ -14,15 +16,13 @@ class Preparation():
         "pcxs": "pcxs10"
     }
 
-    """Import input parameters, and create input files."""
-
     def __init__(self, input_path="input.yml"):
+        self.logger = self.get_logger()
+
         # read input file
         with open(input_path, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
 
-        # Create a logger
-        self.logger = self.get_logger()
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
         self.site_name = args["site_name"]
@@ -36,22 +36,22 @@ class Preparation():
             self.base_path = os.getcwd()
 
         self.data_path = os.path.join(
-            self.base_path, "data", self.instrument_number, self.site_name)
+            self.base_path, "data", self.site_name, self.instrument_number)
 
         self.map_path = args["map_path"]
         if self.map_path == "default":
             self.map_path = os.path.join(
-                self.base_path, 'data', "atmospheric", self.site_name, "map")
+                self.base_path, 'data', self.site_name, "map")
 
         self.log_path = args["log_path"]
         if self.log_path == "default":
             self.log_path = os.path.join(
-                self.base_path, "data", "atmospheric", self.site_name, "log")
+                self.base_path, "data", self.site_name, "log")
 
         self.pt_path = args["pt_path"]
         if self.pt_path == "default":
             self.pt_path = os.path.join(
-                self.base_path, "data", "atmospheric", self.site_name, "pt")
+                self.base_path, "data", self.site_name, "pt")
 
         # path to ils file
         self.ils_file = args["ils_file"]
@@ -67,61 +67,17 @@ class Preparation():
 
         # safe the path where the igrams and spectra are safed as class
         # variable since it is needed often.
-        self.igram_path = os.path.join(self.data_path, "interferograms")
-        self.spectra_path = os.path.join(self.data_path, "spectra")
-        # generate relevant parameters
-        # all dates to be processed:
-        date_paths = glob(os.path.join(self.igram_path, "*"))
-        self.dates = []
-        # TODO: Implement a possibility to specify startDate and endDate.
-        #       If implemented, a list like the one below can be generated
-        #       artificially.
-        for date_path in date_paths:
-            date = os.path.split(date_path)[1]
-            date = dt.strptime(date, "%y%m%d")
-            self.dates.append(date)
+        self.igram_path = os.path.join(self.data_path)
+        # TODO: spectra are safed in two places. Contribute to this in the code
+        self.spectra_path = os.path.join(self.base_path, "prf", "analysis",
+                                         self.site_name,
+                                         self.instrument_number)
 
-        def find_closest(list, item):
-            '''Find the closest entry in a list copared to item'''
-            i = 0
-            diff1 = abs(list[0] - item)
-            for j, entry in enumerate(list):
-                diff0 = abs(entry - item)
-                if diff0 < diff1:
-                    i = j
-                    diff1 = diff0
-            return i
-
-        if args['start_date'] != 'default':
-
-            self.start_date = dt.combine(args["start_date"], dt.min.time())
-            if self.start_date < self.dates[0]:
-                i = 0
-                self.logger.warning("Start_date given in input file is earlier"
-                                    + " than earliest date on disk.")
-            elif self.start_date > self.dates[-1]:
-                self.logger.error("The start date is later than the"
-                                  + " date of the last interferogram on disk."
-                                  + "\nTerminate program.")
-                quit()
-            else:
-                i = find_closest(self.dates, self.start_date)
-            self.dates = self.dates[i:]
-
-        if args['end_date'] != 'default':
-            self.end_date = dt.combine(args["end_date"], dt.min.time())
-            if self.end_date > self.dates[-1]:
-                i = len(self.dates)
-                self.logger.warning("End_date is larger than the date"
-                                    "of the last interferogram on disk.")
-            elif self.end_date < self.dates[0]:
-                self.logger.error("The end date is earlier than the"
-                                  + " date of the first interferogram on disk."
-                                  + "\nTerminate program.")
-                quit()
-            else:
-                i = find_closest(self.dates, self.end_date)
-            self.dates = self.dates[:i]
+        # list of dates
+        self.dates = self.get_dates(
+                start_date=args["start_date"],
+                end_date=args["end_date"]
+            )
 
         # coordinates
         if None not in args["coords"].values():
@@ -133,13 +89,13 @@ class Preparation():
             else:
                 coord_file = os.path.join(
                     self.base_path, "data",
-                    self.instrument_number, "coords.csv")
+                    "coords.csv")
             self.coords = self.get_coords_from_file(coord_file)
 
     def get_logger(self):
-        # Create a logger
+        """Create and return a logger."""
         logger = logging.getLogger('Preparation')
-        # set logging to debug to record everythin in the first place
+        # set logging to debug to record everything in the first place
         logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
         FHandler = logging.FileHandler('Logfile.txt', mode='w')
@@ -154,9 +110,31 @@ class Preparation():
         FHandler.setFormatter(StreamFormat)
         return logger
 
+    def get_dates(self, start_date, end_date):
+        """Return a list of dates for the given site, instrument and
+        start- and end date.
+        """
+        date_paths = glob(os.path.join(self.igram_path, "*"))
+        dates = []
+
+        # create a list of all dates available on the disk
+        for date_path in date_paths:
+            date = os.path.split(date_path)[1]
+            date = dt.strptime(date, "%y%m%d")
+            dates.append(date)
+        # if start and/or end date is given truncate the list
+        if start_date is not None:
+            i = self._get_start_date_pos(start_date, dates)
+            dates = dates[i:]
+        if end_date is not None:
+            i = self._get_end_date_pos(end_date, dates)
+            dates = dates[:i]
+
+        return dates
+
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
-        folder_path = os.path.join(self.base_path, "prf", "templates")
+        folder_path = os.path.join(self.base_path, "templates")
         filename = "template_{}.inp".format(self.template_types[template_type])
         template_path = os.path.join(folder_path, filename)
         return template_path
@@ -198,22 +176,19 @@ class Preparation():
         self.replace_params_in_template(parameters, template_type)
 
     def get_igrams(self):
-        """
-        Search for spectra on disk an add them to the preprocess input file.
-        """
-        # TODO: Implement start and endDate
+        """Search for interferograms disk and return a list of files."""
         igram_list = []
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
             igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
-
             if igrams == []:
                 self.logger.warning(f"Interferogram at day {date} not found.")
+            igram_list.extend(igrams)
         return igram_list
 
     def replace_params_in_template(self, parameters, template_type):
         """
-        This methods generates a site specific input file by using a template.
+        Generate a site specific input file by using a template.
         params:
             parameters(dict): containing keys which match the variable
                               names in the template file. They are replaced by
@@ -230,17 +205,17 @@ class Preparation():
             for key, parameter in parameters.items():
                 new_line = new_line.replace(
                     '%{}%'.format(key), str(parameter))
+
             prf_input_stream.write(new_line)
         templ_stream.close()
         prf_input_stream.close()
 
     def get_prep_parameters(self):
         '''
-        Return Parameters to be replace in the pereprocess input file.
+        Return Parameters to be replaced in the pereprocess input file.
         '''
 
         ILS_Channel1, ILS_Channel2 = self.get_ils_from_file()
-        # TODO: Change this line to a correct date
         lat, lon, alt = self.coords
         comment = (
             "This spectrum is generated using preprocess4, a part of "
@@ -249,6 +224,8 @@ class Preparation():
             comment = " ".join([comment, self.note])
 
         igrams = "\n".join(self.get_igrams())
+        # add end marker of input file:
+        igrams += "\n***"
         parameters = {
             'ILS_Channel1': ILS_Channel1,
             'ILS_Channel2': ILS_Channel2,
@@ -256,13 +233,10 @@ class Preparation():
             'lat': lat,
             'lon': lon,
             'alt': alt,
-            'utc_offset': '0.0',
+            'utc_offset': '0.0',  # TODO: make this chageable!
             'comment': comment,
             'igrams': igrams,
                      }
-        # TODO: Add key 'raw_measurement_list' to dict
-        #       this dict contains  a list of all raw measurements.
-
         return parameters
 
     def get_pcxs_and_inv_parameters(self, date):
@@ -307,7 +281,7 @@ class Preparation():
             return (MEChan1, PEChan1, MEChan2, PEChan2)
 
     def get_coords_from_file(self, coord_file):
-        '''This methods reads out the coordinates from the coord file.'''
+        '''Return the coordinates from the coord file.'''
         coord_df = pd.read_csv(coord_file).set_index("Site")
         lat, lon, alt = 0., 0., 0.
 
@@ -320,3 +294,46 @@ class Preparation():
             raise Exception(
                 "Error reading CoordFile. Please check format and path.")
         return lat, lon, alt
+
+    def _get_start_date_pos(self, start_date, dates):
+        """Return position of the start date in dates."""
+        start_date = dt.combine(start_date, dt.min.time())
+        if start_date < dates[0]:
+            i = 0
+            self.logger.warning("Start_date given in input file is earlier"
+                                + " than earliest date on disk.")
+        elif start_date > dates[-1]:
+            self.logger.error("The start date is later than the"
+                              + " date of the last interferogram on disk."
+                              + "\nTerminate program.")
+            quit()  # better raise an error here?
+        else:
+            i = self._find_closest(dates, start_date)
+        return i
+
+    def _get_end_date_pos(self, end_date, dates):
+        """Return position of the end date in dates."""
+        end_date = dt.combine(end_date, dt.min.time())
+        if end_date > dates[-1]:
+            i = len(dates)
+            self.logger.warning("End_date is larger than the date"
+                                "of the last interferogram on disk.")
+        elif self.end_date < self.dates[0]:
+            self.logger.error("The end date is earlier than the"
+                              + " date of the first interferogram on disk."
+                              + "\nTerminate program.")
+            quit()  # better raise an error here?
+        else:
+            i = self._find_closest(self.dates, self.end_date)
+        return i
+
+    def _find_closest(list, item):
+        '''Find the closest entry in a list compared to item.'''
+        i = 0
+        diff1 = abs(list[0] - item)
+        for j, entry in enumerate(list):
+            diff0 = abs(entry - item)
+            if diff0 < diff1:
+                i = j
+                diff1 = diff0
+        return i

@@ -1,2 +1,66 @@
-2021-05-21 13:44:37,919: prepare.py,line 26 -> INFO: Test
-2021-05-21 13:44:37,923: pylot.py,line 13 -> DEBUG: Initialized the FileMover
+2021-08-24 11:48:56,004: pylot.py,line 13 -> DEBUG: Initialized the FileMover
+2021-08-24 11:48:56,005: pylot.py,line 22 -> INFO: Starting preprocessing ...
+
+2021-08-24 11:48:56,005: pylot.py,line 23 -> INFO: Generate input file...
+2021-08-24 11:48:56,005: prepare.py,line 162 -> INFO: generating preprocess4.inp ...
+2021-08-24 11:48:56,010: pylot.py,line 48 -> INFO: Process the spectra with 2 processes in parallel.
+2021-08-24 11:48:56,010: pylot.py,line 50 -> INFO: This will open 2 new consoles. Please note that it is normal that nothing is printed
+2021-08-24 11:48:58,011: pylot.py,line 56 -> INFO: Start Task 0 of 2
+2021-08-24 11:48:58,022: pylot.py,line 56 -> INFO: Start Task 1 of 2
+2021-08-24 11:49:01,765: pylot.py,line 74 -> INFO: Finished Task 1 of 2
+2021-08-24 11:49:03,019: pylot.py,line 74 -> INFO: Finished Task 1 of 2
+2021-08-24 11:49:03,020: filemover.py,line 23 -> INFO: Start Moving files
+2021-08-24 11:49:03,029: filemover.py,line 38 -> INFO: Move files of date 170608
+2021-08-24 11:49:03,030: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\054549SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\054549SM.BIN
+2021-08-24 11:49:03,031: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\054549SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\054549SN.BIN
+2021-08-24 11:49:03,031: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\063902SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\063902SM.BIN
+2021-08-24 11:49:03,032: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\063902SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\063902SN.BIN
+2021-08-24 11:49:03,032: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\073232SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\073232SM.BIN
+2021-08-24 11:49:03,033: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\073232SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\073232SN.BIN
+2021-08-24 11:49:03,034: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\082609SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\082609SM.BIN
+2021-08-24 11:49:03,035: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\082609SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\082609SN.BIN
+2021-08-24 11:49:03,035: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\091953SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\091953SM.BIN
+2021-08-24 11:49:03,036: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\091953SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\091953SN.BIN
+2021-08-24 11:49:03,037: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\101338SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\101338SM.BIN
+2021-08-24 11:49:03,038: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\101338SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\101338SN.BIN
+2021-08-24 11:49:03,039: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\110729SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\110729SM.BIN
+2021-08-24 11:49:03,040: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\110729SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\110729SN.BIN
+2021-08-24 11:49:03,041: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\120126SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\120126SM.BIN
+2021-08-24 11:49:03,042: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\120126SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\120126SN.BIN
+2021-08-24 11:49:03,042: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\125459SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\125459SM.BIN
+2021-08-24 11:49:03,043: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\125459SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\125459SN.BIN
+2021-08-24 11:49:03,044: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\134900SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\134900SM.BIN
+2021-08-24 11:49:03,045: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\134900SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\134900SN.BIN
+2021-08-24 11:49:03,045: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\144308SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\144308SM.BIN
+2021-08-24 11:49:03,046: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\144308SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\144308SN.BIN
+2021-08-24 11:49:03,047: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\153719SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\153719SM.BIN
+2021-08-24 11:49:03,048: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\153719SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\153719SN.BIN
+2021-08-24 11:49:03,049: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\163133SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\163133SM.BIN
+2021-08-24 11:49:03,053: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\163133SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\163133SN.BIN
+2021-08-24 11:49:03,054: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\172551SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\172551SM.BIN
+2021-08-24 11:49:03,054: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170608\cal\172551SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170608\cal\172551SN.BIN
+2021-08-24 11:49:03,061: filemover.py,line 38 -> INFO: Move files of date 170609
+2021-08-24 11:49:03,062: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\054220SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\054220SM.BIN
+2021-08-24 11:49:03,063: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\054220SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\054220SN.BIN
+2021-08-24 11:49:03,064: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\063537SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\063537SM.BIN
+2021-08-24 11:49:03,064: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\063537SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\063537SN.BIN
+2021-08-24 11:49:03,065: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\072912SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\072912SM.BIN
+2021-08-24 11:49:03,066: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\072912SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\072912SN.BIN
+2021-08-24 11:49:03,067: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\082251SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\082251SM.BIN
+2021-08-24 11:49:03,068: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\082251SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\082251SN.BIN
+2021-08-24 11:49:03,069: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\091635SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\091635SM.BIN
+2021-08-24 11:49:03,069: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\091635SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\091635SN.BIN
+2021-08-24 11:49:03,070: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\101024SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\101024SM.BIN
+2021-08-24 11:49:03,071: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\101024SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\101024SN.BIN
+2021-08-24 11:49:03,072: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\110415SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\110415SM.BIN
+2021-08-24 11:49:03,073: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\110415SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\110415SN.BIN
+2021-08-24 11:49:03,073: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\115739SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\115739SM.BIN
+2021-08-24 11:49:03,074: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\115739SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\115739SN.BIN
+2021-08-24 11:49:03,075: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\125151SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\125151SM.BIN
+2021-08-24 11:49:03,076: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\125151SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\125151SN.BIN
+2021-08-24 11:49:03,077: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\153413SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\153413SM.BIN
+2021-08-24 11:49:03,078: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\153413SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\153413SN.BIN
+2021-08-24 11:49:03,079: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\162832SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\162832SM.BIN
+2021-08-24 11:49:03,079: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\162832SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\162832SN.BIN
+2021-08-24 11:49:03,080: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\172255SM.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\172255SM.BIN
+2021-08-24 11:49:03,082: filemover.py,line 43 -> DEBUG: Moved E:\Profast_Pylot\data\Sodankyla\SN039\170609\cal\172255SN.BIN->E:\Profast_Pylot\prf\analysis\Sodankyla\SN039\170609\cal\172255SN.BIN
