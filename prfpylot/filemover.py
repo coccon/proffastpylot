@@ -28,7 +28,7 @@ class FileMover(Preparation):
         if not os.path.exists(pt_path):
             shutil.makedir(pt_path)
 
-    def create_cal_folders(self):
+    def create_cal_dirs(self):
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
             igram_folder = os.path.join(self.igram_path, date_str)
@@ -37,6 +37,11 @@ class FileMover(Preparation):
                 shutil.rmtree(cal_path)
             os.mkdir(cal_path)
     
+    def create_process_log_dir(self):
+        """Create directory to store prf output."""
+        if not os.path.exists(self.prep4_logpath):
+            os.mkdir(self.prep4_logpath)
+
     def mv_spec_to_prf():
         """Move sectra to prf input folder?"""
         pass

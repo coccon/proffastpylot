@@ -61,7 +61,7 @@ class Preparation():
         # path to preprocess folder and to preprocess log-folder
         self.prep_path = os.path.join(self.base_path, "prf", "preprocess")
         if args["prep4_logpath"] == "default":
-            self.prep4_logpath = os.path.join(self.prep_path, "log-files")
+            self.prep4_logpath = os.path.join(self.prep_path, "preprocess_log")
         else:
             self.prep4_logpath = args["prep4_logpath"]
 

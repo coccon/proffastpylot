@@ -1,8 +1,9 @@
 from prfpylot.filemover import FileMover
-from subprocess import Popen, CREATE_NEW_CONSOLE, PIPE, DETACHED_PROCESS
+from subprocess import Popen, PIPE
 import os
 import shutil
 import time
+import sys
 
 
 class Pylot(FileMover):
@@ -18,6 +19,8 @@ class Pylot(FileMover):
         pass
 
     def run_preprocess(self, NumberOfProcesses=1, deleteExistingFolders=True):
+        self.create_process_log_dir()
+
         # generate input file:
         self.logger.info("Starting preprocessing ...\n")
         self.logger.info("Generate input file...")
@@ -44,6 +47,9 @@ class Pylot(FileMover):
         #       version is used.
 
         preprocess = os.path.join(prep_path, "preprocess4.exe")
+        if sys.platform == "linux":
+            preprocess = os.path.join(prep_path, "preprocess4")
+        
         pList = []
         self.logger.info(f"Process the spectra with {NumberOfProcesses}" +
                          " processes in parallel.")
@@ -56,7 +62,6 @@ class Pylot(FileMover):
             self.logger.info(f"Start Task {n} of {NumberOfProcesses}")
             pList.append(
              Popen([preprocess, str(NumberOfProcesses), str(n)],
-                   creationflags=CREATE_NEW_CONSOLE,
                    shell=False, cwd=prep_path,
                    stdout=PIPE,
                    stderr=PIPE
@@ -86,13 +91,17 @@ class Pylot(FileMover):
         # Finally move the files to the spectra folder:
         self.move_bin_files(deleteExistingFolders)
 
-    def run_pcx(self):
+    def run_pcxs(self):
         for date in self.dates:
             self.run_pcx_at(date)
 
-    def run_pcx_at(self, date):
+    def run_pcxs_at(self, date):
+        pcxs_executable = "pcxs10.exe"
+        if sys.platform == "linux":
+            pcxs_executable = "pcxs10"
+
         self.generate_prf_input("pcxs", date)
-        Popen(["./pcxs10", "pcxs10.inp"])
+        Popen([pcxs_executable, "pcxs10.inp"])
 
     def run_inv(self):
         pass
