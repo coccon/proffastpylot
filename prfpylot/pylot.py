@@ -93,15 +93,20 @@ class Pylot(FileMover):
 
     def run_pcxs(self):
         for date in self.dates:
-            self.run_pcx_at(date)
+            self.run_pcxs_at(date)
 
     def run_pcxs_at(self, date):
-        pcxs_executable = "pcxs10.exe"
+        prf_path = os.path.join(self.base_path, "prf")
+        pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
         if sys.platform == "linux":
-            pcxs_executable = "pcxs10"
+            pcxs_executable = os.path.join(prf_path, "pcxs10")
 
         self.generate_prf_input("pcxs", date)
-        Popen([pcxs_executable, "pcxs10.inp"])
+        prf_input_path = self.get_prf_input_path("pcxs", date)
+        Popen(
+            [pcxs_executable, prf_input_path],
+            cwd=prf_path,
+            stdout=PIPE, stdin=PIPE)
 
     def run_inv(self):
         pass

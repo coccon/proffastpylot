@@ -144,7 +144,7 @@ class Preparation():
         folder_path = os.path.join(self.base_path, 'prf')
         if template_type in ["pcxs", "inv"]:
             date_str = dt.strftime(date, "%y%m%d")
-            filename = self.template_types[template_type] + date_str + ".inp"
+            filename = self.template_types[template_type] + f"_{date_str}.inp"
         if template_type == "prep":
             folder_path = os.path.join(folder_path, "preprocess")
             filename = self.template_types[template_type] + ".inp"
@@ -173,7 +173,7 @@ class Preparation():
             parameters = self.get_pcxs_and_inv_parameters(date)
         else:
             raise NotImplementedError("Implement other prf input files.")
-        self.replace_params_in_template(parameters, template_type)
+        self.replace_params_in_template(parameters, template_type, date)
 
     def get_igrams(self):
         """Search for interferograms disk and return a list of files."""
@@ -186,7 +186,7 @@ class Preparation():
             igram_list.extend(igrams)
         return igram_list
 
-    def replace_params_in_template(self, parameters, template_type):
+    def replace_params_in_template(self, parameters, template_type, date):
         """
         Generate a site specific input file by using a template.
         params:
@@ -197,7 +197,7 @@ class Preparation():
             template_type(str): Can be "prep", "pt", "inv" or "pcxc"
         """
         templ_file = self.get_template_path(template_type)
-        prf_input_file = self.get_prf_input_path(template_type)
+        prf_input_file = self.get_prf_input_path(template_type, date)
         templ_stream = open(templ_file, 'r')
         prf_input_stream = open(prf_input_file, 'w')
         for line in templ_stream:
