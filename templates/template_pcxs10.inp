@@ -25,11 +25,11 @@ pT file
 construct H2O and HDO from pT file (True/False)
 n_Tdisturb
 $
-analysis\%SITE%\%INSTRUMENT%\%DATE%\cal
+%DATAPATH%\%DATE%
 %SITE%
 %DATE%
 .false.
-data\%SITE%\map\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
 .true.
 6
 
@@ -85,14 +85,14 @@ inp_fwd\hitran\linedata\14_hit12.par
 for each species:
   VMR file
 $
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
-data\%INSTRUMENT%\%SITE%\%DATE%\pT\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
+%MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
 
 
 for AVK calculation
@@ -115,3 +115,4 @@ $
 (7765.0,8005.0)
 'HF'
 (4208.7,4318.8)
+***

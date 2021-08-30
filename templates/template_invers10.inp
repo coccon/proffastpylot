@@ -6,7 +6,7 @@ date
 absco file
 pT detail dec (True/False)
 $
-date\%INSTRUMENT%\%SITE%\%DATE%
+%DATAPATH%\%DATE%
 %SITE%
 %DATE%
 %SITE%%DATE%-abscos.bin
@@ -111,3 +111,5 @@ $
 names of spectra
 (only list SN spectra here, the code will check whether a corresponding SM is available)
 $
+%SPECTRA_LIST%
+***

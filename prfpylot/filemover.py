@@ -71,6 +71,14 @@ class FileMover(Preparation):
                 shutil.move(bin_file, target)
                 self.logger.debug(f"Moved {bin_file}->{target}")
 
+    def delete_abscos_files(self):
+        """Delete the abscos.bin files."""
+        wrk_fast_folder = os.path.join(
+            self.base_path, "wrk_fast")
+        # TODO: Implement deletion
+        pass
+        
+
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""
         pass

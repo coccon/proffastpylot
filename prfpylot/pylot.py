@@ -89,26 +89,49 @@ class Pylot(FileMover):
             f.write('===================================================\n')
         f.close()
         # Finally move the files to the spectra folder:
-        self.move_bin_files(deleteExistingFolders)
+        # trying to work directly in prfpylot/data: 
+        # self.move_bin_files(deleteExistingFolders)  
 
     def run_pcxs(self):
         for date in self.dates:
             self.run_pcxs_at(date)
 
-    def run_pcxs_at(self, date):
-        self.generate_pt_intraday(date)
-        
+    def run_inv(self):
+        for date in self.dates:
+            self.run_inv_at(date)
+
+    def run_pcxs_at(self, date):        
         prf_path = os.path.join(self.base_path, "prf")
         pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
         if sys.platform == "linux":
-            pcxs_executable = os.path.join(prf_path, "pcxs10")
+            pcxs_executable = os.path.join(
+                prf_path, "pcxs10")
 
         self.generate_prf_input("pcxs", date)
-        prf_input_path = self.get_prf_input_path("pcxs", date)
-        Popen(
-            [pcxs_executable, prf_input_path],
-            cwd=prf_path,
-            stdout=PIPE, stdin=PIPE)
+        prf_input_path = os.path.basename(
+            self.get_prf_input_path("pcxs", date))
 
-    def run_inv(self):
-        pass
+        p = Popen(
+            [pcxs_executable, prf_input_path],
+            cwd=prf_path)
+        out, err = p.communicate()
+        p.wait()
+        print(out)
+        print(err)
+
+    def run_inv_at(self, date):
+        self.generate_pt_intraday(date)
+        self.generate_prf_input("inv", date)
+
+        prf_path = os.path.join(self.base_path, "prf")
+        inv_executable = os.path.join(prf_path, "invers10.exe")
+        if sys.platform == "linux":
+            inv_executable = os.path.join(
+                prf_path, "invers10")        
+        prf_input_path = os.path.basename(
+            self.get_prf_input_path("inv", date))
+        
+        p = Popen(
+            [inv_executable, prf_input_path],
+            cwd=prf_path)
+        p.wait()
