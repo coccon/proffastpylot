@@ -74,19 +74,3 @@ class FileMover(Preparation):
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""
         pass
-
-    def get_map_file(self, date):
-        """Return path to mapfile of given date.
-
-        params:
-            date: datetime object
-        """
-        search_string = os.path.join(
-            self.map_path,
-            "*{date}.map".format(date=date.strftime("%y%m%d")))
-        map_file = glob(search_string)
-
-        assert len(map_file) == 1
-        map_file = map_file[0]
-
-        return map_file

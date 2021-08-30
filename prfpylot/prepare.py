@@ -151,6 +151,50 @@ class Preparation():
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
+    def get_map_file(self, date):
+        """Return path to mapfile of given date.
+
+        params:
+            date: datetime object
+        """
+        search_string = os.path.join(
+            self.map_path,
+            "*{date}.map".format(date=date.strftime("%y%m%d")))
+        map_file = glob(search_string)
+
+        assert len(map_file) == 1
+        map_file = map_file[0]
+
+        return map_file
+
+    def get_log_file(self, date):
+        """Return path to log (=pT) file of given date."""
+        search_string = os.path.join(
+            self.log_path,
+            "{date}*.dat".format(date=date.strftime("%Y-%m-%d")))
+        log_file = glob(search_string)
+        
+        assert len(log_file) == 1
+        log_file = log_file[0]
+
+        return log_file
+
+    def generate_pt_intraday(self, date):
+        """Skript #3 generate pt files."""
+        # TODO: Insert Header!
+        date_str = date.strftime("%y%m%d")
+        pt_folder = os.path.join(self.data_path, date_str, "pt")
+        pt_file = os.path.join(pt_folder, "pt.inp")
+        if not os.path.exists(pt_folder):
+            os.mkdir(pt_folder)
+        
+        log_file = self.get_log_file(date)
+        pt_lines = self._read_pressure_from_logfile(log_file)
+        with open(pt_file, "w") as f:
+            f.write("$\n")
+            f.write("\n".join(pt_lines))
+            f.write("\n***\n")
+
     def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
 
@@ -327,7 +371,7 @@ class Preparation():
             i = self._find_closest(self.dates, self.end_date)
         return i
 
-    def _find_closest(list, item):
+    def _find_closest(self, list, item):
         '''Find the closest entry in a list compared to item.'''
         i = 0
         diff1 = abs(list[0] - item)
@@ -337,3 +381,22 @@ class Preparation():
                 i = j
                 diff1 = diff0
         return i
+
+    def _read_pressure_from_logfile(self, logfile):
+        """Return list of lines with time and pressure and delta T (=0.0).
+        Check if pressure is in between 500 and 1500.
+        Origin: script #3, pt_logger(n)."""
+        log = pd.read_csv(logfile, sep="\t")
+        
+        p_lines = []
+        for i, row in log.iterrows():
+            p = row["BaroTHB40"]
+            if p > 500 and p < 1500:
+                p_line = "\t".join(
+                    [
+                        row["UTCtime___"],
+                        str(p),
+                        "0.0"
+                    ])
+            p_lines.append(p_line)
+        return p_lines

@@ -96,6 +96,8 @@ class Pylot(FileMover):
             self.run_pcxs_at(date)
 
     def run_pcxs_at(self, date):
+        self.generate_pt_intraday(date)
+        
         prf_path = os.path.join(self.base_path, "prf")
         pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
         if sys.platform == "linux":

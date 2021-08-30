@@ -25,11 +25,11 @@ pT file
 construct H2O and HDO from pT file (True/False)
 n_Tdisturb
 $
-data\%INSTRUMENT%\%SITE%\spectra\%DATE%
+analysis\%SITE%\%INSTRUMENT%\%DATE%\cal
 %SITE%
 %DATE%
 .false.
-data\atmospheric\%SITE%\map\%SITE_ABBREV%%DATE_LONG%.map
+data\%SITE%\map\%SITE_ABBREV%%DATE_LONG%.map
 .true.
 6
 
