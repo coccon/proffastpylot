@@ -249,6 +249,7 @@ class Preparation():
             for key, parameter in parameters.items():
                 new_line = new_line.replace(
                     '%{}%'.format(key), str(parameter))
+                new_line = self._replace_backslash(new_line)
 
             prf_input_stream.write(new_line)
         templ_stream.close()
@@ -400,3 +401,8 @@ class Preparation():
                     ])
             p_lines.append(p_line)
         return p_lines
+
+    def _replace_backslash(self, line):
+        """Replace backslash with slash if run on linux."""
+        if sys.platform == "linux":
+            return line.replace("\\", "/")
