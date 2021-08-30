@@ -49,7 +49,7 @@ class Pylot(FileMover):
         preprocess = os.path.join(prep_path, "preprocess4.exe")
         if sys.platform == "linux":
             preprocess = os.path.join(prep_path, "preprocess4")
-        
+
         pList = []
         self.logger.info(f"Process the spectra with {NumberOfProcesses}" +
                          " processes in parallel.")
@@ -97,7 +97,7 @@ class Pylot(FileMover):
 
     def run_pcxs_at(self, date):
         self.generate_pt_intraday(date)
-        
+
         prf_path = os.path.join(self.base_path, "prf")
         pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
         if sys.platform == "linux":
@@ -111,4 +111,7 @@ class Pylot(FileMover):
             stdout=PIPE, stdin=PIPE)
 
     def run_inv(self):
+        pass
+
+    def collate_results(self):
         pass
