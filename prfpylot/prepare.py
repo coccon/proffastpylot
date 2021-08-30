@@ -172,7 +172,7 @@ class Preparation():
             self.log_path,
             "{date}*.dat".format(date=date.strftime("%Y-%m-%d")))
         log_file = glob(search_string)
-        
+
         assert len(log_file) == 1
         log_file = log_file[0]
 
@@ -186,7 +186,7 @@ class Preparation():
         pt_file = os.path.join(pt_folder, "pT_intraday.inp")
         if not os.path.exists(pt_folder):
             os.mkdir(pt_folder)
-        
+
         log_file = self.get_log_file(date)
         pt_lines = self._read_pressure_from_logfile(log_file)
         with open(pt_file, "w") as f:
@@ -390,7 +390,7 @@ class Preparation():
         Check if pressure is in between 500 and 1500.
         Origin: script #3, pt_logger(n)."""
         log = pd.read_csv(logfile, sep="\t")
-        
+
         p_lines = []
         for i, row in log.iterrows():
             p = row["BaroTHB40"]

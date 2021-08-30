@@ -49,7 +49,7 @@ class Pylot(FileMover):
         preprocess = os.path.join(prep_path, "preprocess4.exe")
         if sys.platform == "linux":
             preprocess = os.path.join(prep_path, "preprocess4")
-        
+
         pList = []
         self.logger.info(f"Process the spectra with {NumberOfProcesses}" +
                          " processes in parallel.")
@@ -135,3 +135,6 @@ class Pylot(FileMover):
             [inv_executable, prf_input_path],
             cwd=prf_path)
         p.wait()
+
+    def collate_results(self):
+        pass
