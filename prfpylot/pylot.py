@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 import sys
+import glob
 
 
 class Pylot(FileMover):
@@ -89,8 +90,8 @@ class Pylot(FileMover):
             f.write('===================================================\n')
         f.close()
         # Finally move the files to the spectra folder:
-        # trying to work directly in prfpylot/data: 
-        # self.move_bin_files(deleteExistingFolders)  
+        # trying to work directly in prfpylot/data:
+        # self.move_bin_files(deleteExistingFolders)
 
     def run_pcxs(self):
         for date in self.dates:
@@ -100,7 +101,7 @@ class Pylot(FileMover):
         for date in self.dates:
             self.run_inv_at(date)
 
-    def run_pcxs_at(self, date):        
+    def run_pcxs_at(self, date):
         prf_path = os.path.join(self.base_path, "prf")
         pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
         if sys.platform == "linux":
@@ -127,14 +128,74 @@ class Pylot(FileMover):
         inv_executable = os.path.join(prf_path, "invers10.exe")
         if sys.platform == "linux":
             inv_executable = os.path.join(
-                prf_path, "invers10")        
+                prf_path, "invers10")
         prf_input_path = os.path.basename(
             self.get_prf_input_path("inv", date))
-        
+
         p = Popen(
             [inv_executable, prf_input_path],
             cwd=prf_path)
         p.wait()
+
+    def move_result_files(self):
+        """
+        Move the results to the data folder.
+        If the datafolder does exists, the existing folder is renamed adding
+        backupX where X increases if an other backup does already exists.
+        After renaming, a new folder is created.
+        """
+
+        # check if result folder exist already, if not create
+        startDate_strng = self.dates[0].strftime("%y%m%d")
+        endDate_strng = self.dates[-1].strftime("%y%m%d")
+        result_folder = os.path.join(self.results_path,
+                                     f"{startDate_strng}_{endDate_strng}"
+                                     )
+        if os.path.exists(result_folder):
+            # check if already other backuped folder exist as well:
+            backuped_results = glob.glob(result_folder + "_backup*")
+            # rename existing folder by adding _backupN where N is the N-th
+            # backup
+            result_folder_backup = result_folder\
+                + f"_backup{len(backuped_results)}"
+            self.logger.warning(f"Result directory {result_folder} exists!" +
+                                "Renamed existing one to "
+                                f"{result_folder_backup} and create a new one")
+            # rename and create new, empty folder
+            os.rename(result_folder, result_folder_backup)
+            os.makedirs(result_folder)
+        else:
+            os.makedirs(result_folder)
+        # move result files to directory
+        # files can be devided in suffix and preafix, where the suffix is
+        # constant allt the time:
+        suffix_list = ["colsens.dat", "invparms.dat", "job01.spc", "job02.spc",
+                       "job03.spc", "job04.spc", "job05.spc"]
+        source_folder = os.path.join(self.base_path, "prf", "out_fast")
+        for date in self.dates:
+            datestr = date.strftime("%y%m%d")
+            praefix = self.site_name + datestr + "-"
+            for suffix in suffix_list:
+                file = praefix + suffix
+                shutil.move(os.path.join(source_folder, file),
+                            os.path.join(result_folder, file))
+
+
+
+
+    def clean_working_files(self):
+        """
+        Delete the files which where created from pylot and profast.
+        The files to be deleted are:
+        - Input file for preprocess:
+            - proffast/prf/preprocess/preprocess4.inp
+        - Input file for pxcs10 and inver10:
+            - proffast/prf/inp_fast/invers10_date.inp
+            - proffast/prf/inp_fast/pcxs10_date.inp
+        - abscos-bin files:
+            - proffast/prf/wrk_fast/SiteDate-abscos.bin
+        """
+        pass
 
     def collate_results(self):
         pass

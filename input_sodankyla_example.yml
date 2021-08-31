@@ -59,3 +59,6 @@ prep4_logpath: default
 
 # TODO: path of the interfergorams:
 #igram_path: default
+
+# TODO: path of the results:
+#result_path: default

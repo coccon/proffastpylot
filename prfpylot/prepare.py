@@ -37,7 +37,12 @@ class Preparation():
             self.base_path = os.getcwd()
 
         self.data_path = os.path.join(
-            self.base_path, "data", self.site_name, self.instrument_number)
+            self.base_path, "data", self.site_name, self.instrument_number,
+            "raw_data")
+
+        self.results_path = os.path.join(
+            self.base_path, "data", self.site_name, self.instrument_number,
+            "results")
 
         self.map_path = args["map_path"]
         if self.map_path == "default":
