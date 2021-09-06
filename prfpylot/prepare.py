@@ -49,10 +49,16 @@ class Preparation():
             self.map_path = os.path.join(
                 self.base_path, 'data', self.site_name, "map")
 
-        self.log_path = args["log_path"]
-        if self.log_path == "default":
-            self.log_path = os.path.join(
+        self.datalogger_path = args["datalogger_path"]
+        if self.datalogger_path == "default":
+            self.datalogger_path = os.path.join(
                 self.base_path, "data", self.site_name, "log")
+
+        self.logfile_path = args["logfile_path"]
+        if self.logfile_path == "default":
+            self.logfile_path = os.path.join(
+                self.base_path, "data", self.site_name, self.instrument_number,
+                "results", "logfiles")
 
         self.pt_path = args["pt_path"]
         if self.pt_path == "default":
@@ -174,7 +180,7 @@ class Preparation():
     def get_log_file(self, date):
         """Return path to log (=pT) file of given date."""
         search_string = os.path.join(
-            self.log_path,
+            self.datalogger_path,
             "{date}*.dat".format(date=date.strftime("%Y-%m-%d")))
         log_file = glob(search_string)
 
@@ -251,7 +257,6 @@ class Preparation():
         for line in templ_stream:
             new_line = line
             for key, parameter in parameters.items():
-                print(type(new_line))
                 new_line = new_line.replace(
                     '%{}%'.format(key), str(parameter))
                 new_line = self._replace_backslash(new_line)

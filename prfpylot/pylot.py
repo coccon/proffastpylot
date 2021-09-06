@@ -5,6 +5,7 @@ import shutil
 import time
 import sys
 import glob
+import multiprocessing
 
 
 class Pylot(FileMover):
@@ -93,32 +94,58 @@ class Pylot(FileMover):
         # trying to work directly in prfpylot/data:
         # self.move_bin_files(deleteExistingFolders)
 
-    def run_pcxs(self):
-        for date in self.dates:
-            self.run_pcxs_at(date)
+    def run_pcxs(self, NumberOfProcesses=1):
+        """
+        Main method to run pxcs. If NumberOfProcesses > 1, run_pcxs_at is
+        called directly. Otherwise it is called via run_parallel
+        """
+        self.logger.info(f"Starting pcxs with {NumberOfProcesses} in parallel")
+        output = []
+        if NumberOfProcesses <= 1:
+            for date in self.dates:
+                tmp_out = self.run_pcxs_at(date)
+                output.append(tmp_out)
 
-    def run_inv(self):
-        for date in self.dates:
-            self.run_inv_at(date)
+        else:
+            tmp_out = self._run_parallel(self.run_pcxs_at,
+                                         NumberOfProcesses)
+            output = tmp_out
+        self._write_logfile("pcsx", output)
+
+    def run_inv(self, NumberOfProcesses=1):
+        """
+        Main method to run inv. If NumberOfProcesses > 1, run_inv_at is
+        called directly. Otherwise it is called via run_parallel
+        """
+        self.logger.info(f"Starting pcxs with {NumberOfProcesses} in parallel")
+        output = []
+        if NumberOfProcesses <= 1:
+            for date in self.dates:
+                tmp_out = self.run_inv_at(date)
+                output.append(tmp_out)
+        else:
+            tmp_out = self._run_parallel(self.run_inv_at,
+                                         NumberOfProcesses)
+            output = tmp_out
+        self._write_logfile("inv", output)
 
     def run_pcxs_at(self, date):
+        self.logger.info(f"run pcxs for date {date.strftime('%Y-%m-%d')}")
         prf_path = os.path.join(self.base_path, "prf")
         pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
+        # pcxs_executable = os.path.join(prf_path, "SimplePrinter.exe")
         if sys.platform == "linux":
             pcxs_executable = os.path.join(
                 prf_path, "pcxs10")
-
         self.generate_prf_input("pcxs", date)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("pcxs", date))
-
-        p = Popen(
-            [pcxs_executable, prf_input_path],
-            cwd=prf_path)
-        out, err = p.communicate()
-        p.wait()
-        print(out)
-        print(err)
+        out, err = self._call_external_program(
+            [pcxs_executable, prf_input_path], **{'cwd': prf_path})
+        if err == "":
+            err = "No Error occured."
+        outlist = out, err, " ".join([pcxs_executable, prf_input_path])
+        return outlist
 
     def run_inv_at(self, date):
         self.generate_pt_intraday(date)
@@ -131,11 +158,10 @@ class Pylot(FileMover):
                 prf_path, "invers10")
         prf_input_path = os.path.basename(
             self.get_prf_input_path("inv", date))
-
-        p = Popen(
-            [inv_executable, prf_input_path],
-            cwd=prf_path)
-        p.wait()
+        out, err = self._call_external_program(
+                    [inv_executable, prf_input_path], **{'cwd': prf_path})
+        outlist = out, err, " ".join([inv_executable, prf_input_path])
+        return outlist
 
     def move_result_files(self):
         """
@@ -180,9 +206,6 @@ class Pylot(FileMover):
                 shutil.move(os.path.join(source_folder, file),
                             os.path.join(result_folder, file))
 
-
-
-
     def clean_working_files(self):
         """
         Delete the files which where created from pylot and profast.
@@ -199,3 +222,50 @@ class Pylot(FileMover):
 
     def collate_results(self):
         pass
+
+    def _call_external_program(self, commandList, **kwargs):
+        """
+        This method calls a extrenal program and returns the output and the
+        error
+        """
+        p = Popen(commandList, stdout=PIPE, stderr=PIPE, **kwargs)
+        out, err = p.communicate()
+        p.wait()
+        out = out.decode("utf-8")
+        err = err.decode("utf-8")
+        return(out, err)
+
+    def _run_parallel(self, method, NumberOfProcesses):
+        """
+        Run pcxs in parallel using python multiprocessing
+        """
+        pool = multiprocessing.Pool(processes=NumberOfProcesses)
+        output = pool.map(method, self.dates)
+        return output
+
+    def _write_logfile(self, program, content):
+        """
+        This method writes the output of pcxs and inv to a logfile.
+        """
+        self.logger.info(f"Write Log-files of {program}")
+        start_str = self.dates[0].strftime("%y%m%d")
+        stop_str = self.dates[-1].strftime("%y%m%d")
+        if not os.path.exists(self.logfile_path):
+            self.logger.debug(
+                f"Logfile path did not exist, create {self.logfile_path}")
+            os.makedirs(self.logfile_path)
+        self.logger.debug(f"Logfile_path: {self.logfile_path}")
+        # TODO: Add PID or something similar to logfile?
+        file = os.path.join(self.logfile_path,
+                            f"LogFile_{program}_{start_str}_{stop_str}.txt")
+        logfile = open(file, "w")
+        for entry in content:
+            out, err, call_strg = entry
+            logfile.write("=============================================\n")
+            logfile.write(call_strg)
+            logfile.write("\nOutput:\n")
+            logfile.write(out)
+            logfile.write("\n\nErrors:\n")
+            logfile.write(err)
+            logfile.write("\n============================================\n\n")
+        logfile.close()

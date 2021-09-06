@@ -42,7 +42,11 @@ map_path: default
 # default ${root_path}\data\${site}\log\
 pt_path: default
 
-log_path: default
+# datalog are the files of the datalogger at KIT. I.e. p, T, h measurements
+datalogger_path: default
+
+# logfiles are the logs of the calculations.
+logfile_path: default
 
 #default: data\ILSList.csv
 ils_file: default
