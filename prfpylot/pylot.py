@@ -221,7 +221,15 @@ class Pylot(FileMover):
         pass
 
     def collate_results(self):
-        pass
+        """Collate all results."""
+        result_path = os.path.join(
+            self.base_path, "prf", "out_fast")
+        
+        colsens_search_str = os.path.join(result_path, "*-colsens.dat")
+        colsens_filelist = glob(colsens_search_str)
+
+        invparams_search_str = os.path.join(result_path, "-invparams.dat")
+        invparams_filelist = glob(invparams_search_str)
 
     def _call_external_program(self, commandList, **kwargs):
         """
