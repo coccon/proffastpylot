@@ -21,9 +21,7 @@ coords:
 utc_offset: 
 
 
-# If you want to process only a ceratain date interval it is possible to give
-# here the start_date and end_date of this intervall
-# Otherwise all files which are found on the disk are going to be processed.
+# process only dates in a specific time range
 # The date must be given in ISO8601 format. I.e. YYYY-MM-DD.
 # Leave empty to process all dates in the corresponding folder
 start_date:

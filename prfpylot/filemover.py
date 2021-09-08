@@ -78,7 +78,6 @@ class FileMover(Preparation):
         # TODO: Implement deletion
         pass
         
-
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""
         pass

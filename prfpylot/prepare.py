@@ -12,7 +12,6 @@ class Preparation():
 
     template_types = {
         "prep": "preprocess4",
-        "pt": "pT_intraday",
         "inv": "invers10",
         "pcxs": "pcxs10"
     }
@@ -30,9 +29,7 @@ class Preparation():
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
 
-        # generate paths
-        # path to profast base directory
-        self.base_path = args["base_path"]
+        self.base_path = args["base_path"]  # proffast base directory
         if self.base_path == "default":
             self.base_path = os.getcwd()
 
@@ -224,13 +221,13 @@ class Preparation():
         if date is not None:
             date_str = dt.strftime(date, "%y%m%d")
         if template_type == "prep":
-            self.logger.info("generating preprocess4.inp ...")
+            self.logger.info("Generating preprocess4.inp ...")
             parameters = self.get_prep_parameters()
         elif template_type == "pcxs":
-            self.logger.info(f"generating pcxs10_{date_str}.inp ...")
+            self.logger.info(f"Generating pcxs10_{date_str}.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         elif template_type == "inv":
-            self.logger.info(f"generating invers10_{date_str}.inp ...")
+            self.logger.info(f"Generating invers10_{date_str}.inp ...")
             parameters = self.get_pcxs_and_inv_parameters(date)
         else:
             raise NotImplementedError("Implement other prf input files.")

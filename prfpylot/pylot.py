@@ -2,7 +2,6 @@ from prfpylot.filemover import FileMover
 import pandas as pd
 from subprocess import Popen, PIPE
 import os
-import shutil
 import time
 import sys
 from glob import glob
@@ -108,7 +107,7 @@ class Pylot(FileMover):
         Main method to run pxcs. If NumberOfProcesses > 1, run_pcxs_at is
         called directly. Otherwise it is called via run_parallel
         """
-        self.logger.info(f"Starting pcxs with {NumberOfProcesses} in parallel")
+        self.logger.info(f"Running pcxs with {NumberOfProcesses} task(s) ...")
         output = []
         if NumberOfProcesses <= 1:
             for date in self.dates:
@@ -126,7 +125,7 @@ class Pylot(FileMover):
         Main method to run inv. If NumberOfProcesses > 1, run_inv_at is
         called directly. Otherwise it is called via run_parallel
         """
-        self.logger.info(f"Starting pcxs with {NumberOfProcesses} in parallel")
+        self.logger.info(f"Running inv with {NumberOfProcesses} task(s) ...")
         output = []
         if NumberOfProcesses <= 1:
             for date in self.dates:
@@ -139,7 +138,7 @@ class Pylot(FileMover):
         self._write_logfile("inv", output)
 
     def run_pcxs_at(self, date):
-        self.logger.info(f"run pcxs for date {date.strftime('%Y-%m-%d')}")
+        self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
         prf_path = os.path.join(self.base_path, "prf")
         pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
         # pcxs_executable = os.path.join(prf_path, "SimplePrinter.exe")
