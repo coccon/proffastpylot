@@ -37,55 +37,12 @@ class Preparation():
             self.base_path, "data", self.site_name, self.instrument_number,
             "raw_data")
 
-        self.map_path = args["map_path"]
-        if self.map_path == "default":
-            self.map_path = os.path.join(
-                self.base_path, 'data', self.site_name, "map")
-
-        self.datalogger_path = args["datalogger_path"]
-        if self.datalogger_path == "default":
-            self.datalogger_path = os.path.join(
-                self.base_path, "data", self.site_name, "log")
-
-        self.pt_path = args["pt_path"]
-        if self.pt_path == "default":
-            self.pt_path = os.path.join(
-                self.base_path, "data", self.site_name, "pt")
-
-        # path to ils file
-        self.ils_file = args["ils_file"]
-        if self.ils_file == "default":
-            self.ils_file = os.path.join(self.base_path, 'data', 'ILSList.csv')
-
-        # path to preprocess folder and to preprocess log-folder
-        self.prep_path = os.path.join(self.base_path, "prf", "preprocess")
-        if args["prep4_logpath"] == "default":
-            self.prep4_logpath = os.path.join(self.prep_path, "preprocess_log")
-        else:
-            self.prep4_logpath = args["prep4_logpath"]
-
-        # safe the path where the igrams and spectra are safed as class
-        # variable since it is needed often.
-        self.igram_path = os.path.join(self.data_path)
-        # TODO: spectra are safed in two places. Contribute to this in the code
-
         # list of dates
         self.dates = self.get_dates(
                 start_date=args["start_date"],
                 end_date=args["end_date"]
             )
 
-        start = self.dates[0].strftime("%y%m%d")
-        end = self.dates[-1].strftime("%y%m%d")
-        self.result_path = os.path.join(
-            self.base_path, "data", self.site_name, self.instrument_number,
-            "results", f"{start}_{end}")
-
-        self.logfile_path = args["logfile_path"]
-        if self.logfile_path == "default":
-            self.logfile_path = os.path.join(
-                self.result_path, "logfiles")
-        
         # coordinates
         if None not in args["coords"].values():
             self.coords = args["coords"]
@@ -99,17 +56,44 @@ class Preparation():
                     "coords.csv")
             self.coords = self.get_coords_from_file(coord_file)
 
-        # utc time shift
-        # if args["utc_offset"] is None:
-        #     self.utc_gap = self._get_utc_gap_from_coordinates()
-        # else:
-        #     self.utc_gap = args["utc_gap"]
+        # utc time shift of the recorded data
+        if args["utc_offset"] is None:
+            self.utc_offset = 0.0
+        else:
+            self.utc_offset = args["utc_gap"]
+
+        # additional paths
+        self.map_path = args["map_path"]
+        if self.map_path == "default":
+            self.map_path = os.path.join(
+                self.base_path, 'data', self.site_name, "map")
+
+        self.datalogger_path = args["datalogger_path"]
+        if self.datalogger_path == "default":
+            self.datalogger_path = os.path.join(
+                self.base_path, "data", self.site_name, "log")
+
+        self.ils_file = args["ils_file"]
+        if self.ils_file == "default":
+            self.ils_file = os.path.join(self.base_path, 'data', 'ILSList.csv')
+
+        start = self.dates[0].strftime("%y%m%d")
+        end = self.dates[-1].strftime("%y%m%d")
+        self.result_path = os.path.join(
+            self.base_path, "data", self.site_name, self.instrument_number,
+            "results", f"{start}_{end}")
+
+        # log of the processes
+        self.logfile_path = args["logfile_path"]
+        if self.logfile_path == "default":
+            self.logfile_path = os.path.join(
+                self.result_path, "logfiles")
 
     def get_logger(self):
         """Create and return a logger."""
-        logger = logging.getLogger('Preparation')
+        logger = logging.getLogger('prfpylot')
         # set logging to debug to record everything in the first place
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
         StreamHandler = logging.StreamHandler()
         FHandler = logging.FileHandler('Logfile.txt', mode='w')
         StreamHandler.setLevel(logging.DEBUG)
@@ -117,7 +101,7 @@ class Preparation():
         logger.addHandler(StreamHandler)
         logger.addHandler(FHandler)
         StreamFormat = logging.Formatter(
-            '{asctime}: {filename},line {lineno} -> {levelname}: {message}',
+            '{asctime}, {levelname}: {message}',
             style='{')
         StreamHandler.setFormatter(StreamFormat)
         FHandler.setFormatter(StreamFormat)

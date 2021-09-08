@@ -36,11 +36,6 @@ class FileMover(Preparation):
             if os.path.exists(cal_path):
                 shutil.rmtree(cal_path)
             os.mkdir(cal_path)
-    
-    def create_process_log_dir(self):
-        """Create directory to store prf output."""
-        if not os.path.exists(self.prep4_logpath):
-            os.mkdir(self.prep4_logpath)
 
     def mv_spec_to_prf():
         """Move sectra to prf input folder?"""
@@ -129,6 +124,7 @@ class FileMover(Preparation):
             - proffast/prf/wrk_fast/SiteDate-abscos.bin
         """
         pass
+
     def delete_abscos_files(self):
         """Delete the abscos.bin files."""
         wrk_fast_folder = os.path.join(
@@ -139,3 +135,10 @@ class FileMover(Preparation):
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""
         pass
+
+    def create_logfile_dir(self):
+        if not os.path.exists(self.logfile_path):
+            self.logger.debug(
+                f"Logfile path did not exist, create {self.logfile_path}")
+            os.makedirs(self.logfile_path)
+        self.logger.debug(f"Logfile_path: {self.logfile_path}")
