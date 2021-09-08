@@ -31,7 +31,7 @@ class FileMover(Preparation):
     def create_cal_dirs(self):
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
-            igram_folder = os.path.join(self.igram_path, date_str)
+            igram_folder = os.path.join(self.data_path, date_str)
             cal_path = os.path.join(igram_folder, 'cal')
             if os.path.exists(cal_path):
                 shutil.rmtree(cal_path)
@@ -51,10 +51,10 @@ class FileMover(Preparation):
         # loop over all days which where processed:
         self.logger.info("Start Moving files")
         for date in self.dates:
-            # the *.BIN files are currently in the self.igram_path/YYMMDD/cal
+            # the *.BIN files are currently in the self.data_path/YYMMDD/cal
             # folder. search for them:
             date_str = date.strftime("%y%m%d")
-            bin_files = glob(os.path.join(self.igram_path, date_str,
+            bin_files = glob(os.path.join(self.data_path, date_str,
                              "cal", "*.BIN"))
             # they should be in self.spectra_path/YYMMDD/cal/*.bin:
             target_folder = os.path.join(self.spectra_path, date_str, "cal")

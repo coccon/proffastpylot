@@ -130,7 +130,7 @@ class Preparation():
         """Return a list of dates for the given site, instrument and
         start- and end date.
         """
-        date_paths = glob(os.path.join(self.igram_path, "*"))
+        date_paths = glob(os.path.join(self.data_path, "*"))
         dates = []
 
         # create a list of all dates available on the disk
@@ -241,7 +241,7 @@ class Preparation():
         igram_list = []
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
-            igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
+            igrams = glob(os.path.join(self.data_path, date_str, "*.*"))
             if igrams == []:
                 self.logger.warning(f"Interferogram at day {date} not found.")
             igram_list.extend(igrams)
