@@ -41,7 +41,7 @@ class FileMover(Preparation):
         """Move sectra to prf input folder?"""
         pass
 
-    def move_bin_files(self, deleteExistingFolders=True):
+    def move_bin_files(self, overwrite=True):
         """Move binary files after running preprocessing"""
         # loop over all days which where processed:
         self.logger.info("Start Moving files")
@@ -53,7 +53,7 @@ class FileMover(Preparation):
                              "cal", "*.BIN"))
             # they should be in self.spectra_path/YYMMDD/cal/*.bin:
             target_folder = os.path.join(self.spectra_path, date_str, "cal")
-            if os.path.exists(target_folder) and deleteExistingFolders:
+            if os.path.exists(target_folder) and overwrite:
                 # delete the folder and make it new
                 shutil.rmtree(target_folder)
                 os.makedirs(target_folder, exist_ok=False)

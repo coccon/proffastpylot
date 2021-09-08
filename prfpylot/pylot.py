@@ -23,14 +23,14 @@ class Pylot(FileMover):
         Run preporcessing, pcxs, invers.
         The generated data is moved and merged in a result folder.
         """
-        self.run_preprocess(NumberOfProcesses=n_processes)
-        self.run_pcxs(NumberOfProcesses=n_processes)
-        self.run_inv(NumberOfProcesses=n_processes)
+        self.run_preprocess(n_processes=n_processes)
+        self.run_pcxs(n_processes=n_processes)
+        self.run_inv(n_processes=n_processes)
         self.combine_results()
 
-    def run_preprocess(self, NumberOfProcesses=1):
+    def run_preprocess(self, n_processes=1):
         self.logger.info(
-            f"Running preprocess4 with {NumberOfProcesses} task(s) ...")
+            f"Running preprocess4 with {n_processes} task(s) ...")
         
         self.create_logfile_dir()
         self.create_cal_dirs()
@@ -39,51 +39,51 @@ class Pylot(FileMover):
         prep_path = os.path.join(self.base_path, "prf", "preprocess")
         executable = self._get_executable("prep")
         
-        pList = []            
-        for n in range(NumberOfProcesses):
-            self.logger.debug(f"Start Task {n} of {NumberOfProcesses}")
-            pList.append(
-             Popen([executable, str(NumberOfProcesses), str(n)],
+        p_list = []            
+        for n in range(n_processes):
+            self.logger.debug(f"Start Task {n} of {n_processes}")
+            p_list.append(
+             Popen([executable, str(n_processes), str(n)],
                    shell=False, cwd=prep_path,
                    stdout=PIPE,
                    stderr=PIPE
                    ))
         time.sleep(2)  # to fill the list before the next loop is executed
-        self._write_preprocess_log(pList=pList)
+        self._write_preprocess_log(p_list=p_list)
         self.logger.info("Finished preprocessing.")
 
-    def run_pcxs(self, NumberOfProcesses=1):
+    def run_pcxs(self, n_processes=1):
         """
-        Main method to run pxcs. If NumberOfProcesses > 1, run_pcxs_at is
+        Main method to run pxcs. If n_processes > 1, run_pcxs_at is
         called directly. Otherwise it is called via run_parallel
         """
-        self.logger.info(f"Running pcxs with {NumberOfProcesses} task(s) ...")
+        self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
         output = []
-        if NumberOfProcesses <= 1:
+        if n_processes <= 1:
             for date in self.dates:
                 tmp_out = self.run_pcxs_at(date)
                 output.append(tmp_out)
 
         else:
             tmp_out = self._run_parallel(self.run_pcxs_at,
-                                         NumberOfProcesses)
+                                         n_processes)
             output = tmp_out
         self._write_pcxs_inv_logfile("pcsx", output)
 
-    def run_inv(self, NumberOfProcesses=1):
+    def run_inv(self, n_processes=1):
         """
-        Main method to run inv. If NumberOfProcesses > 1, run_inv_at is
+        Main method to run inv. If n_processes > 1, run_inv_at is
         called directly. Otherwise it is called via run_parallel
         """
-        self.logger.info(f"Running inv with {NumberOfProcesses} task(s) ...")
+        self.logger.info(f"Running inv with {n_processes} task(s) ...")
         output = []
-        if NumberOfProcesses <= 1:
+        if n_processes <= 1:
             for date in self.dates:
                 tmp_out = self.run_inv_at(date)
                 output.append(tmp_out)
         else:
             tmp_out = self._run_parallel(self.run_inv_at,
-                                         NumberOfProcesses)
+                                         n_processes)
             output = tmp_out
         self._write_pcxs_inv_logfile("inv", output)
 
@@ -126,23 +126,23 @@ class Pylot(FileMover):
             self.result_path, "combined_invparms.csv")
         df.to_csv(combined_file, index=False)
     
-    def _call_external_program(self, commandList, **kwargs):
+    def _call_external_program(self, command_list, **kwargs):
         """
         This method calls a extrenal program and returns the output and the
         error
         """
-        p = Popen(commandList, stdout=PIPE, stderr=PIPE, **kwargs)
+        p = Popen(command_list, stdout=PIPE, stderr=PIPE, **kwargs)
         out, err = p.communicate()
         p.wait()
         out = out.decode("utf-8")
         err = err.decode("utf-8")
         return(out, err)
 
-    def _run_parallel(self, method, NumberOfProcesses):
+    def _run_parallel(self, method, n_processes):
         """
         Run pcxs in parallel using python multiprocessing
         """
-        pool = multiprocessing.Pool(processes=NumberOfProcesses)
+        pool = multiprocessing.Pool(processes=n_processes)
         output = pool.map(method, self.dates)
         return output
 
@@ -225,12 +225,12 @@ class Pylot(FileMover):
         df = df[[*sel_cols]]
         return df
 
-    def _write_preprocess_log(self, pList):
+    def _write_preprocess_log(self, p_list):
         """Loop over list of processes and write output to logfile."""
         self.create_logfile_dir()
         logfile = os.path.join(self.logfile_path, "prep.log")
         f = open((logfile), 'w')
-        for c, p in enumerate(pList):
+        for c, p in enumerate(p_list):
             out, err = p.communicate()
             p.wait()
             out = out.decode('utf-8')
