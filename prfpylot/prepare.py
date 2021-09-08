@@ -40,10 +40,6 @@ class Preparation():
             self.base_path, "data", self.site_name, self.instrument_number,
             "raw_data")
 
-        self.results_path = os.path.join(
-            self.base_path, "data", self.site_name, self.instrument_number,
-            "results")
-
         self.map_path = args["map_path"]
         if self.map_path == "default":
             self.map_path = os.path.join(
@@ -53,12 +49,6 @@ class Preparation():
         if self.datalogger_path == "default":
             self.datalogger_path = os.path.join(
                 self.base_path, "data", self.site_name, "log")
-
-        self.logfile_path = args["logfile_path"]
-        if self.logfile_path == "default":
-            self.logfile_path = os.path.join(
-                self.base_path, "data", self.site_name, self.instrument_number,
-                "results", "logfiles")
 
         self.pt_path = args["pt_path"]
         if self.pt_path == "default":
@@ -88,6 +78,17 @@ class Preparation():
                 end_date=args["end_date"]
             )
 
+        start = self.dates[0].strftime("%y%m%d")
+        end = self.dates[-1].strftime("%y%m%d")
+        self.result_path = os.path.join(
+            self.base_path, "data", self.site_name, self.instrument_number,
+            "results", f"{start}_{end}")
+
+        self.logfile_path = args["logfile_path"]
+        if self.logfile_path == "default":
+            self.logfile_path = os.path.join(
+                self.result_path, "logfiles")
+        
         # coordinates
         if None not in args["coords"].values():
             self.coords = args["coords"]
@@ -100,6 +101,12 @@ class Preparation():
                     self.base_path, "data",
                     "coords.csv")
             self.coords = self.get_coords_from_file(coord_file)
+
+        # utc time shift
+        # if args["utc_offset"] is None:
+        #     self.utc_gap = self._get_utc_gap_from_coordinates()
+        # else:
+        #     self.utc_gap = args["utc_gap"]
 
     def get_logger(self):
         """Create and return a logger."""
@@ -271,7 +278,7 @@ class Preparation():
         '''
 
         ILS_Channel1, ILS_Channel2 = self.get_ils_from_file()
-        lat, lon, alt = self.coords
+        lat, lon, alt = self.coords.values()
         comment = (
             "This spectrum is generated using preprocess4, a part of "
             "PROFAST controlled by PRFpylot.")
@@ -296,7 +303,7 @@ class Preparation():
     def get_pcxs_and_inv_parameters(self, date):
         """Return Parameters to replace in the pcxs10.inp
         or invers10.inp files."""
-        lat, lon, alt = self.coords
+        lat, lon, alt = self.coords.values()
         spectra_list = self._get_spectra_list(date)
 
         parameters = {
@@ -351,7 +358,7 @@ class Preparation():
         if lat == 0. or lon == 0. or alt == 0:
             raise Exception(
                 "Error reading CoordFile. Please check format and path.")
-        return lat, lon, alt
+        return {"lat": lat, "lon": lon, "alt": alt}
 
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""

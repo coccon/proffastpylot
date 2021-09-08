@@ -16,6 +16,12 @@ coords:
   lon:
   alt:  # km over sea level
 
+
+# you can insert the UTC time shift manually here.
+# leave empty for calculationg the time shift from the gps coordinates (recommended)
+utc_offset: 
+
+
 # If you want to process only a ceratain date interval it is possible to give
 # here the start_date and end_date of this intervall
 # Otherwise all files which are found on the disk are going to be processed.

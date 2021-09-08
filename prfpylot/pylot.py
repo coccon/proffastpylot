@@ -1,11 +1,14 @@
 from prfpylot.filemover import FileMover
+import pandas as pd
 from subprocess import Popen, PIPE
 import os
 import shutil
 import time
 import sys
-import glob
+from glob import glob
 import multiprocessing
+from timezonefinder import TimezoneFinder
+import pytz
 
 
 class Pylot(FileMover):
@@ -15,10 +18,16 @@ class Pylot(FileMover):
         super(Pylot, self).__init__(input_file)
         self.logger.debug('Initialized the FileMover')
 
-    def run(self):
-        # run all processes
-        # delete temporary files
-        pass
+    def run(self, n_processes=1):
+        """Execute all processes of profast.
+
+        Run preporcessing, pcxs, invers.
+        The generated data is moved and merged in a result folder.
+        """
+        self.run_preprocess(NumberOfProcesses=n_processes)
+        self.run_pcxs(NumberOfProcesses=n_processes)
+        self.run_inv(NumberOfProcesses=n_processes)
+        self.combine_results()
 
     def run_preprocess(self, NumberOfProcesses=1, deleteExistingFolders=True):
         self.create_process_log_dir()
@@ -163,7 +172,7 @@ class Pylot(FileMover):
         outlist = out, err, " ".join([inv_executable, prf_input_path])
         return outlist
 
-    def move_result_files(self):
+    def move_results(self):
         """
         Move the results to the data folder.
         If the datafolder does exists, the existing folder is renamed adding
@@ -172,31 +181,33 @@ class Pylot(FileMover):
         """
 
         # check if result folder exist already, if not create
-        startDate_strng = self.dates[0].strftime("%y%m%d")
-        endDate_strng = self.dates[-1].strftime("%y%m%d")
-        result_folder = os.path.join(self.results_path,
-                                     f"{startDate_strng}_{endDate_strng}"
-                                     )
-        if os.path.exists(result_folder):
+        if os.path.exists(self.result_path):
             # check if already other backuped folder exist as well:
-            backuped_results = glob.glob(result_folder + "_backup*")
+            backuped_results = glob(self.result_path + "_backup*")
             # rename existing folder by adding _backupN where N is the N-th
             # backup
-            result_folder_backup = result_folder\
+            result_folder_backup = self.result_path\
                 + f"_backup{len(backuped_results)}"
-            self.logger.warning(f"Result directory {result_folder} exists!" +
+            self.logger.warning(f"Result directory {self.result_path} exists!" +
                                 "Renamed existing one to "
                                 f"{result_folder_backup} and create a new one")
             # rename and create new, empty folder
-            os.rename(result_folder, result_folder_backup)
-            os.makedirs(result_folder)
+            os.rename(self.result_path, result_folder_backup)
+            os.makedirs(self.result_path)
         else:
-            os.makedirs(result_folder)
+            os.makedirs(self.result_path)
         # move result files to directory
         # files can be devided in suffix and preafix, where the suffix is
         # constant allt the time:
-        suffix_list = ["colsens.dat", "invparms.dat", "job01.spc", "job02.spc",
-                       "job03.spc", "job04.spc", "job05.spc"]
+        suffix_list = [
+            # "colsens.dat", 
+            "invparms.dat", 
+            "job01.spc",
+            "job02.spc",
+            "job03.spc",
+            "job04.spc",
+            "job05.spc"
+        ]
         source_folder = os.path.join(self.base_path, "prf", "out_fast")
         for date in self.dates:
             datestr = date.strftime("%y%m%d")
@@ -204,7 +215,7 @@ class Pylot(FileMover):
             for suffix in suffix_list:
                 file = praefix + suffix
                 shutil.move(os.path.join(source_folder, file),
-                            os.path.join(result_folder, file))
+                            os.path.join(self.result_path, file))
 
     def clean_working_files(self):
         """
@@ -220,17 +231,18 @@ class Pylot(FileMover):
         """
         pass
 
-    def collate_results(self):
-        """Collate all results."""
-        result_path = os.path.join(
-            self.base_path, "prf", "out_fast")
+    def combine_results(self):
+        """Combine the generated result files and save as csv."""
+        self.move_results()
         
-        colsens_search_str = os.path.join(result_path, "*-colsens.dat")
-        colsens_filelist = glob(colsens_search_str)
-
-        invparams_search_str = os.path.join(result_path, "-invparams.dat")
-        invparams_filelist = glob(invparams_search_str)
-
+        df = self._get_merged_df()
+        df = self._add_timezones_to(df)
+        df = self._select_rename_cols(df)
+        
+        combined_file = os.path.join(
+            self.result_path, "combined_invparms.csv")
+        df.to_csv(combined_file, index=False)
+    
     def _call_external_program(self, commandList, **kwargs):
         """
         This method calls a extrenal program and returns the output and the
@@ -277,3 +289,59 @@ class Pylot(FileMover):
             logfile.write(err)
             logfile.write("\n============================================\n\n")
         logfile.close()
+
+    def _get_merged_df(self):
+        """Read all invparm.dat files as Dataframe and combine them."""
+        search_str = os.path.join(
+            self.result_path, "*-invparms.dat")
+        invparms_filelist = glob(search_str)
+
+        df_list = [
+            pd.read_csv(file, delim_whitespace=True)
+            for file in invparms_filelist]
+        df = pd.concat(df_list)
+
+        return df
+
+    def _add_timezones_to(self, df):
+        """Add UTC and local timezone at measurement location."""
+        df["JulianDate"] = df["JulianDate"]
+        df["UTC"] = pd.to_datetime(
+            df["JulianDate"].values, origin="julian", unit="D", utc=True)
+        
+        tf = TimezoneFinder()
+        local_tz_name = tf.timezone_at(
+            lat=self.coords["lat"],
+            lng=self.coords["lon"])
+        
+        local_tz = pytz.timezone(local_tz_name)
+        df["LocalTime"] = df["UTC"].dt.tz_convert(local_tz)
+        return df
+
+    def _select_rename_cols(self, df):
+        """Return df with selected and renamed columns."""
+        rename = {
+            'job01_gas01': 'H2O',
+            'job02_gas07': 'O2',
+            'job03_gas03': 'CO2',
+            'job04_gas04': 'CH4',
+            'job05_gas06': 'CO',
+            'job05_gas04': 'CH4_S5P'
+        }
+        df = df.rename(columns=rename)
+        
+        sel_cols = [
+            "UTC", "LocalTime",
+            "JulianDate", "HHMMSS_ID",
+            "gndP", "gndT",
+            "latdeg", "londeg",
+            "appSZA", "azimuth",
+            "XH2O", "XAIR",
+            "XCO2", "XCH4",
+            "XCO", "XCH4_S5P",
+            "H2O", "O2",
+            "CO2", "CH4",
+            "CO", "CH4_S5P"
+        ]
+        df = df[[*sel_cols]]
+        return df

@@ -12,4 +12,4 @@ if __name__ == "__main__":
     # MyPRFpylot.run_preprocess(NumberOfProcesses=2)
     # MyPRFpylot.run_pcxs(NumberOfProcesses=2)
     MyPRFpylot.run_inv(NumberOfProcesses=2)
-    #MyPRFpylot.move_result_files()
+    MyPRFpylot.combine_results()
