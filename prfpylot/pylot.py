@@ -171,64 +171,6 @@ class Pylot(FileMover):
         outlist = out, err, " ".join([inv_executable, prf_input_path])
         return outlist
 
-    def move_results(self):
-        """
-        Move the results to the data folder.
-        If the datafolder does exists, the existing folder is renamed adding
-        backupX where X increases if an other backup does already exists.
-        After renaming, a new folder is created.
-        """
-
-        # check if result folder exist already, if not create
-        if os.path.exists(self.result_path):
-            # check if already other backuped folder exist as well:
-            backuped_results = glob(self.result_path + "_backup*")
-            # rename existing folder by adding _backupN where N is the N-th
-            # backup
-            result_folder_backup = self.result_path\
-                + f"_backup{len(backuped_results)}"
-            self.logger.warning(f"Result directory {self.result_path} exists!" +
-                                "Renamed existing one to "
-                                f"{result_folder_backup} and create a new one")
-            # rename and create new, empty folder
-            os.rename(self.result_path, result_folder_backup)
-            os.makedirs(self.result_path)
-        else:
-            os.makedirs(self.result_path)
-        # move result files to directory
-        # files can be devided in suffix and preafix, where the suffix is
-        # constant allt the time:
-        suffix_list = [
-            # "colsens.dat", 
-            "invparms.dat", 
-            "job01.spc",
-            "job02.spc",
-            "job03.spc",
-            "job04.spc",
-            "job05.spc"
-        ]
-        source_folder = os.path.join(self.base_path, "prf", "out_fast")
-        for date in self.dates:
-            datestr = date.strftime("%y%m%d")
-            praefix = self.site_name + datestr + "-"
-            for suffix in suffix_list:
-                file = praefix + suffix
-                shutil.move(os.path.join(source_folder, file),
-                            os.path.join(self.result_path, file))
-
-    def clean_working_files(self):
-        """
-        Delete the files which where created from pylot and profast.
-        The files to be deleted are:
-        - Input file for preprocess:
-            - proffast/prf/preprocess/preprocess4.inp
-        - Input file for pxcs10 and inver10:
-            - proffast/prf/inp_fast/invers10_date.inp
-            - proffast/prf/inp_fast/pcxs10_date.inp
-        - abscos-bin files:
-            - proffast/prf/wrk_fast/SiteDate-abscos.bin
-        """
-        pass
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
