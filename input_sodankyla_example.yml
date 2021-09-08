@@ -17,8 +17,7 @@ coords:
   alt:  # km over sea level
 
 
-# you can insert the UTC time shift manually here.
-# leave empty for calculationg the time shift from the gps coordinates (recommended)
+# if times of the recorded data are not stored in UTC, insert the offset here
 utc_offset: 
 
 

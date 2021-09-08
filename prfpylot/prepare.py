@@ -294,7 +294,7 @@ class Preparation():
             'lat': lat,
             'lon': lon,
             'alt': alt,
-            'utc_offset': '0.0',  # TODO: make this chageable!
+            'utc_offset': str(self.utc_offset),
             'comment': comment,
             'igrams': igrams,
                      }
