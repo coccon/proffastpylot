@@ -28,79 +28,29 @@ class Pylot(FileMover):
         self.run_inv(NumberOfProcesses=n_processes)
         self.combine_results()
 
-    def run_preprocess(self, NumberOfProcesses=1, deleteExistingFolders=True):
-        self.create_process_log_dir()
-
-        # generate input file:
-        self.logger.info("Starting preprocessing ...\n")
-        self.logger.info("Generate input file...")
+    def run_preprocess(self, NumberOfProcesses=1):
+        self.logger.info(
+            f"Running preprocess4 with {NumberOfProcesses} task(s) ...")
+        
+        self.create_logfile_dir()
+        self.create_cal_dirs()
         self.generate_prf_input("prep")
-        # start preprocess
-        # preprocess needs a 'cal' folder next to the input folder:
-        for date in self.dates:
-            date_str = date.strftime("%y%m%d")
-            igram_folder = os.path.join(self.igram_path, date_str)
-            cal_path = os.path.join(igram_folder, 'cal')
-            if os.path.exists(cal_path):
-                shutil.rmtree(cal_path)
-            os.mkdir(cal_path)
-
-        # Now we can make us ready for finally running preprocess:
+        
         prep_path = os.path.join(self.base_path, "prf", "preprocess")
-
-        # Create a logfile for the output of preprocess:
-        logfile = "LogFilePreprocess_" + self.site_name + '_'\
-                  + self.dates[0].strftime('%y%m%d') + '_'\
-                  + self.dates[-1].strftime('%y%m%d') + '.txt'
-
-        # TODO: Change this or the single thread method such that only one
-        #       version is used.
-
-        preprocess = os.path.join(prep_path, "preprocess4.exe")
-        if sys.platform == "linux":
-            preprocess = os.path.join(prep_path, "preprocess4")
-
-        pList = []
-        self.logger.info(f"Process the spectra with {NumberOfProcesses}" +
-                         " processes in parallel.")
-        self.logger.info(f"This will open {NumberOfProcesses} new consoles. " +
-                         "Please note that it is normal that nothing" +
-                         " is printed")
-        # give the user some time to read this message!:
-        time.sleep(2)
+        executable = self._get_executable("prep")
+        
+        pList = []            
         for n in range(NumberOfProcesses):
-            self.logger.info(f"Start Task {n} of {NumberOfProcesses}")
+            self.logger.debug(f"Start Task {n} of {NumberOfProcesses}")
             pList.append(
-             Popen([preprocess, str(NumberOfProcesses), str(n)],
+             Popen([executable, str(NumberOfProcesses), str(n)],
                    shell=False, cwd=prep_path,
                    stdout=PIPE,
                    stderr=PIPE
-                   )
-                        )
-        # the sleep here is necessary, since the subprocesses are
-        # startet without retardation.
-        # Hence the next loop would be executed before the p's are filled
-        # into the list
-        time.sleep(2)
-        f = open(os.path.join(self.prep4_logpath, logfile), 'w')
-        for c, p in enumerate(pList):
-            out, err = p.communicate()
-            p.wait()
-            self.logger.info(f"Finished Task {n} of {NumberOfProcesses}")
-            # TODO: catch if it is not encodable by utf-8
-            out = out.decode('utf-8')
-            err = err.decode('utf-8')
-            if len(err) != 0:
-                self.logger.error(
-                    'Error while running preprocess\n' + err)
-            f.write(f'===================== Task {c} =====================\n')
-            f.write(f'Output of Preprocess Task {c}: \n' + out)
-            f.write(f'Error of Preprocess: Task {c}\n' + err)
-            f.write('===================================================\n')
-        f.close()
-        # Finally move the files to the spectra folder:
-        # trying to work directly in prfpylot/data:
-        # self.move_bin_files(deleteExistingFolders)
+                   ))
+        time.sleep(2)  # to fill the list before the next loop is executed
+        self._write_preprocess_log(pList=pList)
+        self.logger.info("Finished preprocessing.")
 
     def run_pcxs(self, NumberOfProcesses=1):
         """
@@ -118,7 +68,7 @@ class Pylot(FileMover):
             tmp_out = self._run_parallel(self.run_pcxs_at,
                                          NumberOfProcesses)
             output = tmp_out
-        self._write_logfile("pcsx", output)
+        self._write_pcxs_inv_logfile("pcsx", output)
 
     def run_inv(self, NumberOfProcesses=1):
         """
@@ -135,24 +85,20 @@ class Pylot(FileMover):
             tmp_out = self._run_parallel(self.run_inv_at,
                                          NumberOfProcesses)
             output = tmp_out
-        self._write_logfile("inv", output)
+        self._write_pcxs_inv_logfile("inv", output)
 
     def run_pcxs_at(self, date):
         self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
         prf_path = os.path.join(self.base_path, "prf")
-        pcxs_executable = os.path.join(prf_path, "pcxs10.exe")
-        # pcxs_executable = os.path.join(prf_path, "SimplePrinter.exe")
-        if sys.platform == "linux":
-            pcxs_executable = os.path.join(
-                prf_path, "pcxs10")
         self.generate_prf_input("pcxs", date)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("pcxs", date))
+
+        executable = self._get_executable("pcxs")
         out, err = self._call_external_program(
-            [pcxs_executable, prf_input_path], **{'cwd': prf_path})
-        if err == "":
-            err = "No Error occured."
-        outlist = out, err, " ".join([pcxs_executable, prf_input_path])
+            [executable, prf_input_path], **{'cwd': prf_path})
+        
+        outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
     def run_inv_at(self, date):
@@ -160,17 +106,13 @@ class Pylot(FileMover):
         self.generate_prf_input("inv", date)
 
         prf_path = os.path.join(self.base_path, "prf")
-        inv_executable = os.path.join(prf_path, "invers10.exe")
-        if sys.platform == "linux":
-            inv_executable = os.path.join(
-                prf_path, "invers10")
         prf_input_path = os.path.basename(
             self.get_prf_input_path("inv", date))
+        executable = self._get_executable("inv")
         out, err = self._call_external_program(
-                    [inv_executable, prf_input_path], **{'cwd': prf_path})
-        outlist = out, err, " ".join([inv_executable, prf_input_path])
+                    [executable, prf_input_path], **{'cwd': prf_path})
+        outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
-
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
@@ -204,23 +146,17 @@ class Pylot(FileMover):
         output = pool.map(method, self.dates)
         return output
 
-    def _write_logfile(self, program, content):
+    def _write_pcxs_inv_logfile(self, program_name, output):
         """
-        This method writes the output of pcxs and inv to a logfile.
+        Write the output of pcxs and inv to a logfile.
         """
-        self.logger.info(f"Write Log-files of {program}")
-        start_str = self.dates[0].strftime("%y%m%d")
-        stop_str = self.dates[-1].strftime("%y%m%d")
-        if not os.path.exists(self.logfile_path):
-            self.logger.debug(
-                f"Logfile path did not exist, create {self.logfile_path}")
-            os.makedirs(self.logfile_path)
-        self.logger.debug(f"Logfile_path: {self.logfile_path}")
+        self.logger.info(f"Write logfile of {program_name}")
+        
         # TODO: Add PID or something similar to logfile?
-        file = os.path.join(self.logfile_path,
-                            f"LogFile_{program}_{start_str}_{stop_str}.txt")
+        file = os.path.join(self.logfile_path, f"{program_name}.log")
+        
         logfile = open(file, "w")
-        for entry in content:
+        for entry in output:
             out, err, call_strg = entry
             logfile.write("=============================================\n")
             logfile.write(call_strg)
@@ -230,6 +166,8 @@ class Pylot(FileMover):
             logfile.write(err)
             logfile.write("\n============================================\n\n")
         logfile.close()
+        if err != "":
+            self.logger.error(f"Error while running {program_name}:" + err)
 
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""
@@ -286,3 +224,47 @@ class Pylot(FileMover):
         ]
         df = df[[*sel_cols]]
         return df
+
+    def _write_preprocess_log(self, pList):
+        """Loop over list of processes and write output to logfile."""
+        self.create_logfile_dir()
+        logfile = os.path.join(self.logfile_path, "prep.log")
+        f = open((logfile), 'w')
+        for c, p in enumerate(pList):
+            out, err = p.communicate()
+            p.wait()
+            out = out.decode('utf-8')
+            err = err.decode('utf-8')
+            if len(err) != 0:
+                self.logger.error(
+                    'Error while running preprocess\n' + err)
+            f.write(
+                f'===================== Task {c} =====================\n'
+                f'Output of Preprocess Task {c}: \n {out}'
+                f'Error of Preprocess: Task {c}\n {err}'
+                '====================================================\n'
+            )
+        f.close()
+        self.logger.info(
+            f"PROFFAST preprocess4 output was written to {logfile}")
+
+    def _get_executable(self, program):
+        """Return PROFFAST executable of the given program part.
+
+        Params:
+            program (str): can be "prep", "pcxs" and "inv"
+
+        Returns:
+            executable (str): depending on the current operating system.
+        """
+        prf_path = os.path.join(self.base_path, "prf")
+        if program == "prep":
+            executable = os.path.join(prf_path, "preprocess", "preprocess4")
+        if program == "pcxs":
+            executable = os.path.join(prf_path, "pcxs10")
+        if program == "inv":
+            executable = os.path.join(prf_path, "invers10")
+
+        if sys.platform == "windows":
+            executable += ".exe"
+        return executable
