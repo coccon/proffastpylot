@@ -4,7 +4,6 @@
 data/*/spectra/
 data/*/results/
 data/Sodankyla/SN039/results/*
-docs/*
 prf/*
 *subl*
 ./Logfile.txt
