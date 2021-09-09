@@ -30,12 +30,14 @@ class Preparation():
         self.note = args["note"]
 
         self.base_path = args["base_path"]  # proffast base directory
-        if self.base_path == "default":
+        if self.base_path is None:
             self.base_path = os.getcwd()
 
-        self.data_path = os.path.join(
-            self.base_path, "data", self.site_name, self.instrument_number,
-            "raw_data")
+        self.data_path = args["data_path"]
+        if self.data_path is None:
+            self.data_path = os.path.join(
+                self.base_path, "data", self.site_name, self.instrument_number,
+                "raw_data")
 
         # list of dates
         self.dates = self.get_dates(
@@ -48,7 +50,7 @@ class Preparation():
             self.coords = args["coords"]
             self.coord_file = None  # to avoid overriding given coords
         else:
-            if args["coord_file"] != "default":
+            if args["coord_file"] is not None:
                 coord_file = args["coord_file"]
             else:
                 coord_file = os.path.join(
@@ -64,30 +66,30 @@ class Preparation():
 
         # additional paths
         self.map_path = args["map_path"]
-        if self.map_path == "default":
+        if self.map_path is None:
             self.map_path = os.path.join(
                 self.base_path, 'data', self.site_name, "map")
 
         self.datalogger_path = args["datalogger_path"]
-        if self.datalogger_path == "default":
+        if self.datalogger_path is None:
             self.datalogger_path = os.path.join(
                 self.base_path, "data", self.site_name, "log")
 
         self.ils_file = args["ils_file"]
-        if self.ils_file == "default":
+        if self.ils_file is None:
             self.ils_file = os.path.join(self.base_path, 'data', 'ILSList.csv')
 
-        start = self.dates[0].strftime("%y%m%d")
-        end = self.dates[-1].strftime("%y%m%d")
-        self.result_path = os.path.join(
-            self.base_path, "data", self.site_name, self.instrument_number,
-            "results", f"{start}_{end}")
+        self.result_path = args["result_path"]
+        if self.result_path is None:
+            start = self.dates[0].strftime("%y%m%d")
+            end = self.dates[-1].strftime("%y%m%d")
+            self.result_path = os.path.join(
+                self.base_path, "data", self.site_name, self.instrument_number,
+                "results", f"{start}_{end}")
 
         # log of the processes
-        self.logfile_path = args["logfile_path"]
-        if self.logfile_path == "default":
-            self.logfile_path = os.path.join(
-                self.result_path, "logfiles")
+        self.logfile_path = os.path.join(
+            self.result_path, "logfiles")
 
     def get_logger(self):
         """Create and return a logger."""

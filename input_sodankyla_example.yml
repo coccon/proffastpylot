@@ -1,10 +1,11 @@
 # input to run PRFpylot
-# enter "default" for values to be set automatcally
+# leave empty if the default value should be used
 
 instrument_number: SN039
 
 # SITE INFORMATION
 site_name: Sodankyla
+
 # abbreviation of the site name in map file:
 # <site_abbrev><date>.map
 site_abbrev: so
@@ -16,56 +17,54 @@ coords:
   lon:
   alt:  # km over sea level
 
+# full path to the coord file.
+# This file contains the coorindates of the sites.
+# default: ${root_path}\data\coords.csv
+coord_file:
 
-# if times of the recorded data are not stored in UTC, insert the offset here
+
+# default: data\ILSList.csv
+ils_file:
+
+# if times of the recorded data is not stored in UTC, insert the offset here
+# default: 0.0
 utc_offset: 
 
 
 # process only dates in a specific time range
-# The date must be given in ISO8601 format. I.e. YYYY-MM-DD.
-# Leave empty to process all dates in the corresponding folder
+# date format: YYYY-MM-DD.
+# Leave empty to process all dates in the data folder
 start_date:
 end_date:
-
-# full path and name of the coord file. This file contains the coorindates
-# of the sites.
-# default: ${root_path}\data\coords.csv
-coord_file: default
-
-
-# OPTIONAL INFORMATION
-# The following values can be set to default, or specified concretly
-
-# path to profast directory (default: current directory)
-base_path: default
-
-# default ${root_path}\data\${site}\map\
-map_path: default
-
-# default ${root_path}\data\${site}\log\
-pt_path: default
-
-# datalog are the files of the datalogger at KIT. I.e. p, T, h measurements
-datalogger_path: default
-
-# logfiles are the logs of the calculations.
-logfile_path: default
-
-#default: data\ILSList.csv
-ils_file: default
 
 # optional comment included in bin-files, string
 # Leave empty adding no comment
 note:
 
-# log file where the output of preprocess4 is stored in:
-prep4_logpath: default
 
-# TODO: path of the spectra:
-#spectra_path: default
+# ADDITIONAL OPTIONS
 
-# TODO: path of the interfergorams:
-#igram_path: default
+# path to the interferograms
+# default: data/${site}/${instrument}/raw_data/
+# this folder should contain a folder for 
+# each date to be processed (YYMMDD)
+data_path:
 
-# TODO: path of the results:
-#result_path: default
+# path to prfpylot directory
+# default: current directory
+base_path:
+
+# path to the map files
+# default ${base_path}\data\${site}\map\
+map_path:
+
+# path of the p, T, h measurement files 
+# produced by the datalogger at KIT
+# default: data/<site>/log
+datalogger_path:
+
+# path to store the results,
+# note that some results are stored 
+# at the location of the data_path by PROFFAST
+# default: data/${site}/${instrument}/${results}/${start}_${end}
+result_path:
