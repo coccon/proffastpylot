@@ -29,7 +29,7 @@ class FileMover(Preparation):
         self._create_result_dir()
         self._create_logfile_dir()
 
-    def _check_proffast_folders(self, date):
+    def _check_proffast_folders(self):
         """Check if relevant Profast folders are in place."""
         pass
 
@@ -37,7 +37,7 @@ class FileMover(Preparation):
         """Create pt directory."""
         pt_path = os.path.join(
             self.data_path,
-            dt.strftime(date, "%y%m%d"),
+            date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
             shutil.makedir(pt_path)

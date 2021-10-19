@@ -32,8 +32,6 @@ class Pylot(FileMover):
         self.logger.info(
             f"Running preprocess4 with {n_processes} task(s) ...")
         
-        self.create_logfile_dir()
-        self.create_cal_dirs()
         self.generate_prf_input("prep")
         
         prep_path = os.path.join(self.base_path, "prf", "preprocess")
@@ -227,7 +225,6 @@ class Pylot(FileMover):
 
     def _write_preprocess_log(self, p_list):
         """Loop over list of processes and write output to logfile."""
-        self.create_logfile_dir()
         logfile = os.path.join(self.logfile_path, "prep.log")
         f = open((logfile), 'w')
         for c, p in enumerate(p_list):
