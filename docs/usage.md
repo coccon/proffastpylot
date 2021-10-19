@@ -34,4 +34,8 @@ Or run all these steps together
 my_pylot.run(n_processes)
 ```
 
-You can execute `run.py` to test this.
+You can execute `run.py` to test this with the example data provided.
+
+# Recommended folder sturcture
+
+We propose a folder structure. It is explained in `folder_structure.md`.
