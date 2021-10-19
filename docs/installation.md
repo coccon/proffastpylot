@@ -28,3 +28,12 @@ Unzip the the downloaded package.
 
 Go inside the PROFFAST directory move `prf96-EM27-fast` into `prfpylot`.
 Rename it to `prf`.
+
+
+## Installation of the prfpylot package with pip
+
+In Order to run prfpylot outside this directory you can install it with pip by running
+
+`pip install -e .`
+
+where the `setup.py` file is located.
