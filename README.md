@@ -1,6 +1,7 @@
 # prfPylot
 
 Running PROFFAST with Python.
+This is a reimplementation of the Python scripts to run PROFFAST written by Qiansi Tu and Darko Dubravica.
 
 Information about the usage and installation of this package can be found in `docs`.
 For more information about PROFFAST, see
