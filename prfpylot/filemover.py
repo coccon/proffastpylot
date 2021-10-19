@@ -10,17 +10,31 @@ class FileMover(Preparation):
 
     def __init__(self, input_file):
         super(FileMover, self).__init__(input_file)
-        self.input_file = input_file
+        # create all folders
+        self.init_folders()
 
-    def create_work_dirs():
-        """Create profast work directories, if non-existant."""
-        dirs = ["inp_fwd", "out_fast"]
-        for d in dirs:
-            if not os.path.exists(d):
-                shutil.makedir(d)
+    def init_folders(self):
+        """Create all relevant folders on startup if nonexistant.
+        
+        Check if relevant profast folders are existant.
+        Folders to be created:
+        - pT, cal directories
+        - result folder (backup of previous results)
+        - logfiles
+        """
+        self._check_proffast_folders()
+        for date in self.dates:
+            self._create_pT_dir(date)
+            self._create_cal_dir(date)
+        self._create_result_dir()
+        self._create_logfile_dir()
 
-    def create_temporary_pT_dir(self, date):
-        """Create empty directory."""
+    def _check_proffast_folders(self, date):
+        """Check if relevant Profast folders are in place."""
+        pass
+
+    def _create_pT_dir(self, date):
+        """Create pt directory."""
         pt_path = os.path.join(
             self.data_path,
             dt.strftime(date, "%y%m%d"),
@@ -28,53 +42,23 @@ class FileMover(Preparation):
         if not os.path.exists(pt_path):
             shutil.makedir(pt_path)
 
-    def create_cal_dirs(self):
-        for date in self.dates:
-            date_str = date.strftime("%y%m%d")
-            igram_folder = os.path.join(self.data_path, date_str)
-            cal_path = os.path.join(igram_folder, 'cal')
-            if os.path.exists(cal_path):
-                shutil.rmtree(cal_path)
-            os.mkdir(cal_path)
-
-    def mv_spec_to_prf():
-        """Move sectra to prf input folder?"""
-        pass
-
-    def move_bin_files(self, overwrite=True):
-        """Move binary files after running preprocessing"""
-        # loop over all days which where processed:
-        self.logger.info("Start Moving files")
-        for date in self.dates:
-            # the *.BIN files are currently in the self.data_path/YYMMDD/cal
-            # folder. search for them:
-            date_str = date.strftime("%y%m%d")
-            bin_files = glob(os.path.join(self.data_path, date_str,
-                             "cal", "*.BIN"))
-            # they should be in self.spectra_path/YYMMDD/cal/*.bin:
-            target_folder = os.path.join(self.spectra_path, date_str, "cal")
-            if os.path.exists(target_folder) and overwrite:
-                # delete the folder and make it new
-                shutil.rmtree(target_folder)
-                os.makedirs(target_folder, exist_ok=False)
-            else:
-                os.makedirs(target_folder, exist_ok=True)
-            self.logger.info(f"Move files of date {date_str}")
-            for bin_file in bin_files:
-                file_name = os.path.basename(bin_file)
-                target = os.path.join(target_folder, file_name)
-                shutil.move(bin_file, target)
-                self.logger.debug(f"Moved {bin_file}->{target}")
-
-    def move_results(self):
+    def _create_cal_dir(self, date):
+        """Create the cal dir in the interferogram folder, overwrite if exists.
         """
-        Move the results to the data folder.
+        date_str = date.strftime("%y%m%d")
+        igram_folder = os.path.join(self.data_path, date_str)
+        cal_path = os.path.join(igram_folder, 'cal')
+        if os.path.exists(cal_path):
+            shutil.rmtree(cal_path)
+        os.mkdir(cal_path)
+
+    def _create_result_dir(self):
+        """Create a result dir and a backup if previous results exist.
+
         If the datafolder does exists, the existing folder is renamed adding
         backupX where X increases if an other backup does already exists.
         After renaming, a new folder is created.
         """
-
-        # check if result folder exist already, if not create
         if os.path.exists(self.result_path):
             # check if already other backuped folder exist as well:
             backuped_results = glob(self.result_path + "_backup*")
@@ -82,19 +66,42 @@ class FileMover(Preparation):
             # backup
             result_folder_backup = self.result_path\
                 + f"_backup{len(backuped_results)}"
-            self.logger.warning(f"Result directory {self.result_path} exists!" +
+            self.logger.warning(f"Result directory {self.result_path} exists! "
                                 "Renamed existing one to "
-                                f"{result_folder_backup} and create a new one")
+                                f"{result_folder_backup} and "
+                                "created a new one.")
             # rename and create new, empty folder
             os.rename(self.result_path, result_folder_backup)
             os.makedirs(self.result_path)
         else:
             os.makedirs(self.result_path)
-        # move result files to directory
-        # files can be devided in suffix and preafix, where the suffix is
-        # constant allt the time:
+
+    def mv_spec_to_prf():
+        """Move sectra to prf input folder?"""
+        pass
+
+    def move_bin_files(self, overwrite=True):
+        """Move binary files after running preprocessing."""
+
+        self.logger.debug("Start Moving files")
+        for date in self.dates:
+            date_str = date.strftime("%y%m%d")
+            self.logger.info(f"Move files of date {date_str}")
+            
+            cal_folder = os.path.join(
+                self.spectra_path, date_str, "cal")
+            bin_files = glob(cal_folder, "*.BIN")            
+            for bin_file in bin_files:
+                file_name = os.path.basename(bin_file)
+                target = os.path.join(cal_folder, file_name)
+                shutil.move(bin_file, target)
+                self.logger.debug(f"Moved {bin_file}->{target}")
+
+    def move_results(self):
+        """Move the results to the data folder.
+        """        
         suffix_list = [
-            # "colsens.dat", 
+            "colsens.dat", 
             "invparms.dat", 
             "job01.spc",
             "job02.spc",
@@ -105,9 +112,9 @@ class FileMover(Preparation):
         source_folder = os.path.join(self.base_path, "prf", "out_fast")
         for date in self.dates:
             datestr = date.strftime("%y%m%d")
-            praefix = self.site_name + datestr + "-"
+            prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
-                file = praefix + suffix
+                file = prefix + suffix
                 shutil.move(os.path.join(source_folder, file),
                             os.path.join(self.result_path, file))
 
@@ -136,7 +143,8 @@ class FileMover(Preparation):
         """Remove all temporary files."""
         pass
 
-    def create_logfile_dir(self):
+    def _create_logfile_dir(self):
+        """Create logfile dir if is does not exist."""
         if not os.path.exists(self.logfile_path):
             self.logger.debug(
                 f"Logfile path did not exist, create {self.logfile_path}")

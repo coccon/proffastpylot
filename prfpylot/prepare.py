@@ -185,8 +185,6 @@ class Preparation():
         date_str = date.strftime("%y%m%d")
         pt_folder = os.path.join(self.data_path, date_str, "pT")
         pt_file = os.path.join(pt_folder, "pT_intraday.inp")
-        if not os.path.exists(pt_folder):
-            os.mkdir(pt_folder)
 
         log_file = self.get_log_file(date)
         pt_lines = self._read_pressure_from_logfile(log_file)
