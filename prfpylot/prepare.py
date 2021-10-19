@@ -403,7 +403,7 @@ class Preparation():
                         str(p),
                         "0.0"
                     ])
-            p_lines.append(p_line)
+                p_lines.append(p_line)
         return p_lines
 
     def _replace_backslash(self, line):
