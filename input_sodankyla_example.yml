@@ -26,6 +26,11 @@ coord_file:
 # default: data\ILSList.csv
 ils_file:
 
+# use own intraday file
+# leave empty if it should be 
+# generated automatically from the datalogger file
+intraday_file: "/home/lena/Projects/data/intraday/ke_2021_10_13.inp"
+
 # if times of the recorded data is not stored in UTC, insert the offset here
 # default: 0.0
 utc_offset: 
