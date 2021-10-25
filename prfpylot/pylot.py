@@ -31,15 +31,16 @@ class Pylot(FileMover):
     def run_preprocess(self, n_processes=1):
         self.logger.info(
             f"Running preprocess4 with {n_processes} task(s) ...")
-        
+
         self.generate_prf_input("prep")
-        
+
         prep_path = os.path.join(self.base_path, "prf", "preprocess")
         executable = self._get_executable("prep")
-        
-        p_list = []            
+
+        p_list = []
         for n in range(n_processes):
             self.logger.debug(f"Start Task {n} of {n_processes}")
+            print(executable, str(n_processes), str(n))
             p_list.append(
              Popen([executable, str(n_processes), str(n)],
                    shell=False, cwd=prep_path,
@@ -95,7 +96,7 @@ class Pylot(FileMover):
         executable = self._get_executable("pcxs")
         out, err = self._call_external_program(
             [executable, prf_input_path], **{'cwd': prf_path})
-        
+
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
@@ -115,15 +116,15 @@ class Pylot(FileMover):
     def combine_results(self):
         """Combine the generated result files and save as csv."""
         self.move_results()
-        
+
         df = self._get_merged_df()
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
-        
+
         combined_file = os.path.join(
             self.result_path, "combined_invparms.csv")
         df.to_csv(combined_file, index=False)
-    
+
     def _call_external_program(self, command_list, **kwargs):
         """
         This method calls a extrenal program and returns the output and the
@@ -149,10 +150,10 @@ class Pylot(FileMover):
         Write the output of pcxs and inv to a logfile.
         """
         self.logger.info(f"Write logfile of {program_name}")
-        
+
         # TODO: Add PID or something similar to logfile?
         file = os.path.join(self.logfile_path, f"{program_name}.log")
-        
+
         logfile = open(file, "w")
         for entry in output:
             out, err, call_strg = entry
@@ -185,12 +186,12 @@ class Pylot(FileMover):
         df["JulianDate"] = df["JulianDate"]
         df["UTC"] = pd.to_datetime(
             df["JulianDate"].values, origin="julian", unit="D", utc=True)
-        
+
         tf = TimezoneFinder()
         local_tz_name = tf.timezone_at(
             lat=self.coords["lat"],
             lng=self.coords["lon"])
-        
+
         local_tz = pytz.timezone(local_tz_name)
         df["LocalTime"] = df["UTC"].dt.tz_convert(local_tz)
         return df
@@ -206,7 +207,7 @@ class Pylot(FileMover):
             'job05_gas04': 'CH4_S5P'
         }
         df = df.rename(columns=rename)
-        
+
         sel_cols = [
             "UTC", "LocalTime",
             "JulianDate", "HHMMSS_ID",
@@ -262,6 +263,6 @@ class Pylot(FileMover):
         if program == "inv":
             executable = os.path.join(prf_path, "invers10")
 
-        if sys.platform == "windows":
+        if sys.platform == "win32":
             executable += ".exe"
         return executable
