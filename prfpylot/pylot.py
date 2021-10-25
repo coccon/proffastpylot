@@ -40,13 +40,13 @@ class Pylot(FileMover):
         p_list = []
         for n in range(n_processes):
             self.logger.debug(f"Start Task {n} of {n_processes}")
-            print(executable, str(n_processes), str(n))
             p_list.append(
-             Popen([executable, str(n_processes), str(n)],
-                   shell=False, cwd=prep_path,
-                   stdout=PIPE,
-                   stderr=PIPE
-                   ))
+                # Note, that is is not possible to use _call_external_program
+                # here, since it is necessary to return 'p'
+                Popen(
+                    [executable, str(n_processes), str(n)], cwd=prep_path,
+                    stdout=PIPE, stderr=PIPE
+                    ))
         time.sleep(2)  # to fill the list before the next loop is executed
         self._write_preprocess_log(p_list=p_list)
         self.logger.info("Finished preprocessing.")
