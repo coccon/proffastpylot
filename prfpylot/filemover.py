@@ -15,7 +15,7 @@ class FileMover(Preparation):
 
     def init_folders(self):
         """Create all relevant folders on startup if nonexistant.
-        
+
         Check if relevant profast folders are existant.
         Folders to be created:
         - pT, cal directories
@@ -40,7 +40,7 @@ class FileMover(Preparation):
             date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
-            shutil.makedir(pt_path)
+            os.mkdir(pt_path)
 
     def _create_cal_dir(self, date):
         """Create the cal dir in the interferogram folder, overwrite if exists.
@@ -87,10 +87,10 @@ class FileMover(Preparation):
         for date in self.dates:
             date_str = date.strftime("%y%m%d")
             self.logger.info(f"Move files of date {date_str}")
-            
+
             cal_folder = os.path.join(
                 self.spectra_path, date_str, "cal")
-            bin_files = glob(cal_folder, "*.BIN")            
+            bin_files = glob(cal_folder, "*.BIN")
             for bin_file in bin_files:
                 file_name = os.path.basename(bin_file)
                 target = os.path.join(cal_folder, file_name)
@@ -99,10 +99,10 @@ class FileMover(Preparation):
 
     def move_results(self):
         """Move the results to the data folder.
-        """        
+        """
         suffix_list = [
-            "colsens.dat", 
-            "invparms.dat", 
+            "colsens.dat",
+            "invparms.dat",
             "job01.spc",
             "job02.spc",
             "job03.spc",
@@ -138,7 +138,7 @@ class FileMover(Preparation):
             self.base_path, "wrk_fast")
         # TODO: Implement deletion
         pass
-        
+
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""
         pass
