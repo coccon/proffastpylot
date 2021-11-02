@@ -71,7 +71,7 @@ class Preparation():
             self.map_path = os.path.join(
                 self.base_path, 'data', self.site_name, "map")
 
-        self.intraday_file = args["intraday_file"]
+        self.intraday_path = args["intraday_path"]
         
         self.datalogger_path = args["datalogger_path"]
         if self.datalogger_path is None:
@@ -190,8 +190,12 @@ class Preparation():
         pt_folder = os.path.join(self.data_path, date_str, "pT")
         pt_file = os.path.join(pt_folder, "pT_intraday.inp")
 
-        if self.intraday_file is not None:
-            shutil.copy(self.intraday_file, pt_file)
+        if self.intraday_path is not None:
+            filename = "{}_{}.inp".format(
+                self.site_abbrev, date.strftime("%y-%m-%d"))
+            intraday_file = os.path.join(
+                self.intraday_path, filename)
+            shutil.copy(intraday_file, pt_file)
             return
 
         log_file = self.get_log_file(date)
