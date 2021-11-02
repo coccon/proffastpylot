@@ -40,7 +40,7 @@ class FileMover(Preparation):
             date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
-            shutil.makedir(pt_path)
+            os.mkdir(pt_path)
 
     def _create_cal_dir(self, date):
         """Create the cal dir in the interferogram folder, overwrite if exists.
