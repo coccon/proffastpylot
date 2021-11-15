@@ -23,9 +23,6 @@ coords:
 coord_file:
 
 
-# default: data\ILSList.csv
-ils_file:
-
 # if times of the recorded data is not stored in UTC, insert the offset here
 # default: 0.0
 utc_offset: 
@@ -42,29 +39,16 @@ end_date:
 note:
 
 
-# ADDITIONAL OPTIONS
 
-# path to the interferograms
-# default: data/${site}/${instrument}/raw_data/
-# this folder should contain a folder for 
-# each date to be processed (YYMMDD)
-data_path:
+# PATH
 
-# path to prfpylot directory
-# default: current directory
-base_path:
+profast_path:
 
-# path to the map files
-# default ${base_path}\data\${site}\map\
+# input data
+interferogram_path:
 map_path:
+pressure_path:
 
-# path of the p, T, h measurement files 
-# produced by the datalogger at KIT
-# default: data/<site>/log
-datalogger_path:
-
-# path to store the results,
-# note that some results are stored 
-# at the location of the data_path by PROFFAST
-# default: data/${site}/${instrument}/${results}/${start}_${end}
+# output data
+analysis_path: 
 result_path:
