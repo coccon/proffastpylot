@@ -5,7 +5,6 @@ from datetime import datetime as dt
 import pandas as pd
 from glob import glob
 import logging
-import shutil
 
 
 class Preparation():
@@ -181,29 +180,6 @@ class Preparation():
         log_file = log_file[0]
 
         return log_file
-
-    def generate_pt_intraday(self, date):
-        """Skript #3 generate pt files."""
-        # TODO: Insert Header!
-
-        date_str = date.strftime("%y%m%d")
-        pt_folder = os.path.join(self.data_path, date_str, "pT")
-        pt_file = os.path.join(pt_folder, "pT_intraday.inp")
-
-        if self.intraday_path is not None:
-            filename = "{}_{}.inp".format(
-                self.site_abbrev, date.strftime("%y-%m-%d"))
-            intraday_file = os.path.join(
-                self.intraday_path, filename)
-            shutil.copy(intraday_file, pt_file)
-            return
-
-        log_file = self.get_log_file(date)
-        pt_lines = self._read_pressure_from_logfile(log_file)
-        with open(pt_file, "w") as f:
-            f.write("$\n")
-            f.write("\n".join(pt_lines))
-            f.write("\n***\n")
 
     def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
@@ -395,26 +371,6 @@ class Preparation():
                 i = j
                 diff1 = diff0
         return i
-
-    def _read_pressure_from_logfile(self, logfile):
-        """Return list of lines with time and pressure and delta T (=0.0).
-        Check if pressure is in between 500 and 1500.
-        Origin: script #3, pt_logger(n)."""
-        log = pd.read_csv(logfile, sep="\t")
-
-        p_lines = []
-        for i, row in log.iterrows():
-            p = row["BaroTHB40"]
-            if p > 500 and p < 1500:
-                time = dt.strptime(row["UTCtime___"], "%H:%M:%S")
-                p_line = "\t".join(
-                    [
-                        time.strftime("%H%M%S"),
-                        str(p),
-                        "0.0"
-                    ])
-                p_lines.append(p_line)
-        return p_lines
 
     def _replace_backslash(self, line):
         """Replace backslash with slash if run on linux."""
