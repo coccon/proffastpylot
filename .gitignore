@@ -9,3 +9,9 @@ prf/*
 ./Logfile.txt
 Logfile.txt
 *pT*
+data/
+*.yml
+*.egg-info/
+*.py
+*.md
+

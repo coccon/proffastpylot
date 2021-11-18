@@ -5,6 +5,7 @@ from datetime import datetime as dt
 import pandas as pd
 from glob import glob
 import logging
+import shutil
 
 
 class Preparation():
@@ -70,6 +71,8 @@ class Preparation():
             self.map_path = os.path.join(
                 self.base_path, 'data', self.site_name, "map")
 
+        self.intraday_path = args["intraday_path"]
+        
         self.datalogger_path = args["datalogger_path"]
         if self.datalogger_path is None:
             self.datalogger_path = os.path.join(
@@ -182,9 +185,18 @@ class Preparation():
     def generate_pt_intraday(self, date):
         """Skript #3 generate pt files."""
         # TODO: Insert Header!
+
         date_str = date.strftime("%y%m%d")
         pt_folder = os.path.join(self.data_path, date_str, "pT")
         pt_file = os.path.join(pt_folder, "pT_intraday.inp")
+
+        if self.intraday_path is not None:
+            filename = "{}_{}.inp".format(
+                self.site_abbrev, date.strftime("%y-%m-%d"))
+            intraday_file = os.path.join(
+                self.intraday_path, filename)
+            shutil.copy(intraday_file, pt_file)
+            return
 
         log_file = self.get_log_file(date)
         pt_lines = self._read_pressure_from_logfile(log_file)
