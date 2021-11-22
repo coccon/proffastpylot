@@ -29,26 +29,18 @@ class Pylot(FileMover):
         self.combine_results()
 
     def run_preprocess(self, n_processes=1):
+        """Main method to run preprocess."""
         self.logger.info(
             f"Running preprocess4 with {n_processes} task(s) ...")
-
-        self.generate_prf_input("prep")
-
-        prep_path = os.path.join(self.base_path, "prf", "preprocess")
-        executable = self._get_executable("prep")
-
-        p_list = []
-        for n in range(n_processes):
-            self.logger.debug(f"Start Task {n} of {n_processes}")
-            p_list.append(
-                # Note, that is is not possible to use _call_external_program
-                # here, since it is necessary to return 'p'
-                Popen(
-                    [executable, str(n_processes), str(n)], cwd=prep_path,
-                    stdout=PIPE, stderr=PIPE
-                    ))
-        time.sleep(2)  # to fill the list before the next loop is executed
-        self._write_preprocess_log(p_list=p_list)
+        output = []
+        if n_processes <= 1:
+            for date in self.dates:
+                tmp_out = self.run_preprocess_at(date)
+                output.append(tmp_out)
+        else:
+            tmp_out = self._run_parallel(self.run_preprocess_at, n_processes)
+            output = tmp_out
+        self._write_logfile("preprocess", output)        
         self.logger.info("Finished preprocessing.")
 
     def run_pcxs(self, n_processes=1):
@@ -67,7 +59,7 @@ class Pylot(FileMover):
             tmp_out = self._run_parallel(self.run_pcxs_at,
                                          n_processes)
             output = tmp_out
-        self._write_pcxs_inv_logfile("pcsx", output)
+        self._write_logfile("pcsx", output)
 
     def run_inv(self, n_processes=1):
         """
@@ -84,9 +76,26 @@ class Pylot(FileMover):
             tmp_out = self._run_parallel(self.run_inv_at,
                                          n_processes)
             output = tmp_out
-        self._write_pcxs_inv_logfile("inv", output)
+        self._write_logfile("inv", output)
+
+    def run_preprocess_at(self, date):
+        """Run preprocess on a single day"""
+        self.logger.info("Running preprocess at "
+                         f"{date.strftime('%Y-%m-%d')} ...")
+        self.generate_prf_input("prep", date)
+        
+        inputfile = os.path.basename(
+            self.get_prf_input_path("prep", date))
+
+        executable = self._get_executable("prep")
+        exec_path = os.path.dirname(executable)
+        out, err = self._call_external_program(
+            [executable, inputfile], **{'cwd': exec_path})
+        outlist = out, err, " ".join([executable, inputfile])
+        return outlist
 
     def run_pcxs_at(self, date):
+        """ Run preprocess at a single day given as an argument """
         self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
         prf_path = os.path.join(self.base_path, "prf")
         self.generate_prf_input("pcxs", date)
@@ -101,6 +110,7 @@ class Pylot(FileMover):
         return outlist
 
     def run_inv_at(self, date):
+        self.logger.debug(f"Run inv at date {date.isoformat()}")
         self.generate_pt_intraday(date)
         self.generate_prf_input("inv", date)
 
@@ -115,21 +125,30 @@ class Pylot(FileMover):
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
+        self.logger.info("Move results to final output folder")
         self.move_results()
 
         df = self._get_merged_df()
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
 
+        resultfile = "combined_invparms_{}_StartStopDates{}_{}.csv".format(
+                            self.site_name,
+                            self.dates[0].strftime("%Y%m%d"),
+                            self.dates[-1].strftime("%Y%m%d")
+                            )
         combined_file = os.path.join(
-            self.result_path, "combined_invparms.csv")
+            self.result_folder, resultfile)
         df.to_csv(combined_file, index=False)
+        self.logger.info("Sucessfully wrote the combined invparams"
+                         f" to {combined_file}")
 
     def _call_external_program(self, command_list, **kwargs):
         """
-        This method calls a extrenal program and returns the output and the
+        This method calls a external program and returns the output and the
         error
         """
+        self.logger.debug("Command List: " + " ".join(command_list))
         p = Popen(command_list, stdout=PIPE, stderr=PIPE, **kwargs)
         out, err = p.communicate()
         p.wait()
@@ -145,7 +164,7 @@ class Pylot(FileMover):
         output = pool.map(method, self.dates)
         return output
 
-    def _write_pcxs_inv_logfile(self, program_name, output):
+    def _write_logfile(self, program_name, output):
         """
         Write the output of pcxs and inv to a logfile.
         """
@@ -171,7 +190,7 @@ class Pylot(FileMover):
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""
         search_str = os.path.join(
-            self.result_path, "*-invparms.dat")
+            self.result_folder, "*-invparms.dat")
         invparms_filelist = glob(search_str)
 
         df_list = [
@@ -226,7 +245,10 @@ class Pylot(FileMover):
 
     def _write_preprocess_log(self, p_list):
         """Loop over list of processes and write output to logfile."""
-        logfile = os.path.join(self.logfile_path, "prep.log")
+        filename = "prfPylots_PreprocessLog_{}_{}.log".format(
+                                    self.dates[0].strftime("%y%m%d"),
+                                    self.dates[-1].strftime("%y%m%d"))
+        logfile = os.path.join(self.logfile_path, filename)
         f = open((logfile), 'w')
         for c, p in enumerate(p_list):
             out, err = p.communicate()
@@ -237,14 +259,18 @@ class Pylot(FileMover):
                 self.logger.error(
                     'Error while running preprocess\n' + err)
             f.write(
-                f'===================== Task {c} =====================\n'
+                f'\n===================== Task {c} =====================\n'
                 f'Output of Preprocess Task {c}: \n {out}'
                 f'Error of Preprocess: Task {c}\n {err}'
-                '====================================================\n'
+                '=====================================================\n'
             )
         f.close()
         self.logger.info(
             f"PROFFAST preprocess4 output was written to {logfile}")
+        # TODO: Implement the following method in filemover!
+        # self.rename_prep_internal_logfile(logfile)
+        
+        
 
     def _get_executable(self, program):
         """Return PROFFAST executable of the given program part.

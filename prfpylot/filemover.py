@@ -28,6 +28,21 @@ class FileMover(Preparation):
             self._create_cal_dir(date)
         self._create_result_dir()
         self._create_logfile_dir()
+        self._create_spectra_outputfolder()
+
+    def _create_spectra_outputfolder(self):
+        """This method creates a folder for each day of the input igrams in
+        the spectra output folder. 
+        """
+        for date in self.dates:
+            datestring = date.strftime("%y%m%d")
+            outfolder = os.path.join(self.spectra_path, datestring, "cal")
+            if not os.path.exists(outfolder):
+                os.mkdir(outfolder)
+            else:
+                self.logger.warning(f"Spectra folder for date {datestring}"
+                                    " exists already."
+                                    " Content may be overwritten.")
 
     def _check_proffast_folders(self):
         """Check if relevant Profast folders are in place."""
@@ -36,17 +51,19 @@ class FileMover(Preparation):
     def _create_pT_dir(self, date):
         """Create pt directory."""
         pt_path = os.path.join(
-            self.data_path,
+            # TODO: Check if this is correct
+            # self.data_path,
+            self.spectra_path,
             date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
-            os.mkdir(pt_path)
+            os.makedirs(pt_path)
 
     def _create_cal_dir(self, date):
         """Create the cal dir in the interferogram folder, overwrite if exists.
         """
         date_str = date.strftime("%y%m%d")
-        igram_folder = os.path.join(self.data_path, date_str)
+        igram_folder = os.path.join(self.igram_path, date_str)
         cal_path = os.path.join(igram_folder, 'cal')
         if os.path.exists(cal_path):
             shutil.rmtree(cal_path)
@@ -59,26 +76,35 @@ class FileMover(Preparation):
         backupX where X increases if an other backup does already exists.
         After renaming, a new folder is created.
         """
-        if os.path.exists(self.result_path):
+        # The result_foldername and result dir are already specified in
+        # the init of prepare
+
+        if os.path.exists(self.result_folder):
             # check if already other backuped folder exist as well:
-            backuped_results = glob(self.result_path + "_backup*")
+
+            backuped_results = glob(self.result_folder + "_backup*")
             # rename existing folder by adding _backupN where N is the N-th
             # backup
-            result_folder_backup = self.result_path\
+            result_folder_backup =self.result_folder\
                 + f"_backup{len(backuped_results)}"
-            self.logger.warning(f"Result directory {self.result_path} exists! "
-                                "Renamed existing one to "
-                                f"{result_folder_backup} and "
-                                "created a new one.")
+            self.logger.warning(
+                f"Result directory {self.result_folder} exists! "
+                "Renamed existing one to "
+                f"{result_folder_backup} and created a new one.")
             # rename and create new, empty folder
-            os.rename(self.result_path, result_folder_backup)
-            os.makedirs(self.result_path)
+            os.rename(self.result_folder, result_folder_backup)
+            os.makedirs(self.result_folder)
         else:
-            os.makedirs(self.result_path)
+            os.makedirs(self.result_folder)
 
     def mv_spec_to_prf():
         """Move sectra to prf input folder?"""
         pass
+
+    def rename_prep_internal_logfile(self, logfile):
+        """Rename the internal logfiles of preprocess"""
+        # TODO
+        raise NotImplementedError
 
     def move_bin_files(self, overwrite=True):
         """Move binary files after running preprocessing."""
@@ -116,7 +142,7 @@ class FileMover(Preparation):
             for suffix in suffix_list:
                 file = prefix + suffix
                 shutil.move(os.path.join(source_folder, file),
-                            os.path.join(self.result_path, file))
+                            os.path.join(self.result_folder, file))
 
     def clean_working_files(self):
         """
