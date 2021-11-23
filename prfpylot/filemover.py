@@ -114,7 +114,7 @@ class FileMover(Preparation):
             "job04.spc",
             "job05.spc"
         ]
-        source_folder = os.path.join(self.base_path, "prf", "out_fast")
+        source_folder = os.path.join(self.prf_path, "out_fast")
         for date in self.dates:
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
@@ -149,9 +149,13 @@ class FileMover(Preparation):
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files."""
-        wrk_fast_folder = os.path.join(
-            self.base_path, "wrk_fast")
-        # TODO: Implement deletion
+        wrk_fast_folder = os.path.join(self.profast_path, "wrk_fast")
+        pass
+
+        
+
+    def move_abscos_files(self):
+        """Move abscos.bin files to result folder"""
         pass
 
     def remove_temporary_files_from_prf():

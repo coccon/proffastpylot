@@ -97,14 +97,13 @@ class Pylot(FileMover):
     def run_pcxs_at(self, date):
         """ Run preprocess at a single day given as an argument """
         self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
-        prf_path = os.path.join(self.base_path, "prf")
         self.generate_prf_input("pcxs", date)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("pcxs", date))
 
         executable = self._get_executable("pcxs")
         out, err = self._call_external_program(
-            [executable, prf_input_path], **{'cwd': prf_path})
+            [executable, prf_input_path], **{'cwd': self.prf_path})
 
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
@@ -114,12 +113,11 @@ class Pylot(FileMover):
         self.generate_pt_intraday(date)
         self.generate_prf_input("inv", date)
 
-        prf_path = os.path.join(self.base_path, "prf")
         prf_input_path = os.path.basename(
             self.get_prf_input_path("inv", date))
         executable = self._get_executable("inv")
         out, err = self._call_external_program(
-                    [executable, prf_input_path], **{'cwd': prf_path})
+                    [executable, prf_input_path], **{'cwd': self.prf_path})
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
@@ -281,13 +279,13 @@ class Pylot(FileMover):
         Returns:
             executable (str): depending on the current operating system.
         """
-        prf_path = os.path.join(self.base_path, "prf")
         if program == "prep":
-            executable = os.path.join(prf_path, "preprocess", "preprocess4")
+            executable = os.path.join(self.prf_path, "preprocess",
+                                      "preprocess4")
         if program == "pcxs":
-            executable = os.path.join(prf_path, "pcxs10")
+            executable = os.path.join(self.prf_path, "pcxs10")
         if program == "inv":
-            executable = os.path.join(prf_path, "invers10")
+            executable = os.path.join(self.prf_path, "invers10")
 
         if sys.platform == "win32":
             executable += ".exe"

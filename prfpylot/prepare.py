@@ -29,16 +29,13 @@ class Preparation():
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
 
+        # path to the profast folder
+        self.prf_path = args["profast_path"]
+
         self.base_path = args["base_path"]  # proffast base directory
         if self.base_path is None:
-            self.base_path = os.getcwd()
-
-        # should be obsolet. Hence comment it
-        # self.data_path = args["data_path"]
-        # if self.data_path is None:
-        #    self.data_path = os.path.join(
-        #        self.base_path, "data", self.site_name, self.instrument_number,
-        #        "raw_data")
+            self.logger.error("base_path is not specified!")
+            sys.exit()
 
         # coordinates
         if None not in args["coords"].values():
@@ -63,23 +60,30 @@ class Preparation():
         # additional paths
         self.map_path = args["map_path"]
         if self.map_path is None:
-            self.map_path = os.path.join(
-                self.base_path, 'data', self.site_name, "map")
+            self.logger.error("map_path is not specified!")
+            sys.exit()
 
         # TODO: Change to pressure_path
         self.datalogger_path = args["pressure_path"]
         if self.datalogger_path is None:
-            self.datalogger_path = os.path.join(
-                self.base_path, "data", self.site_name, "log")
+            self.logger.error("pressure_path is not specified!")
+            sys.exit()
 
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.base_path, 'prfpylot', 'ILSList.csv')
 
         # igram path:
         self.igram_path = args["interferogram_path"]
+        if self.igram_path is None:
+            self.logger.error("interferogram_path is not specified!")
+            sys.exit()
+            
 
         # spectra path, i.e. output of preprocess:
         self.spectra_path = args["spectra_path"]
+        if self.spectra_path is None:
+            self.logger.error("spectra_path is not specified!")
+            sys.exit()
 
         # list of dates
         self.dates = self.get_dates(
@@ -87,18 +91,12 @@ class Preparation():
                 end_date=args["end_date"]
             )
 
-        # old version:
-        # self.result_path = args["result_path"]
-        # if self.result_path is None:
-        #    start = self.dates[0].strftime("%y%m%d")
-        #    end = self.dates[-1].strftime("%y%m%d")
-        #    self.result_path = os.path.join(
-        #        self.base_path, "data", self.site_name, self.instrument_number,
-        #        "results", f"{start}_{end}")
-
-        # New version: only the base where the result folder is to be safed
-        #              is given. The final folder is created anytime.
+        # only the base where the result folder is to be safed
+        # is given. The final folder is created every runtime.
         self.result_path = args["result_path"]
+        if self.result_path is None:
+            self.logger.error("result_path is not specified!")
+            sys.exit()
         dtfs = "%Y%m%d"  # dtformatstring
         result_foldername = "{}_{}_{}_{}".format(self.site_name,
                                                  self.instrument_number,
@@ -160,13 +158,12 @@ class Preparation():
 
     def get_prf_input_path(self, template_type, date=None):
         """Return path to the corresponding prf_input_file."""
-        folder_path = os.path.join(self.base_path, 'prf')
         if template_type in ["pcxs", "inv"]:
-            folder_path = os.path.join(folder_path, "inp_fast")
+            folder_path = os.path.join(self.prf_path, "inp_fast")
             date_str = dt.strftime(date, "%y%m%d")
             filename = self.template_types[template_type] + f"_{date_str}.inp"
         if template_type == "prep":
-            folder_path = os.path.join(folder_path, "preprocess")
+            folder_path = os.path.join(self.prf_path, "preprocess")
             date_str = dt.strftime(date, "%y%m%d")
             filename = self.template_types[template_type] + f"_{date_str}"\
                        + ".inp"
