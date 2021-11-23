@@ -169,28 +169,63 @@ class Pylot(FileMover):
         output = pool.map(method, self.dates)
         return output
 
+    def _write_preprocess_log(self, p_list):
+        """Loop over list of processes and write output to logfile."""
+        filename = "prfPylots_PreprocessLog_{}_{}.log".format(
+                                    self.dates[0].strftime("%y%m%d"),
+                                    self.dates[-1].strftime("%y%m%d"))
+        logfile = os.path.join(self.logfile_path, filename)
+        f = open((logfile), 'w')
+        for c, p in enumerate(p_list):
+            out, err = p.communicate()
+            p.wait()
+            out = out.decode('utf-8')
+            err = err.decode('utf-8')
+            if len(err) != 0:
+                self.logger.error(
+                    'Error while running preprocess\n' + err)
+            f.write(
+                f'\n===================== Task {c} =====================\n'
+                f'Output of Preprocess Task {c}: \n {out}'
+                f'Error of Preprocess: Task {c}\n {err}'
+                '=====================================================\n'
+            )
+        f.close()
+        self.logger.info(
+            f"PROFFAST preprocess4 output was written to {logfile}")
+        # TODO: Implement the following method in filemover!
+        # self.rename_prep_internal_logfile(logfile)
+
     def _write_logfile(self, program_name, output):
         """
-        Write the output of pcxs and inv to a logfile.
+        Write the output of preprocess, pcxs and inv to a logfile.
         """
         self.logger.info(f"Write logfile of {program_name}")
 
         # TODO: Add PID or something similar to logfile?
-        file = os.path.join(self.logfile_path, f"{program_name}.log")
+        file = os.path.join(self.logfile_path, f"Output_of_{program_name}.log")
 
         logfile = open(file, "w")
-        for entry in output:
+        for i, entry in enumerate(output):
             out, err, call_strg = entry
-            logfile.write("=============================================\n")
+            logfile.write(f"\n================= Task {i} ================\n")
             logfile.write(call_strg)
             logfile.write("\nOutput:\n")
             logfile.write(out)
             logfile.write("\n\nErrors:\n")
             logfile.write(err)
-            logfile.write("\n============================================\n\n")
+            logfile.write("============================================\n")
+            logfile.write("============================================\n\n\n")
+
         logfile.close()
         if err != "":
             self.logger.error(f"Error while running {program_name}:" + err)
+        if program_name == "preprocess":
+            self._move_prep_logfiles()
+
+    def _move_prep_logfiles(self):
+        """Move the logfiles created by preprocess to the logfolder"""
+        pass
 
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""
@@ -247,35 +282,6 @@ class Pylot(FileMover):
         ]
         df = df[[*sel_cols]]
         return df
-
-    def _write_preprocess_log(self, p_list):
-        """Loop over list of processes and write output to logfile."""
-        filename = "prfPylots_PreprocessLog_{}_{}.log".format(
-                                    self.dates[0].strftime("%y%m%d"),
-                                    self.dates[-1].strftime("%y%m%d"))
-        logfile = os.path.join(self.logfile_path, filename)
-        f = open((logfile), 'w')
-        for c, p in enumerate(p_list):
-            out, err = p.communicate()
-            p.wait()
-            out = out.decode('utf-8')
-            err = err.decode('utf-8')
-            if len(err) != 0:
-                self.logger.error(
-                    'Error while running preprocess\n' + err)
-            f.write(
-                f'\n===================== Task {c} =====================\n'
-                f'Output of Preprocess Task {c}: \n {out}'
-                f'Error of Preprocess: Task {c}\n {err}'
-                '=====================================================\n'
-            )
-        f.close()
-        self.logger.info(
-            f"PROFFAST preprocess4 output was written to {logfile}")
-        # TODO: Implement the following method in filemover!
-        # self.rename_prep_internal_logfile(logfile)
-        
-        
 
     def _get_executable(self, program):
         """Return PROFFAST executable of the given program part.

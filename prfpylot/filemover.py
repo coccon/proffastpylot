@@ -149,7 +149,7 @@ class FileMover(Preparation):
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files."""
-        wrk_fast_folder = os.path.join(self.profast_path, "wrk_fast")
+        wrk_fast_folder = os.path.join(self.prf_path, "wrk_fast")
         for date in self.dates:
             filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
             try:
@@ -162,7 +162,7 @@ class FileMover(Preparation):
 
     def move_abscos_files(self):
         """Move abscos.bin files to result folder"""
-        wrk_fast_folder = os.path.join(self.profast_path, "wrk_fast")
+        wrk_fast_folder = os.path.join(self.prf_path, "wrk_fast")
         # the target folder doesnot exists, since this is an optional method
         abscosbin_folder = os.path.join(self.result_folder, "abscos-bin")
         if not os.path.exists(abscosbin_folder):
