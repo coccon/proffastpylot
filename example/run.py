@@ -6,12 +6,16 @@ import os
 
 if __name__ == "__main__":
     # if __name__ == "__main__" is necessary for multiprocessing
-    input_file = os.path.join(".", "example", "input_sodankyla_example.yml")
-    MyPRFpylot = Pylot(input_file)
-    # MyPRFpylot.run(n_processes=2)
-    
-    MyPRFpylot.run_preprocess(n_processes=2)
-    MyPRFpylot.run_pcxs(n_processes=2)
-    MyPRFpylot.run_inv(n_processes=2)
-    MyPRFpylot.combine_results()
-    MyPRFpylot.clean_files()
+    try:
+        input_file = os.path.join(".", "example",
+                            "input_sodankyla_example.yml")
+        MyPRFpylot = Pylot(input_file, logginglevel="debug")
+        # MyPRFpylot.run(n_processes=2)
+        
+        MyPRFpylot.run_preprocess(n_processes=2)
+        MyPRFpylot.run_pcxs(n_processes=2)
+        MyPRFpylot.run_inv(n_processes=2)
+        MyPRFpylot.combine_results()
+        MyPRFpylot.clean_files()
+    finally:
+        del MyPRFpylot

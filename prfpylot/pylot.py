@@ -13,8 +13,9 @@ import pytz
 class Pylot(FileMover):
     """Start all Profast processes."""
 
-    def __init__(self, input_file):
-        super(Pylot, self).__init__(input_file)
+    def __init__(self, input_file, logginglevel="info"):
+        super(Pylot, self).__init__(input_file, logginglevel="info")
+        
         self.logger.debug('Initialized the FileMover')
 
     def run(self, n_processes=1):

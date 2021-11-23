@@ -16,12 +16,21 @@ class Preparation():
         "pcxs": "pcxs10"
     }
 
-    def __init__(self, input_path="input.yml"):
-        self.logger = self.get_logger()
-
+    def __init__(self, input_path="input.yml", logginglevel="info"):
         # read input file
         with open(input_path, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
+
+        # now, the logfile can be created:
+        self.logger = self.get_logger(logginglevel=logginglevel)
+        self.logger.info("++++ Welcome to Proffast powered by PrfPylot ++++")
+        self.logger.info("Start reading input file...")
+
+        # set parameters from input file
+        self.instrument_number = args["instrument_number"]
+        self.site_name = args["site_name"]
+        self.site_abbrev = args["site_abbrev"]
+        self.note = args["note"]
 
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
@@ -90,6 +99,12 @@ class Preparation():
                 start_date=args["start_date"],
                 end_date=args["end_date"]
             )
+        
+        # record some notes about the behaviour of the pylot:
+        if args["delete_abscos.bin_files"]:
+            self.delete_abscosbin = True
+        else:
+            self.delete_abscosbin = False
 
         # only the base where the result folder is to be safed
         # is given. The final folder is created every runtime.
@@ -104,26 +119,34 @@ class Preparation():
                                                  self.dates[-1].strftime(dtfs))
         self.result_folder = os.path.join(self.result_path, result_foldername)
 
-
         # log of the processes
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
         
-        # record some notes about the behaviour of the pylot:
-        if args["delete_abscos.bin_files"]:
-            self.delete_abscosbin = True
-        else:
-            self.delete_abscosbin = False
+        self.logger.info("... read in finished!")
 
-    def get_logger(self):
+
+    def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
         logger = logging.getLogger('prfpylot')
         # set logging to debug to record everything in the first place
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
-        FHandler = logging.FileHandler('Logfile.txt', mode='w')
-        StreamHandler.setLevel(logging.DEBUG)
-        FHandler.setLevel(logging.DEBUG)
+        cwd = os.getcwd()
+        self.generalLogfile = os.path.join(cwd, "GeneralLogfile.log")
+        logfile = os.path.join("GeneralLogfile.log")
+        FHandler = logging.FileHandler(logfile, mode='w')
+        
+        if logginglevel == "debug":
+            StreamHandler.setLevel(logging.DEBUG)
+            FHandler.setLevel(logging.DEBUG)
+        elif logginglevel == "info":
+            StreamHandler.setLevel(logging.INFO)
+            FHandler.setLevel(logging.INFO)
+        elif logginglevel == "warning":
+            StreamHandler.setLevel(logging.WARNING)
+            FHandler.setLevel(logging.WARNING)
+        
         logger.addHandler(StreamHandler)
         logger.addHandler(FHandler)
         StreamFormat = logging.Formatter(
@@ -296,6 +319,9 @@ class Preparation():
         #       a "cal" string to the spectra path.
         outfolder = os.path.join(self.spectra_path, datestring, "cal")
         
+        # Give the logfile a name:
+        logfile = f"Internal_preprocess_log_{datestring}.log"
+
         # generate path to outputfolder for logfiles for this date.
         # TODO: First generate the folders!
 
@@ -311,6 +337,7 @@ class Preparation():
             'comment': comment,
             'igrams': igrams,
             'path_preprocess_log': self.logfile_path,
+            'filename_logfile': logfile,
             'path_spectra': outfolder
                      }
         return parameters

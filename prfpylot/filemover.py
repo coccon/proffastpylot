@@ -8,8 +8,8 @@ from prfpylot.prepare import Preparation
 class FileMover(Preparation):
     """Copy, Move and remove temporary profast Files."""
 
-    def __init__(self, input_file):
-        super(FileMover, self).__init__(input_file)
+    def __init__(self, input_file, logginglevel="info"):
+        super(FileMover, self).__init__(input_file, logginglevel="info")
         # create all folders
         self.init_folders()
 
@@ -133,6 +133,7 @@ class FileMover(Preparation):
                     self.logger.error("Unknown error while movig file "
                                       f"{source}. Errormessage: {e}")
 
+
     def clean_working_files(self):
         """
         Delete the files which where created from pylot and profast.
@@ -146,6 +147,7 @@ class FileMover(Preparation):
             - proffast/prf/wrk_fast/SiteDate-abscos.bin
         """
         pass
+
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files."""
@@ -190,3 +192,19 @@ class FileMover(Preparation):
                 f"Logfile path did not exist, create {self.logfile_path}")
             os.makedirs(self.logfile_path)
         self.logger.debug(f"Logfile_path: {self.logfile_path}")
+
+    def _move_generallogfile_to_logdir(self):
+        """Move the general logfile to the logdir"""
+        # This have to be done at the end, since the folder is createt by the
+        # program itself.
+        target = os.path.join(self.logfile_path,
+                              os.path.basename(self.generalLogfile))
+        try:
+            shutil.move(self.generalLogfile, target)
+        except (FileNotFoundError, OSError):
+            self.logger.error("Could not move logfile to new logfile dir!"
+                              f"File is located in: {self.generalLogfile}")
+
+    def __del__(self):
+        self._move_generallogfile_to_logdir()
+
