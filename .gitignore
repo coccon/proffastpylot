@@ -9,3 +9,10 @@ prf/*
 ./Logfile.txt
 Logfile.txt
 *pT*
+build/
+prfPylot.egg-info/
+example/*
+docs/
+prfpylot/templates/template_preprocess4_old.inp
+Notes_Besprechung.txt
+desktop.ini
