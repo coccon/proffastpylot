@@ -38,7 +38,7 @@ class FileMover(Preparation):
             datestring = date.strftime("%y%m%d")
             outfolder = os.path.join(self.spectra_path, datestring, "cal")
             if not os.path.exists(outfolder):
-                os.mkdir(outfolder)
+                os.makedirs(outfolder)
             else:
                 self.logger.warning(f"Spectra folder for date {datestring}"
                                     " exists already."
