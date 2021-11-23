@@ -97,31 +97,10 @@ class FileMover(Preparation):
         else:
             os.makedirs(self.result_folder)
 
-    def mv_spec_to_prf():
-        """Move sectra to prf input folder?"""
-        pass
-
     def rename_prep_internal_logfile(self, logfile):
         """Rename the internal logfiles of preprocess"""
         # TODO
         raise NotImplementedError
-
-    def move_bin_files(self, overwrite=True):
-        """Move binary files after running preprocessing."""
-
-        self.logger.debug("Start Moving files")
-        for date in self.dates:
-            date_str = date.strftime("%y%m%d")
-            self.logger.info(f"Move files of date {date_str}")
-
-            cal_folder = os.path.join(
-                self.spectra_path, date_str, "cal")
-            bin_files = glob(cal_folder, "*.BIN")
-            for bin_file in bin_files:
-                file_name = os.path.basename(bin_file)
-                target = os.path.join(cal_folder, file_name)
-                shutil.move(bin_file, target)
-                self.logger.debug(f"Moved {bin_file}->{target}")
 
     def move_results(self):
         """Move the results to the data folder.
@@ -141,8 +120,18 @@ class FileMover(Preparation):
             prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
                 file = prefix + suffix
-                shutil.move(os.path.join(source_folder, file),
-                            os.path.join(self.result_folder, file))
+                source = os.path.join(source_folder, file)
+                target = os.path.join(self.result_folder, file)
+                try:
+                    shutil.move(source, target)
+                except FileNotFoundError:
+                    self.logger.error(f"File {source} was not found!")
+                except PermissionError:
+                    self.logger.error(f"Could not write {target} due to "
+                                      "permission issues.")
+                except OSError as e:
+                    self.logger.error("Unknown error while movig file "
+                                      f"{source}. Errormessage: {e}")
 
     def clean_working_files(self):
         """
