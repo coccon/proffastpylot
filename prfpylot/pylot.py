@@ -141,6 +141,13 @@ class Pylot(FileMover):
         self.logger.info("Sucessfully wrote the combined invparams"
                          f" to {combined_file}")
 
+    def clean_files(self):
+        """After execution clean up the files not needed anymore"""
+        if self.delete_abscosbin:
+            self.delete_abscos_files()
+        else:
+            self.move_abscos_files()
+
     def _call_external_program(self, command_list, **kwargs):
         """
         This method calls a external program and returns the output and the

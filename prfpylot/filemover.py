@@ -150,13 +150,34 @@ class FileMover(Preparation):
     def delete_abscos_files(self):
         """Delete the abscos.bin files."""
         wrk_fast_folder = os.path.join(self.profast_path, "wrk_fast")
-        pass
-
-        
+        for date in self.dates:
+            filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+            try:
+                os.remove(os.path.join(wrk_fast_folder, filename))
+            except FileNotFoundError:
+                # TODO: Decide if this is wanted or better raise an error
+                srchres = glob.glob(os.path.join(wrk_fast_folder,
+                                f"{date.strftime('%y%m%d')}-abscos.bin"))
+                os.remove(srchres[0])
 
     def move_abscos_files(self):
         """Move abscos.bin files to result folder"""
-        pass
+        wrk_fast_folder = os.path.join(self.profast_path, "wrk_fast")
+        # the target folder doesnot exists, since this is an optional method
+        abscosbin_folder = os.path.join(self.result_folder, "abscos-bin")
+        if not os.path.exists(abscosbin_folder):
+            os.mkdir(abscosbin_folder)
+        for date in self.dates:
+            filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+            try:
+                shutil.move(os.path.join(wrk_fast_folder, filename),
+                            os.path.join(abscosbin_folder, filename))
+            except FileNotFoundError:
+                # TODO: Decide if this is wanted or better raise an error
+                srchres = glob.glob(os.path.join(wrk_fast_folder,
+                                f"{date.strftime('%y%m%d')}-abscos.bin"))
+                shutil.move(os.path.join(wrk_fast_folder, srchres[0]),
+                            os.path.join(abscosbin_folder, srchres[0]))
 
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""
