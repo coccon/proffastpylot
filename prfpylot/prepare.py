@@ -108,13 +108,7 @@ class Preparation():
         # log of the processes
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
-        
-        # record some notes about the behaviour of the pylot:
-        if args["delete_abscos.bin_files"]:
-            self.delete_abscosbin = True
-        else:
-            self.delete_abscosbin = False
-            
+
     def get_logger(self):
         """Create and return a logger."""
         logger = logging.getLogger('prfpylot')
