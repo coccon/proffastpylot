@@ -9,7 +9,7 @@ class FileMover(Preparation):
     """Copy, Move and remove temporary profast Files."""
 
     def __init__(self, input_file, logginglevel="info"):
-        super(FileMover, self).__init__(input_file, logginglevel="info")
+        super(FileMover, self).__init__(input_file, logginglevel=logginglevel)
         # create all folders
         self.init_folders()
 
@@ -157,10 +157,8 @@ class FileMover(Preparation):
             try:
                 os.remove(os.path.join(wrk_fast_folder, filename))
             except FileNotFoundError:
-                # TODO: Decide if this is wanted or better raise an error
-                srchres = glob.glob(os.path.join(wrk_fast_folder,
-                                f"{date.strftime('%y%m%d')}-abscos.bin"))
-                os.remove(srchres[0])
+                self.logger.warning("File not Found: "
+                                    f"Could not move {source}")
 
     def move_abscos_files(self):
         """Move abscos.bin files to result folder"""
@@ -172,14 +170,43 @@ class FileMover(Preparation):
         for date in self.dates:
             filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
             try:
-                shutil.move(os.path.join(wrk_fast_folder, filename),
-                            os.path.join(abscosbin_folder, filename))
+                source = os.path.join(wrk_fast_folder, filename)
+                target = os.path.join(abscosbin_folder, filename)
+                shutil.move(source, target)
             except FileNotFoundError:
-                # TODO: Decide if this is wanted or better raise an error
-                srchres = glob.glob(os.path.join(wrk_fast_folder,
-                                f"{date.strftime('%y%m%d')}-abscos.bin"))
-                shutil.move(os.path.join(wrk_fast_folder, srchres[0]),
-                            os.path.join(abscosbin_folder, srchres[0]))
+                self.logger.warning("File not Found: "
+                                    f"Could not move {source}")
+
+    def delete_input_files(self):
+        """Delete the input files for preprocess, pcxs and inv"""
+        for i, date in enumerate(self.dates):
+            for type in ["prep", "pcxs", "inv"]:
+                inp_file = self.get_prf_input_path(type, date)
+                try:
+                    os.remove(inp_file)
+                except FileNotFoundError:
+                    self.logger.warning("File not Found: "
+                                        f"Could not remove {type} input file"
+                                        f" {inp_file}")
+
+    def move_input_files(self):
+        """Move the input files for prep., pcxs and inv to result folder"""
+        # crate a folder in result dir for input files:
+        inp_folder = os.path.join(self.result_folder, "input_files")
+        if not os.path.exists(inp_folder):
+            os.mkdir(inp_folder)
+
+        for type in ["prep", "pcxs", "inv"]:
+            for i, date in enumerate(self.dates):
+                inp_file = self.get_prf_input_path(type, date)
+                try:
+                    shutil.move(
+                        inp_file,
+                        os.path.join(inp_folder, os.path.basename(inp_file)))
+                except FileNotFoundError:
+                    self.logger.warning("File not found: "
+                                        f"Could not move {type} input file"
+                                        f" {inp_file}")
 
     def remove_temporary_files_from_prf():
         """Remove all temporary files."""
@@ -192,19 +219,3 @@ class FileMover(Preparation):
                 f"Logfile path did not exist, create {self.logfile_path}")
             os.makedirs(self.logfile_path)
         self.logger.debug(f"Logfile_path: {self.logfile_path}")
-
-    def _move_generallogfile_to_logdir(self):
-        """Move the general logfile to the logdir"""
-        # This have to be done at the end, since the folder is createt by the
-        # program itself.
-        target = os.path.join(self.logfile_path,
-                              os.path.basename(self.generalLogfile))
-        try:
-            shutil.move(self.generalLogfile, target)
-        except (FileNotFoundError, OSError):
-            self.logger.error("Could not move logfile to new logfile dir!"
-                              f"File is located in: {self.generalLogfile}")
-
-    def __del__(self):
-        self._move_generallogfile_to_logdir()
-

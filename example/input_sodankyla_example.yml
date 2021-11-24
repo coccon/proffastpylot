@@ -39,8 +39,8 @@ end_date:
 note:
 
 # BEHAVIOUR:
-delete_abscos.bin_files: True
-
+delete_abscos.bin_files:
+delete_input_files:
 
 # PATHS
 # The path to the prf folder

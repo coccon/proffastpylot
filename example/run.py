@@ -9,13 +9,13 @@ if __name__ == "__main__":
     try:
         input_file = os.path.join(".", "example",
                             "input_sodankyla_example.yml")
-        MyPRFpylot = Pylot(input_file, logginglevel="debug")
+        MyPRFpylot = Pylot(input_file, logginglevel="info")
         # MyPRFpylot.run(n_processes=2)
         
         MyPRFpylot.run_preprocess(n_processes=2)
         MyPRFpylot.run_pcxs(n_processes=2)
         MyPRFpylot.run_inv(n_processes=2)
         MyPRFpylot.combine_results()
-        MyPRFpylot.clean_files()
     finally:
+        MyPRFpylot.clean_files()
         del MyPRFpylot

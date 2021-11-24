@@ -14,7 +14,7 @@ class Pylot(FileMover):
     """Start all Profast processes."""
 
     def __init__(self, input_file, logginglevel="info"):
-        super(Pylot, self).__init__(input_file, logginglevel="info")
+        super(Pylot, self).__init__(input_file, logginglevel=logginglevel)
         
         self.logger.debug('Initialized the FileMover')
 
@@ -39,10 +39,11 @@ class Pylot(FileMover):
                 tmp_out = self.run_preprocess_at(date)
                 output.append(tmp_out)
         else:
+            self.logger.info("...start parallel processing...")
             tmp_out = self._run_parallel(self.run_preprocess_at, n_processes)
             output = tmp_out
         self._write_logfile("preprocess", output)        
-        self.logger.info("Finished preprocessing.")
+        self.logger.info("... finished preprocessing.")
 
     def run_pcxs(self, n_processes=1):
         """
@@ -145,9 +146,18 @@ class Pylot(FileMover):
     def clean_files(self):
         """After execution clean up the files not needed anymore"""
         if self.delete_abscosbin:
+            self.logger.info("Delete abscos-bin files")
             self.delete_abscos_files()
         else:
+            self.logger.info("Move abscos-bin files")
             self.move_abscos_files()
+        
+        if self.bool_delete_input_files:
+            self.logger.info("delete input files")
+            self.delete_input_files()
+        else:
+            self.logger.info("Move input files")
+            self.move_input_files()
 
     def _call_external_program(self, command_list, **kwargs):
         """
@@ -221,12 +231,6 @@ class Pylot(FileMover):
         logfile.close()
         if err != "":
             self.logger.error(f"Error while running {program_name}:" + err)
-        if program_name == "preprocess":
-            self._move_prep_logfiles()
-
-    def _move_prep_logfiles(self):
-        """Move the logfiles created by preprocess to the logfolder"""
-        pass
 
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""

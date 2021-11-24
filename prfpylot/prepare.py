@@ -5,6 +5,7 @@ from datetime import datetime as dt
 import pandas as pd
 from glob import glob
 import logging
+import shutil
 
 
 class Preparation():
@@ -101,10 +102,17 @@ class Preparation():
             )
         
         # record some notes about the behaviour of the pylot:
-        if args["delete_abscos.bin_files"]:
-            self.delete_abscosbin = True
+        if args["delete_abscos.bin_files"] is not None:
+            self.delete_abscosbin = args["delete_abscos.bin_files"]
         else:
-            self.delete_abscosbin = False
+            self.logger.error("delete_abscos.bin_files not specified!")
+            sys.exit()
+        
+        if args["delete_input_files"] is not None:
+            self.bool_delete_input_files = args["delete_input_files"]
+        else:
+            self.logger.error("delete_input_files not specified!")
+            sys.exit()
 
         # only the base where the result folder is to be safed
         # is given. The final folder is created every runtime.
@@ -124,7 +132,6 @@ class Preparation():
             self.result_folder, "logfiles")
         
         self.logger.info("... read in finished!")
-
 
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
@@ -190,11 +197,13 @@ class Preparation():
         if template_type in ["pcxs", "inv"]:
             folder_path = os.path.join(self.prf_path, "inp_fast")
             date_str = dt.strftime(date, "%y%m%d")
-            filename = self.template_types[template_type] + f"_{date_str}.inp"
+            filename = self.template_types[template_type]\
+                       + f"{self.site_name}_{date_str}.inp"
         if template_type == "prep":
             folder_path = os.path.join(self.prf_path, "preprocess")
             date_str = dt.strftime(date, "%y%m%d")
-            filename = self.template_types[template_type] + f"_{date_str}"\
+            filename = self.template_types[template_type]\
+                       + f"{self.site_name}_{date_str}"\
                        + ".inp"
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
@@ -414,8 +423,6 @@ class Preparation():
             i = self._find_closest(dates, start_date)
         return i
 
-
-
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
         end_date = dt.combine(end_date, dt.min.time())
@@ -479,3 +486,30 @@ class Preparation():
         if len(spectra_list) == 0:
             raise(RuntimeError("No spectra were found"))
         return spectra_list
+
+    def _move_generallogfile_to_logdir(self):
+        """Move the general logfile to the logdir"""
+        # This have to be done at the end, since the folder is createt by the
+        # program itself.
+        for i, logger in enumerate(self.logger.handlers[:]):
+            if i == 1:
+                # TODO: BUGFIX!! Here happens some kind of black-python-magic
+                #       As soon as the below statement is printed an error
+                #       occurs at a place where I do not expect it..?
+                # print(isinstance(logger, logging.FileHandler))
+                # print(logger)
+                logger.close()
+            # self.logger.handlers[:][1].close()
+        target = os.path.join(self.logfile_path,
+                              os.path.basename(self.generalLogfile))
+        try:
+            shutil.move(self.generalLogfile, target)
+        except (FileNotFoundError) as e:
+            self.logger.debug(f"\nsource: {self.generalLogfile} "
+                              f"\ntarget: {target}")
+            self.logger.debug(e)
+            self.logger.error("Could not move logfile to new logfile dir! "
+                              f"File is located in: {self.generalLogfile}")
+
+    def __del__(self):
+        self._move_generallogfile_to_logdir()
