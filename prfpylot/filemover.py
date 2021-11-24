@@ -97,11 +97,6 @@ class FileMover(Preparation):
         else:
             os.makedirs(self.result_folder)
 
-    def rename_prep_internal_logfile(self, logfile):
-        """Rename the internal logfiles of preprocess"""
-        # TODO
-        raise NotImplementedError
-
     def move_results(self):
         """Move the results to the data folder.
         """
@@ -132,22 +127,6 @@ class FileMover(Preparation):
                 except OSError as e:
                     self.logger.error("Unknown error while movig file "
                                       f"{source}. Errormessage: {e}")
-
-
-    def clean_working_files(self):
-        """
-        Delete the files which where created from pylot and profast.
-        The files to be deleted are:
-        - Input file for preprocess:
-            - proffast/prf/preprocess/preprocess4.inp
-        - Input file for pxcs10 and inver10:
-            - proffast/prf/inp_fast/invers10_date.inp
-            - proffast/prf/inp_fast/pcxs10_date.inp
-        - abscos-bin files:
-            - proffast/prf/wrk_fast/SiteDate-abscos.bin
-        """
-        pass
-
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files."""
@@ -207,10 +186,6 @@ class FileMover(Preparation):
                     self.logger.warning("File not found: "
                                         f"Could not move {type} input file"
                                         f" {inp_file}")
-
-    def remove_temporary_files_from_prf():
-        """Remove all temporary files."""
-        pass
 
     def _create_logfile_dir(self):
         """Create logfile dir if is does not exist."""
