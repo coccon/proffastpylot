@@ -3,6 +3,7 @@
 
 from prfpylot.pylot import Pylot
 import os
+import time
 
 if __name__ == "__main__":
     # if __name__ == "__main__" is necessary for multiprocessing
@@ -18,4 +19,4 @@ if __name__ == "__main__":
         MyPRFpylot.combine_results()
     finally:
         MyPRFpylot.clean_files()
-        del MyPRFpylot
+        

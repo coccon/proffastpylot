@@ -6,6 +6,7 @@ import pandas as pd
 from glob import glob
 import logging
 import shutil
+import time
 
 
 class Preparation():
@@ -51,15 +52,16 @@ class Preparation():
         if None not in args["coords"].values():
             self.coords = args["coords"]
             self.coord_file = None  # to avoid overriding given coords
+            self.use_coordfile = False
         else:
             if args["coord_file"] is not None:
-                coord_file = args["coord_file"]
+                self.coords = {}
+                self.coord_file = args["coord_file"]
+                self.use_coordfile = True
+                # self.coords = {}
             else:
-                # TODO: Here, a better path is needed
-                coord_file = os.path.join(
-                    self.base_path, "example", "input_data", 
-                    "coords.csv")
-            self.coords = self.get_coords_from_file(coord_file)
+                self.logger.error("coord_file is not specified!")
+                sys.exit()
 
         # utc time shift of the recorded data
         if args["utc_offset"] is None:
@@ -259,16 +261,17 @@ class Preparation():
         params:
             template_type (str): Can be "prep", "pt", "inv" or "pcxc"
         """
-        if date is not None:
-            date_str = dt.strftime(date, "%y%m%d")
+
+        date_str = dt.strftime(date, "%y%m%d")
         if template_type == "prep":
-            self.logger.info("Generating preprocess4.inp ...")
+            self.logger.info(
+                f"Generating preprocess inp file for {date_str}..")
             parameters = self.get_prep_parameters(date)
         elif template_type == "pcxs":
-            self.logger.info(f"Generating pcxs10_{date_str}.inp ...")
+            self.logger.info(f"Generating pcxs10 inp file for {date_str}..")
             parameters = self.get_pcxs_and_inv_parameters(date)
         elif template_type == "inv":
-            self.logger.info(f"Generating invers10_{date_str}.inp ...")
+            self.logger.info(f"Generating invers10 inp file for {date_str}..")
             parameters = self.get_pcxs_and_inv_parameters(date)
         else:
             raise NotImplementedError("Implement other prf input files.")
@@ -312,8 +315,18 @@ class Preparation():
         Return Parameters to be replaced in the pereprocess input file.
         '''
         ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
-        # TODO: write _get_coords, which gets the coords date specific!
-        lat, lon, alt = self.coords.values()
+        # if coordfile is used, check for the corred coords for each day.
+        # otherwise use the same for all days
+        if self.use_coordfile:
+            self.get_coords_from_file(date)
+        lat = self.coords.get("lat", -1.)
+        lon = self.coords.get("lon", -1.)
+        alt = self.coords.get("alt", -1.)
+
+        if lat == -1. or lon == -1. or alt == -1.:
+            self.logger.critical("Could not determine coodinates. Exit!")
+            sys.exit()
+
         # TODO: Add to comment things like version of Profast, PrfPylot, ...
         comment = (
             "This spectrum is generated using preprocess4, a part of "
@@ -331,10 +344,6 @@ class Preparation():
         # Give the logfile a name:
         logfile = f"Internal_preprocess_log_{datestring}.log"
 
-        # generate path to outputfolder for logfiles for this date.
-        # TODO: First generate the folders!
-
-        # add end marker of input file:
         parameters = {
             'ILS_Channel1': f"{ME1} {PE1}",
             'ILS_Channel2': f"{ME2} {PE2}",
@@ -354,9 +363,17 @@ class Preparation():
     def get_pcxs_and_inv_parameters(self, date):
         """Return Parameters to replace in the pcxs10.inp
         or invers10.inp files."""
-        lat, lon, alt = self.coords.values()
-        spectra_list = self._get_spectra_list(date)
+        self.logger.info("create pcxs and inv input parameter")
+        if self.use_coordfile:
+            self.get_coords_from_file(date)
+        lat = self.coords.get("lat", -1.)
+        lon = self.coords.get("lon", -1.)
+        alt = self.coords.get("alt", -1.)
+        if lat == -1. or lon == -1. or alt == -1.:
+            self.logger.critical("Could not determine coodinates. Exit!")
+            sys.exit()
 
+        spectra_list = self._get_spectra_list(date)
         parameters = {
             "ALT": alt,
             "LAT": lat,
@@ -392,21 +409,28 @@ class Preparation():
             raise (e)
         return (MEChan1, PEChan1, MEChan2, PEChan2)
 
-    def get_coords_from_file(self, coord_file):
+    def get_coords_from_file(self, date):
         '''Return the coordinates from the coord file.'''
-        coord_df = pd.read_csv(coord_file).set_index("Site")
-        lat, lon, alt = 0., 0., 0.
-
-        row = coord_df.loc[self.site_name]
-        lon = row["Longitude"]
-        lat = row["Latitude"]
-        alt = row["Altitude_kmasl"]
-
-        if lat == 0. or lon == 0. or alt == 0:
-            raise Exception(
-                "Error reading CoordFile. Please check format and path.")
-        return {"lat": lat, "lon": lon, "alt": alt}
-
+        coord_df = pd.read_csv(self.coord_file, skipinitialspace=True)
+        coord_df["Starttime"] = pd.to_datetime(coord_df["Starttime"])
+        coord_df = coord_df.set_index('Site')
+        try:
+            coord_df = coord_df.loc[self.site_name]
+        except KeyError:
+            self.logger.critical(f"{self.site_name} is not in coord.csv!")
+            sys.exit()
+        if isinstance(coord_df, pd.Series):
+            # this is the case, if only one entry per site is available
+            self.coords["lat"] = coord_df["Longitude"]
+            self.coords["lon"] = coord_df["Latitude"]
+            self.coords["alt"] = coord_df["Altitude_kmasl"]
+        elif isinstance(coord_df, pd.DataFrame):
+            coord_df = coord_df.loc[coord_df["Starttime"] <= date]
+            row = coord_df.sort_values(by=["Starttime"])
+            self.coords["lat"] = row["Longitude"].iloc[-1]
+            self.coords["lon"] = row["Latitude"].iloc[-1]
+            self.coords["alt"] = row["Altitude_kmasl"].iloc[-1]
+ 
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""
         start_date = dt.combine(start_date, dt.min.time())
@@ -486,30 +510,3 @@ class Preparation():
         if len(spectra_list) == 0:
             raise(RuntimeError("No spectra were found"))
         return spectra_list
-
-    def _move_generallogfile_to_logdir(self):
-        """Move the general logfile to the logdir"""
-        # This have to be done at the end, since the folder is createt by the
-        # program itself.
-        for i, logger in enumerate(self.logger.handlers[:]):
-            if i == 1:
-                # TODO: BUGFIX!! Here happens some kind of black-python-magic
-                #       As soon as the below statement is printed an error
-                #       occurs at a place where I do not expect it..?
-                # print(isinstance(logger, logging.FileHandler))
-                # print(logger)
-                logger.close()
-            # self.logger.handlers[:][1].close()
-        target = os.path.join(self.logfile_path,
-                              os.path.basename(self.generalLogfile))
-        try:
-            shutil.move(self.generalLogfile, target)
-        except (FileNotFoundError) as e:
-            self.logger.debug(f"\nsource: {self.generalLogfile} "
-                              f"\ntarget: {target}")
-            self.logger.debug(e)
-            self.logger.error("Could not move logfile to new logfile dir! "
-                              f"File is located in: {self.generalLogfile}")
-
-    def __del__(self):
-        self._move_generallogfile_to_logdir()

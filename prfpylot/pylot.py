@@ -91,6 +91,8 @@ class Pylot(FileMover):
 
         executable = self._get_executable("prep")
         exec_path = os.path.dirname(executable)
+        
+        outlist = ["only test mode here"]
         out, err = self._call_external_program(
             [executable, inputfile], **{'cwd': exec_path})
         outlist = out, err, " ".join([executable, inputfile])
@@ -131,7 +133,7 @@ class Pylot(FileMover):
         df = self._get_merged_df()
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
-
+        # TODO: Create 
         resultfile = "combined_invparms_{}_StartStopDates{}_{}.csv".format(
                             self.site_name,
                             self.dates[0].strftime("%Y%m%d"),
@@ -158,6 +160,8 @@ class Pylot(FileMover):
         else:
             self.logger.info("Move input files")
             self.move_input_files()
+        
+        self._move_generallogfile_to_logdir()
 
     def _call_external_program(self, command_list, **kwargs):
         """
@@ -250,12 +254,15 @@ class Pylot(FileMover):
         df["JulianDate"] = df["JulianDate"]
         df["UTC"] = pd.to_datetime(
             df["JulianDate"].values, origin="julian", unit="D", utc=True)
-
+        # This needs to be executed, since the calls bevore took place in a
+        # multiprocessing process, which is encapsulated and does not write to
+        # the current instance of the class.
+        if self.use_coordfile:
+            self.get_coords_from_file(self.dates[0])
         tf = TimezoneFinder()
         local_tz_name = tf.timezone_at(
             lat=self.coords["lat"],
             lng=self.coords["lon"])
-
         local_tz = pytz.timezone(local_tz_name)
         df["LocalTime"] = df["UTC"].dt.tz_convert(local_tz)
         return df

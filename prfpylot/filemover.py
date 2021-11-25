@@ -194,3 +194,31 @@ class FileMover(Preparation):
                 f"Logfile path did not exist, create {self.logfile_path}")
             os.makedirs(self.logfile_path)
         self.logger.debug(f"Logfile_path: {self.logfile_path}")
+
+    def _move_generallogfile_to_logdir(self):
+        """Move the general logfile to the logdir"""
+        # This have to be done at the end, since the folder is createt by the
+        # program itself.
+        for i, handler in enumerate(self.logger.handlers[:]):
+            if i == 1:
+                # TODO: BUGFIX!! Here happens some kind of black-python-magic
+                #       As soon as the below statement is printed an error
+                #       occurs at a place where I do not expect it..?
+                # print(isinstance(logger, logging.FileHandler))
+                #print(handler)
+                handler.close()
+                self.logger.removeHandler(handler)
+                del handler
+            # self.logger.handlers[:][1].close()
+        target = os.path.join(self.logfile_path,
+                              os.path.basename(self.generalLogfile))
+        try:
+            shutil.move(self.generalLogfile, target)
+            self.logger.info("Moved the general logfile to the"
+                             " result/logfiles folder")
+        except (FileNotFoundError) as e:
+            self.logger.debug(f"\nsource: {self.generalLogfile} "
+                              f"\ntarget: {target}")
+            self.logger.debug(e)
+            self.logger.error("Could not move logfile to new logfile dir! "
+                              f"File is located in: {self.generalLogfile}")        
