@@ -1,6 +1,5 @@
 import os
 from glob import glob
-import datetime as dt
 import shutil
 from prfpylot.prepare import Preparation
 
@@ -85,7 +84,7 @@ class FileMover(Preparation):
             backuped_results = glob(self.result_folder + "_backup*")
             # rename existing folder by adding _backupN where N is the N-th
             # backup
-            result_folder_backup =self.result_folder\
+            result_folder_backup = self.result_folder\
                 + f"_backup{len(backuped_results)}"
             self.logger.warning(
                 f"Result directory {self.result_folder} exists! "

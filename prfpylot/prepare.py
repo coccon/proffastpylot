@@ -6,8 +6,6 @@ from datetime import datetime as dt
 import pandas as pd
 from glob import glob
 import logging
-import shutil
-import time
 
 
 class Preparation():
@@ -194,14 +192,18 @@ class Preparation():
         if template_type in ["pcxs", "inv"]:
             folder_path = os.path.join(self.proffast_path, "inp_fast")
             date_str = dt.strftime(date, "%y%m%d")
-            filename = self.template_types[template_type]\
-                       + f"{self.site_name}_{date_str}.inp"
+            filename = "".join(
+                [self.template_types[template_type],
+                    f"{self.site_name}_{date_str}.inp"]
+            )
         if template_type == "prep":
             folder_path = os.path.join(self.proffast_path, "preprocess")
             date_str = dt.strftime(date, "%y%m%d")
-            filename = self.template_types[template_type]\
-                       + f"{self.site_name}_{date_str}"\
-                       + ".inp"
+            filename = "".join(
+                [self.template_types[template_type],
+                    f"{self.site_name}_{date_str}",
+                    ".inp"]
+                )
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 

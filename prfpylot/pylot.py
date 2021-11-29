@@ -4,7 +4,6 @@ from prfpylot.pressure import PressureParameters, \
 import pandas as pd
 from subprocess import Popen, PIPE
 import os
-import time
 import sys
 from glob import glob
 import multiprocessing
@@ -125,7 +124,8 @@ class Pylot(FileMover):
             self.get_prf_input_path("inv", date))
         executable = self._get_executable("inv")
         out, err = self._call_external_program(
-                    [executable, prf_input_path], **{'cwd': self.proffast_path})
+                    [executable, prf_input_path],
+                    **{'cwd': self.proffast_path})
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
