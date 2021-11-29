@@ -12,6 +12,10 @@ Logfile.txt
 data/
 *.yml
 *.egg-info/
-*.py
-*.md
-
+build/
+example/*
+docs/
+prfpylot/templates/template_preprocess4_old.inp
+Notes_Besprechung.txt
+desktop.ini
+GeneralLogfile.log

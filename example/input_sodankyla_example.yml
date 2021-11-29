@@ -38,11 +38,16 @@ end_date:
 # Leave empty adding no comment
 note:
 
+# BEHAVIOUR:
+delete_abscos.bin_files:
+delete_input_files:
 
+# PATHS
+# The path to the prf folder
+profast_path: 
+# The path where the prfpylot folder is located
+base_path:
 
-# PATH
-
-profast_path:
 
 # input data
 interferogram_path:
@@ -55,6 +60,8 @@ pressure_path:
 # if type is original, naming of the files should be <site_abbrev>_<yy-mm-dd>.inp
 pressure_type: log
 
+# intermediate data
+spectra_path:
+
 # output data
-analysis_path: 
-result_path:
+result_path: 

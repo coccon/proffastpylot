@@ -1,6 +1,6 @@
-Input File for COCCON PROCEEDS Preprocessor
+Input file for COCCON PROCEEDS prf96-EM27-fast\preprocessor                        
 
-Generate ASCII Output for Testing
+Generate ASCII output for testing
 mpowFFT (17 for EM27/SUN)
 DCmin
 DCvar
@@ -11,19 +11,19 @@ $
 0.10
 
 
-ILS Parameter: Apo + Phase Error
-Primary Channel
-Secondary Channel
+ILS parameter: apo + phase error
+primary channel
+secondary channel
 $
 %ILS_Channel1%
 %ILS_Channel2%
 
 
-T/F: Fixed or Variable Observer Coordinates
-Specify Site Name
-Specify Time Offset of OPUS Time versus UT (hours + decimals)
-If Fixed Observer Coordinates:
-Specify Fixed Observer Coordinates (lat_deg, lon_deg (East pos), alt_km)
+T/F: fixed or variable observer coordinates
+specify site name
+specify time offset of OPUS time versus UT (hours+decimals)
+if fixed observer coordinates: specify fixed observer coords (lat_deg,long_deg (East pos),alt_km)
+
 $
 .true.
 %site_name%
@@ -31,12 +31,23 @@ $
 %lat%  %lon%  %alt%
 
 
-Input for Comments Added to File Header (up to 150 Characters)
+Quiet execution (no user requests)
+Output path diagnosis
+Output filename diagnosis
+Output path bin spectra
+$
+.true.
+%path_preprocess_log%
+%filename_logfile%
+%path_spectra%
+
+
+input for comments added to file header (up to 150 characters)
 $
 %comment%
 
 
-List of Raw Measurements (path and filename, end marker ***)
+list of raw measurements (path and filename, end marker ***)
 $
 %igrams%
 ***
