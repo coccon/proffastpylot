@@ -12,8 +12,8 @@ class PressureParameters():
     filename_parameters = {
         "log": {
             "basename": "",
-            "time_format": "",
-            "ending": ""
+            "time_format": "%Y-%m-%d",
+            "ending": "_00-00-00.dat"
         }
     }
 
