@@ -148,7 +148,7 @@ class Pylot(FileMover):
             return
 
         params = PressureParameters.df_parameters[self.pressure_type]
-        filename = PressureParameters.get_filename(self.pressure_type)
+        filename = self._get_pressure_file_at(date)
         pt_input_file = os.path.join(self.pressure_path, filename)
         p_list = read_pressure_from_file(
             file=pt_input_file,
@@ -352,3 +352,11 @@ class Pylot(FileMover):
         if sys.platform == "win32":
             executable += ".exe"
         return executable
+
+    def _get_pressure_file_at(self, date):
+        """Return path to pressure file of given date."""
+        search_string = PressureParameters.get_filename(self.pressure_type)
+        pressure_file = glob(search_string)
+        assert len(pressure_file) == 1
+        pressure_file = pressure_file[0]
+        return pressure_file

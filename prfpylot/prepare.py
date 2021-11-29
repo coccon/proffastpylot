@@ -221,18 +221,6 @@ class Preparation():
 
         return map_file
 
-    def get_log_file(self, date):
-        """Return path to log (=pT) file of given date."""
-        search_string = os.path.join(
-            self.datalogger_path,
-            "{date}*.dat".format(date=date.strftime("%Y-%m-%d")))
-        log_file = glob(search_string)
-
-        assert len(log_file) == 1
-        log_file = log_file[0]
-
-        return log_file
-
     def generate_prf_input(self, template_type, date):
         """Generate a template file.
 
