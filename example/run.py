@@ -8,13 +8,12 @@ import time
 if __name__ == "__main__":
     # if __name__ == "__main__" is necessary for multiprocessing
     try:
-        input_file = os.path.join(".", "example",
-                            "input_sodankyla_example.yml")
+        input_file = "input_sodankyla_example.yml"
         MyPRFpylot = Pylot(input_file, logginglevel="info")
         # MyPRFpylot.run(n_processes=2)
         
-        MyPRFpylot.run_preprocess(n_processes=2)
-        MyPRFpylot.run_pcxs(n_processes=2)
+        #MyPRFpylot.run_preprocess(n_processes=2)
+        #MyPRFpylot.run_pcxs(n_processes=2)
         MyPRFpylot.run_inv(n_processes=2)
         MyPRFpylot.combine_results()
     finally:

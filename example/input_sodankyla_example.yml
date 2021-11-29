@@ -20,7 +20,7 @@ coords:
 # full path to the coord file.
 # This file contains the coorindates of the sites.
 # default: ${root_path}\data\coords.csv
-coord_file:
+coord_file: /home/feld/example/coords.csv
 
 
 # if times of the recorded data is not stored in UTC, insert the offset here
@@ -45,10 +45,10 @@ note:
 proffast_path:
 
 # input data
-interferogram_path:
-map_path:
+interferogram_path: /home/feld/Projects/prfpylot/example/input_data/interferograms_sodankyla
+map_path: /home/feld/Projects/prfpylot/example/input_data/map_sodankyla
 
-pressure_path: 
+pressure_path: /home/feld/Projects/prfpylot/example/input_data/pressure_sodankyla
 # the pressure type defines the format of the pressure file
 # type original if you want to create the pt_intraday.inp file by yourself
 # in the documentation about the pressure is described how to create your own filetype
@@ -56,5 +56,5 @@ pressure_path:
 pressure_type: log
 
 # output data
-analysis_path: 
-result_path:
+analysis_path: /home/feld/Projects/prfpylot/example/output/analysis
+result_path: /home/feld/Projects/prfpylot/example/output/results

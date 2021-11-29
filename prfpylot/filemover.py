@@ -35,7 +35,7 @@ class FileMover(Preparation):
         """
         for date in self.dates:
             datestring = date.strftime("%y%m%d")
-            outfolder = os.path.join(self.spectra_path, datestring, "cal")
+            outfolder = os.path.join(self.analysis_path, datestring, "cal")
             if not os.path.exists(outfolder):
                 os.makedirs(outfolder)
             else:
@@ -52,7 +52,7 @@ class FileMover(Preparation):
         pt_path = os.path.join(
             # TODO: Check if this is correct
             # self.data_path,
-            self.spectra_path,
+            self.analysis_path,
             date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
