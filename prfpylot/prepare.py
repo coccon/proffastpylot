@@ -1,3 +1,4 @@
+import prfpylot
 import os
 import sys
 import yaml
@@ -34,20 +35,13 @@ class Preparation():
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
 
-        # set parameters from input file
-        self.instrument_number = args["instrument_number"]
-        self.site_name = args["site_name"]
-        self.site_abbrev = args["site_abbrev"]
-        self.note = args["note"]
-
-        # path to the profast folder
-        self.prf_path = args["profast_path"]
-
-        self.base_path = args["base_path"]  # proffast base directory
-        if self.base_path is None:
-            self.logger.error("base_path is not specified!")
-            sys.exit()
-
+        self.prfpylot_path = prfpylot.__path__[0]
+        
+        # path to the PROFFAST executables
+        self.proffast_path = args["proffast_path"]
+        if self.proffast_path is None:
+            self.proffast_path = os.path.join(self.prfpylot_path, "prf")
+        
         # coordinates
         if None not in args["coords"].values():
             self.coords = args["coords"]
@@ -76,14 +70,15 @@ class Preparation():
             sys.exit()
 
         # TODO: Change to pressure_path
-        self.datalogger_path = args["pressure_path"]
-
-        if self.datalogger_path is None:
+        self.pressure_path = args["pressure_path"]
+        if self.pressure_path is None:
             self.logger.error("pressure_path is not specified!")
             sys.exit()
 
+        self.pressure_type = args["pressure_type"]
+
         # ILS-File is hardcoded since it will be released with prfpylot
-        self.ils_file = os.path.join(self.base_path, 'prfpylot', 'ILSList.csv')
+        self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')
 
         # igram path:
         self.igram_path = args["interferogram_path"]
@@ -189,7 +184,7 @@ class Preparation():
 
     def get_template_path(self, template_type):
         """Return path to the corresponding template file."""
-        folder_path = os.path.join(self.base_path, "prfpylot", "templates")
+        folder_path = os.path.join(self.prfpylot_path, "templates")
         filename = "template_{}.inp".format(self.template_types[template_type])
         template_path = os.path.join(folder_path, filename)
         return template_path
@@ -197,12 +192,12 @@ class Preparation():
     def get_prf_input_path(self, template_type, date=None):
         """Return path to the corresponding prf_input_file."""
         if template_type in ["pcxs", "inv"]:
-            folder_path = os.path.join(self.prf_path, "inp_fast")
+            folder_path = os.path.join(self.proffast_path, "inp_fast")
             date_str = dt.strftime(date, "%y%m%d")
             filename = self.template_types[template_type]\
                        + f"{self.site_name}_{date_str}.inp"
         if template_type == "prep":
-            folder_path = os.path.join(self.prf_path, "preprocess")
+            folder_path = os.path.join(self.proffast_path, "preprocess")
             date_str = dt.strftime(date, "%y%m%d")
             filename = self.template_types[template_type]\
                        + f"{self.site_name}_{date_str}"\

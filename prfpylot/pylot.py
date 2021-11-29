@@ -110,7 +110,7 @@ class Pylot(FileMover):
 
         executable = self._get_executable("pcxs")
         out, err = self._call_external_program(
-            [executable, prf_input_path], **{'cwd': self.prf_path})
+            [executable, prf_input_path], **{'cwd': self.proffast_path})
 
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
@@ -125,7 +125,7 @@ class Pylot(FileMover):
             self.get_prf_input_path("inv", date))
         executable = self._get_executable("inv")
         out, err = self._call_external_program(
-                    [executable, prf_input_path], **{'cwd': self.prf_path})
+                    [executable, prf_input_path], **{'cwd': self.proffast_path})
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
@@ -155,7 +155,7 @@ class Pylot(FileMover):
             **params)
 
         template_path = os.path.join(
-            self.prf_path, "prfpylot", "templates", "template_pt_intraday.inp"
+            self.prfpylot_path, "templates", "template_pt_intraday.inp"
             )
         pt_intraday = generate_pt_intraday(p_list, template_path)
 
@@ -342,12 +342,12 @@ class Pylot(FileMover):
             executable (str): depending on the current operating system.
         """
         if program == "prep":
-            executable = os.path.join(self.prf_path, "preprocess",
+            executable = os.path.join(self.proffast_path, "preprocess",
                                       "preprocess4")
         if program == "pcxs":
-            executable = os.path.join(self.prf_path, "pcxs10")
+            executable = os.path.join(self.proffast_path, "pcxs10")
         if program == "inv":
-            executable = os.path.join(self.prf_path, "invers10")
+            executable = os.path.join(self.proffast_path, "invers10")
 
         if sys.platform == "win32":
             executable += ".exe"
