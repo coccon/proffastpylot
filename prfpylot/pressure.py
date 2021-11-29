@@ -2,48 +2,80 @@
 The user can add own functions to handle the viarity of data formats.
 """
 
-import os
-import shutil
 import pandas as pd
 from datetime import datetime as dt
 
 
-log_file_parms = {
-    "key_pressure": "BaroTHB40",
-    "key_time": "UTCtime___",
-    "fmt_time": "%H:%M:%S",
-    "csv_kwargs": {
-        "sep": "\t"
+class PressureParameters():
+    """Storage for different pressure file formats."""
+
+    filename_parameters = {
+        "log": {
+            "basename": "",
+            "time_format": "",
+            "ending": ""
+        }
     }
-}
+
+    df_prameters = {
+        "log": {
+            "key_pressure": "BaroTHB40",
+            "key_time": "UTCtime___",
+            "fmt_time": "%H:%M:%S",
+            "csv_kwargs": {
+                "sep": "\t"
+            }
+        }
+    }
+
+    def get_filename(self, pressure_type, date):
+        """Return merged filename of pressure_type."""
+        params = self.filename_parameters[pressure_type]
+        filename = "".join(
+                params["basename"],
+                date.strftime(params["time_format"]),
+                params["ending"]
+            )
+        return filename
 
 
-def generate_pt_intraday(self, date):
-    """Skript #3 generate pt files."""
-    # TODO: Insert Header!
+def create_p_lines(self, p_list):
+    """Create a string with times and pressure in the format of the intraday file.
+    
+    Params:
+        p_list: list of tuple with time and pressure.
+    """
+    p_lines_list = []
+    for time, p in p_list:
+        p_line = "\t".join(
+            [
+                time.strftime("%H%M%S"),
+                str(p),
+                "0.0"
+            ])
+        p_lines_list.append(p_line)
+    p_lines = "\n".join(p_lines_list)
+    return p_lines
 
-    date_str = date.strftime("%y%m%d")
-    pt_folder = os.path.join(self.data_path, date_str, "pT")
-    pt_file = os.path.join(pt_folder, "pT_intraday.inp")
 
-    if self.intraday_path is not None:
-        filename = "{}_{}.inp".format(
-            self.site_abbrev, date.strftime("%y-%m-%d"))
-        intraday_file = os.path.join(
-            self.intraday_path, filename)
-        shutil.copy(intraday_file, pt_file)
-        return
+def generate_pt_intraday(p_list, template_path):
+    """Generate pt_intraday file from p_list.
 
-    log_file = self.get_log_file(date)
-    pt_lines = self._read_pressure_from_logfile(log_file)
-    with open(pt_file, "w") as f:
-        f.write("$\n")
-        f.write("\n".join(pt_lines))
-        f.write("\n***\n")
+    Params:
+        p_list: See read_pressure_from_file
+        template_path: path to  template_pt_intraday.inp
+    """
+    p_lines = create_p_lines(p_list)
+    with open(template_path, "r") as f:
+        intraday_lines = f.readlines()
+    for intraday_line in intraday_lines:
+        intraday_line.replace("%p_lines%", p_lines)
+    pt_intraday = "\n".join(intraday_lines)
+    return pt_intraday
 
 
 def read_pressure_from_file(
-        self, file, key_pressure, key_time, fmt_time, csv_kwargs={}):
+        file, key_pressure, key_time, fmt_time, csv_kwargs={}):
     """Read list of lines with pairs of time and pressure.
 
     Params:
@@ -64,22 +96,5 @@ def read_pressure_from_file(
         p = row[key_time]
         if p > 500 and p < 1500:
             time = dt.strptime(row[key_time], fmt_time)
-        p_list.append((p, time))
+            p_list.append((time, p))
     return p_list
-
-
-def create_p_lines(self, p_list):
-    """Create list of lines in the format of the intraday file.
-    Params:
-        p_list: list of tuple with time and pressure.
-    """
-    p_lines = []
-    for time, p in p_list:
-        p_line = "\t".join(
-            [
-                time.strftime("%H%M%S"),
-                str(p),
-                "0.0"
-            ])
-        p_lines.append(p_line)
-    return p_lines

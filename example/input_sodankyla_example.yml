@@ -47,16 +47,14 @@ profast_path:
 # input data
 interferogram_path:
 map_path:
-pressure_path:
+
+pressure_path: 
+# the pressure type defines the format of the pressure file
+# type original if you want to create the pt_intraday.inp file by yourself
+# in the documentation about the pressure is described how to create your own filetype
+# if type is original, naming of the files should be <site_abbrev>_<yy-mm-dd>.inp
+pressure_type: log
 
 # output data
 analysis_path: 
 result_path:
-
-
-# to be replaced with pressure path later on
-# use own intraday files
-# leave empty if it should be 
-# generated automatically from the datalogger file
-# naming of the files should be <site_abbrev>_<yy-mm-dd>.inp
-intraday_path: "/home/lena/Projects/data/intraday/"

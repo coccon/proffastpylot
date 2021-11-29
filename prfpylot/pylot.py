@@ -1,4 +1,6 @@
 from prfpylot.filemover import FileMover
+from prfpylot.pressure import PressureParameters, \
+    read_pressure_from_file, generate_pt_intraday
 import pandas as pd
 from subprocess import Popen, PIPE
 import os
@@ -8,6 +10,7 @@ from glob import glob
 import multiprocessing
 from timezonefinder import TimezoneFinder
 import pytz
+import shutil
 
 
 class Pylot(FileMover):
@@ -101,7 +104,7 @@ class Pylot(FileMover):
         return outlist
 
     def run_inv_at(self, date):
-        self.generate_pt_intraday(date)
+        self.prepare_pressure_at(date)
         self.generate_prf_input("inv", date)
 
         prf_path = os.path.join(self.base_path, "prf")
@@ -112,6 +115,39 @@ class Pylot(FileMover):
                     [executable, prf_input_path], **{'cwd': prf_path})
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
+
+    def prepare_pressure_at(self, date):
+        """Perpare the pressure input data for a date.
+
+        Depending on the options the pt_intraday file is either generated
+        or copied to its destination for each day.
+        """
+        date_str = date.strftime("%y%m%d")
+        pt_folder = os.path.join(self.analysis_path, date_str, "pT")
+        intraday_file = os.path.join(pt_folder, "pT_intraday.inp")
+
+        if self.pressure_type == "original":
+            filename = "{}_{}.inp".format(
+                self.site_abbrev, date.strftime("%y-%m-%d"))
+            src_intraday_file = os.path.join(
+                self.intraday_path, filename)
+            shutil.copy(src_intraday_file, intraday_file)
+            return
+
+        params = PressureParameters.df_parameters[self.pressure_type]
+        filename = PressureParameters.get_filename(self.pressure_type)
+        pt_input_file = os.path.join(self.pressure_path, filename)
+        p_list = read_pressure_from_file(
+            file=pt_input_file,
+            **params)
+
+        template_path = os.path.join(
+            self.prf_path, "prfpylot", "templates", "template_pt_intraday.inp"
+            )
+        pt_intraday = generate_pt_intraday(p_list, template_path)
+
+        with open(intraday_file, "w") as f:
+            f.write(pt_intraday)
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
