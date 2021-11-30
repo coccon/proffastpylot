@@ -38,7 +38,8 @@ class Preparation():
         # path to the PROFFAST executables
         self.proffast_path = args["proffast_path"]
         if self.proffast_path is None:
-            self.proffast_path = os.path.join(self.prfpylot_path, "prf")
+            head, _ = os.path.split(self.prfpylot_path)
+            self.proffast_path = os.path.join(head, "prf")
         
         # coordinates
         if None not in args["coords"].values():

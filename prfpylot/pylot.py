@@ -355,7 +355,10 @@ class Pylot(FileMover):
 
     def _get_pressure_file_at(self, date):
         """Return path to pressure file of given date."""
-        search_string = PressureParameters.get_filename(self.pressure_type)
+        p_params = PressureParameters()
+        filename = p_params.get_filename(self.pressure_type, date)
+        search_string = os.path.join(self.pressure_path, filename)
+        
         pressure_file = glob(search_string)
         assert len(pressure_file) == 1
         pressure_file = pressure_file[0]

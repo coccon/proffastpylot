@@ -13,11 +13,11 @@ class PressureParameters():
         "log": {
             "basename": "",
             "time_format": "%Y-%m-%d",
-            "ending": "_00-00-00.dat"
+            "ending": "*.dat"
         }
     }
 
-    df_prameters = {
+    df_parameters = {
         "log": {
             "key_pressure": "BaroTHB40",
             "key_time": "UTCtime___",
@@ -32,14 +32,14 @@ class PressureParameters():
         """Return merged filename of pressure_type."""
         params = self.filename_parameters[pressure_type]
         filename = "".join(
-                params["basename"],
-                date.strftime(params["time_format"]),
-                params["ending"]
+                [params["basename"],
+                    date.strftime(params["time_format"]),
+                    params["ending"]]
             )
         return filename
 
 
-def create_p_lines(self, p_list):
+def create_p_lines(p_list):
     """Create a string with times and pressure in the format of the intraday file.
     
     Params:
@@ -68,9 +68,10 @@ def generate_pt_intraday(p_list, template_path):
     p_lines = create_p_lines(p_list)
     with open(template_path, "r") as f:
         intraday_lines = f.readlines()
-    for intraday_line in intraday_lines:
-        intraday_line.replace("%p_lines%", p_lines)
-    pt_intraday = "\n".join(intraday_lines)
+    for i, line in enumerate(intraday_lines):
+        intraday_lines[i] = line.replace("%p_lines%", p_lines)
+        print(intraday_lines[i])
+    pt_intraday = "".join(intraday_lines)
     return pt_intraday
 
 
@@ -90,10 +91,9 @@ def read_pressure_from_file(
 
     """
     log = pd.read_csv(file, **csv_kwargs)
-
     p_list = []
     for i, row in log.iterrows():
-        p = row[key_time]
+        p = row[key_pressure]
         if p > 500 and p < 1500:
             time = dt.strptime(row[key_time], fmt_time)
             p_list.append((time, p))
