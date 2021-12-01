@@ -98,17 +98,17 @@ class Preparation():
             )
         
         # record some notes about the behaviour of the pylot:
-        # if args["delete_abscos.bin_files"] is not None:
-        #     self.delete_abscosbin = args["delete_abscos.bin_files"]
-        # else:
-        #     self.logger.error("delete_abscos.bin_files not specified!")
-        #     sys.exit()
+        if args["delete_abscos.bin_files"] is not None:
+            self.delete_abscosbin = args["delete_abscos.bin_files"]
+        else:
+            self.logger.error("delete_abscos.bin_files not specified!")
+            sys.exit()
         
-        # if args["delete_input_files"] is not None:
-        #     self.bool_delete_input_files = args["delete_input_files"]
-        # else:
-        #     self.logger.error("delete_input_files not specified!")
-        #     sys.exit()
+        if args["delete_input_files"] is not None:
+            self.bool_delete_input_files = args["delete_input_files"]
+        else:
+            self.logger.error("delete_input_files not specified!")
+            sys.exit()
 
         # only the base where the result folder is to be safed
         # is given. The final folder is created every runtime.

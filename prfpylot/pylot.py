@@ -135,6 +135,7 @@ class Pylot(FileMover):
         Depending on the options the pt_intraday file is either generated
         or copied to its destination for each day.
         """
+        self.logger.debug("Call 'prepare_pressure_at'")
         date_str = date.strftime("%y%m%d")
         pt_folder = os.path.join(self.analysis_path, date_str, "pT")
         intraday_file = os.path.join(pt_folder, "pT_intraday.inp")

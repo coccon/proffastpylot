@@ -70,7 +70,6 @@ def generate_pt_intraday(p_list, template_path):
         intraday_lines = f.readlines()
     for i, line in enumerate(intraday_lines):
         intraday_lines[i] = line.replace("%p_lines%", p_lines)
-        print(intraday_lines[i])
     pt_intraday = "".join(intraday_lines)
     return pt_intraday
 

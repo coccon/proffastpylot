@@ -38,7 +38,9 @@ end_date:
 # Leave empty adding no comment
 note:
 
-
+# BEHAVIOUR:
+delete_abscos.bin_files: True
+delete_input_files: True
 
 # PATH
 
