@@ -13,8 +13,8 @@ class Preparation():
 
     template_types = {
         "prep": "preprocess4",
-        "inv": "invers10",
-        "pcxs": "pcxs10"
+        "inv": "invers20",
+        "pcxs": "pcxs20"
     }
 
     def __init__(self, input_path="input.yml", logginglevel="info"):
@@ -239,14 +239,11 @@ class Preparation():
             self.logger.info(
                 f"Generating preprocess inp file for {date_str}..")
             parameters = self.get_prep_parameters(date)
-        elif template_type == "pcxs":
-            self.logger.info(f"Generating pcxs10 inp file for {date_str}..")
-            parameters = self.get_pcxs_and_inv_parameters(date)
-        elif template_type == "inv":
-            self.logger.info(f"Generating invers10 inp file for {date_str}..")
-            parameters = self.get_pcxs_and_inv_parameters(date)
         else:
-            raise NotImplementedError("Implement other prf input files.")
+            self.logger.info(f"Generating {self.template_types[template_type]}"
+                             f" inp file for {date_str}..")
+            parameters = self.get_pcxs_and_inv_parameters(date)
+
         self.replace_params_in_template(parameters, template_type, date)
 
     def get_igrams(self, date):
@@ -359,6 +356,11 @@ class Preparation():
             "MAPPATH": self.map_path,
             "SPECTRA_LIST": "\n".join(spectra_list)
         }
+        # in case of pcxs20 the parameter %WET_VMR% is needed in addition:
+        if self.template_types["pcxs"] == "pcxs20":
+            # in case of GGG2014 map files it is dry air (False)
+            # in case of GGG2020 map files it is wet air. (True)
+            parameters["WET_VMR"] = False
         return parameters
 
     def get_ils_from_file(self, date):

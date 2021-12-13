@@ -344,11 +344,10 @@ class Pylot(FileMover):
         """
         if program == "prep":
             executable = os.path.join(self.proffast_path, "preprocess",
-                                      "preprocess4")
-        if program == "pcxs":
-            executable = os.path.join(self.proffast_path, "pcxs10")
-        if program == "inv":
-            executable = os.path.join(self.proffast_path, "invers10")
+                                      self.template_types[program])
+        else:
+            executable = os.path.join(self.proffast_path,
+                                      self.template_types[program])
 
         if sys.platform == "win32":
             executable += ".exe"
@@ -364,3 +363,4 @@ class Pylot(FileMover):
         assert len(pressure_file) == 1
         pressure_file = pressure_file[0]
         return pressure_file
+
