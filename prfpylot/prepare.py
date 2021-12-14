@@ -283,6 +283,7 @@ class Preparation():
         '''
         Return Parameters to be replaced in the pereprocess input file.
         '''
+        # get ILS for Channel 1 and 2 for a specific date
         ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
         # if coordfile is used, check for the corred coords for each day.
         # otherwise use the same for all days
@@ -371,16 +372,36 @@ class Preparation():
         directly.
         """
         # TODO: when getting the ILS check for the date. 
-        ils_df = pd.read_csv(self.ils_file)
+        ils_df = pd.read_csv(self.ils_file, skipinitialspace=True)
+        ils_df["ValidSince"] = pd.to_datetime(ils_df["ValidSince"])
+        ils_df = ils_df.set_index("Instrument")
+
         try:
-            temp = ils_df[ils_df['Instrument'] == self.instrument_number]
-            MEChan1 = temp.iloc[0]['Channel1ME']
-            PEChan1 = temp.iloc[0]['Channel1PE']
-            MEChan2 = temp.iloc[0]['Channel2ME']
-            PEChan2 = temp.iloc[0]['Channel2PE']
+            ils_df = ils_df.loc[self.instrument_number]
         except KeyError as e:
-            self.logger.error('It was not possible to get ILS from file')
-            raise (e)
+            self.logger.critical(
+                f"{self.instrument_number} is not in ILS-file.\n"
+                "Please ensure you downloaded the newest version from GitLab\n"
+                )
+            sys.exit()
+        if isinstance(ils_df, pd.Series):
+            # this is the case, if only one entry per instrument is available
+            MEChan1 = ils_df['Channel1ME']
+            PEChan1 = ils_df['Channel1PE']
+            MEChan2 = ils_df['Channel2ME']
+            PEChan2 = ils_df['Channel2PE']
+        elif isinstance(ils_df, pd.DataFrame):
+            ils_df = ils_df.loc[ils_df["ValidSince"] <= date]
+            row = ils_df.sort_values(by=["ValidSince"])
+            MEChan1 = row["Channel1ME"].iloc[-1]        
+            MEChan2 = row["Channel2ME"].iloc[-1]        
+            PEChan1 = row["Channel1PE"].iloc[-1]        
+            PEChan2 = row["Channel2PE"].iloc[-1]
+        else:
+            self.logger.critical("An unknown error occured while reading the "
+                                 "ILS-list. Please contact the support!")
+            sys.exit()
+
         return (MEChan1, PEChan1, MEChan2, PEChan2)
 
     def get_coords_from_file(self, date):
