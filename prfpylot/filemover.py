@@ -22,26 +22,45 @@ class FileMover(Preparation):
         - logfiles
         """
         self._check_proffast_folders()
-        for date in self.dates:
-            self._create_pT_dir(date)
-            self._create_cal_dir(date)
+        self._create_analysis_subdirs()
         self._create_result_dir()
         self._create_logfile_dir()
-        self._create_spectra_outputfolder()
+        # This is not necessary any more for the new preprocess version.
+        # TODO: Check if it can be deleted!
+        # for date in self.dates:
+        #     self._create_cal_dir(date)
+        
 
-    def _create_spectra_outputfolder(self):
-        """This method creates a folder for each day of the input igrams in
-        the spectra output folder. 
+    def _create_analysis_subdirs(self):
         """
+        Create the subdirs of the analysis folder.
+        This includes 'cal'-folder for the spectra, 'VMR-dim' for the
+        VMR-files, pT
+        """
+        self.analysis_path = os.path.join(
+                    self.analysis_path,
+                    f"{self.site_name}_{self.instrument_number}")
+        # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
         for date in self.dates:
             datestring = date.strftime("%y%m%d")
-            outfolder = os.path.join(self.analysis_path, datestring, "cal")
-            if not os.path.exists(outfolder):
-                os.makedirs(outfolder)
+            # create cal-folder
+            calfolder = os.path.join(self.analysis_path, datestring, "cal")
+            if not os.path.exists(calfolder):
+                os.makedirs(calfolder)
             else:
-                self.logger.warning(f"Spectra folder for date {datestring}"
+                self.logger.warning(f"cal folder for date {datestring}"
                                     " exists already."
                                     " Content may be overwritten.")
+            # create VMR_dim folder:
+            vmrfolder = os.path.join(self.analysis_path, datestring, "VMR_dim")
+            if not os.path.exists(vmrfolder):
+                os.makedirs(vmrfolder)
+            else:
+                self.logger.warning(f"VMR_dim folder for date {datestring}"
+                                    " exists already."
+                                    " Content may be overwritten.")
+            self._create_pT_dir(date)
+
 
     def _check_proffast_folders(self):
         """Check if relevant Profast folders are in place."""
@@ -50,8 +69,6 @@ class FileMover(Preparation):
     def _create_pT_dir(self, date):
         """Create pt directory."""
         pt_path = os.path.join(
-            # TODO: Check if this is correct
-            # self.data_path,
             self.analysis_path,
             date.strftime("%y%m%d"),
             "pT")
@@ -59,7 +76,9 @@ class FileMover(Preparation):
             os.makedirs(pt_path)
 
     def _create_cal_dir(self, date):
-        """Create the cal dir in the interferogram folder, overwrite if exists.
+        """
+        DEPRECATED!
+        Create the cal dir in the interferogram folder, overwrite if exists.
         """
         date_str = date.strftime("%y%m%d")
         igram_folder = os.path.join(self.igram_path, date_str)
@@ -147,7 +166,6 @@ class FileMover(Preparation):
         size = 0
         for file in abscosbinfiles:
             size += os.path.getsize(file)
-        print(size)
         size = size / (1024 * 1024 * 1024)  # get size in GB, was in bytes
         self.logger.debug(f"Size of all abscosbin files: {size} GB.")
         if size > 100.:
