@@ -189,8 +189,10 @@ class Pylot(FileMover):
             self.logger.info("Delete abscos-bin files")
             self.delete_abscos_files()
         else:
-            self.logger.info("Move abscos-bin files")
-            self.move_abscos_files()
+            self.logger.info("Do not delete abscos-bin files. "
+                             "They are located in "
+                             f"{os.path.join(self.proffast_path, 'wrk-fast')}")
+            self.check_abscosbin_summed_size()
         
         if self.bool_delete_input_files:
             self.logger.info("delete input files")

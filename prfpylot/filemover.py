@@ -136,24 +136,24 @@ class FileMover(Preparation):
                 os.remove(os.path.join(wrk_fast_folder, filename))
             except FileNotFoundError:
                 self.logger.warning("File not Found: "
-                                    f"Could not move {source}")
+                                    f"Could not delete {filename}")
 
-    def move_abscos_files(self):
-        """Move abscos.bin files to result folder"""
+    def check_abscosbin_summed_size(self):
+        """Get size of all abscos.bin files. Give warning if too large."""
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         # the target folder doesnot exists, since this is an optional method
-        abscosbin_folder = os.path.join(self.result_folder, "abscos-bin")
-        if not os.path.exists(abscosbin_folder):
-            os.mkdir(abscosbin_folder)
-        for date in self.dates:
-            filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
-            try:
-                source = os.path.join(wrk_fast_folder, filename)
-                target = os.path.join(abscosbin_folder, filename)
-                shutil.move(source, target)
-            except FileNotFoundError:
-                self.logger.warning("File not Found: "
-                                    f"Could not move {source}")
+        abscosbinfiles = glob(os.path.join(wrk_fast_folder,
+                                                "*-abscos.bin"))
+        size = 0
+        for file in abscosbinfiles:
+            size += os.path.getsize(file)
+        print(size)
+        size = size / (1024 * 1024 * 1024)  # get size in GB, was in bytes
+        self.logger.debug(f"Size of all abscosbin files: {size} GB.")
+        if size > 100.:
+            self.logger.warning("The size of all abscos bin files is "
+                                + "{:6.2f} GB. ".format(size)
+                                + "Please delete some to reduce disk usage!")
 
     def delete_input_files(self):
         """Delete the input files for preprocess, pcxs and inv"""
