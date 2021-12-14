@@ -30,18 +30,25 @@ $
 for each job:
   microwindow bounds
   treatment of species (0: neglected, 1: forward calculated, 2: retrieved)
-    H2O (major isotopes)
-    HDO, CO2, CH4, N2O, CO, O2, HF
+      H2O (major isotopes)
+      HDO
+      CO2
+      CH4
+      N2O
+      CO      
+      O2
+      HF
+
   number of baseline points
   deweighting:
-    number of windows
-    spectral bounds and steepness
+      number of windows
+      spectral bounds and steepness
 
 jobs listed here (for SN processing): H2O / O2 / CO2 / CH4 / CO + CH4_S5P
 $
 (8353.4,8463.1)
 2
-0.830,0.0,0.0,"XH2O    "
+1.0,0.0,0.0,"XH2O    "
 0
 0
 0
@@ -60,7 +67,7 @@ $
 0
 0
 2
-0.9737,-0.007,0.0,"XAIR    "
+0.992,-0.007,0.0,"XAIR    "
 0
 20
 0
@@ -69,7 +76,7 @@ $
 1.0,0.0,0.0,"XDUM2   "
 0
 2
-0.9862,0.005,0.0,"XCO2    "
+0.995,-0.0017,0.0,"XCO2    "
 1
 0
 0
@@ -84,7 +91,7 @@ $
 2
 1.0,0.0,0.0,"XDUM4   "
 2
-0.9905,-0.014,0.0,"XCH4    "
+1.0025,0.011,0.0,"XCH4    "
 0
 0
 0
@@ -98,15 +105,14 @@ $
 1.0,0.0,0.0,"XDUM6   "
 0
 2
-0.9727,-0.017,0.0,"XCH4_S5P"
+0.985,-0.010,0.0,"XCH4_S5P"
 1
 2
-0.9250,0.103,0.0,"XCO     "
+0.9250,0.060,0.0,"XCO     "
 0
 1
 20
 0
-
 
 names of spectra
 (only list SN spectra here, the code will check whether a corresponding SM is available)
