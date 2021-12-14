@@ -179,7 +179,7 @@ class Pylot(FileMover):
                             )
         combined_file = os.path.join(
             self.result_folder, resultfile)
-        df.to_csv(combined_file, index=False)
+        df.to_csv(combined_file, index=False, sep="\t")
         self.logger.info("Sucessfully wrote the combined invparams"
                          f" to {combined_file}")
 
@@ -253,7 +253,7 @@ class Pylot(FileMover):
         """
         Write the output of preprocess, pcxs and inv to a logfile.
         """
-        self.logger.info(f"Write logfile of {program_name}")
+        self.logger.info(f"... Write logfile of {program_name} ...")
 
         # TODO: Add PID or something similar to logfile?
         file = os.path.join(self.logfile_path, f"Output_of_{program_name}.log")
