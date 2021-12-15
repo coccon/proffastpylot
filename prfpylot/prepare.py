@@ -416,14 +416,14 @@ class Preparation():
             sys.exit()
         if isinstance(coord_df, pd.Series):
             # this is the case, if only one entry per site is available
-            self.coords["lat"] = coord_df["Longitude"]
-            self.coords["lon"] = coord_df["Latitude"]
+            self.coords["lon"] = coord_df["Longitude"]
+            self.coords["lat"] = coord_df["Latitude"]
             self.coords["alt"] = coord_df["Altitude_kmasl"]
         elif isinstance(coord_df, pd.DataFrame):
             coord_df = coord_df.loc[coord_df["Starttime"] <= date]
             row = coord_df.sort_values(by=["Starttime"])
-            self.coords["lat"] = row["Longitude"].iloc[-1]
-            self.coords["lon"] = row["Latitude"].iloc[-1]
+            self.coords["lon"] = row["Longitude"].iloc[-1]
+            self.coords["lat"] = row["Latitude"].iloc[-1]
             self.coords["alt"] = row["Altitude_kmasl"].iloc[-1]
  
     def _get_start_date_pos(self, start_date, dates):
