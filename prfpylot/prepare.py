@@ -3,14 +3,13 @@ import os
 import sys
 import yaml
 from datetime import datetime as dt
+from datetime import timedelta
 import pandas as pd
 from glob import glob
 import logging
 from timezonefinder import TimezoneFinder
 import pytz
-
-
-
+import fortranformat
 
 class Preparation():
     """Import input parameters, and create input files."""
@@ -489,3 +488,88 @@ class Preparation():
         if len(spectra_list) == 0:
             raise(RuntimeError("No spectra were found"))
         return spectra_list
+        
+    def _interpolate_map_files(self, date):
+        """
+        interpolates the new map files to genereate a map
+        file at 12:00 local time
+        """
+        print("Interpolate map files to local noon for date ", date)
+        # First find out, at which timezone the current files are recorded:
+        if self.use_coordfile:
+            self.get_coords_from_file(self.dates[0])
+        tf = TimezoneFinder()
+        # get timezone as a string:
+        local_tz_name = tf.timezone_at(
+            lat=self.coords["lat"],
+            lng=self.coords["lon"])
+        # convert string to pytz object:
+        local_tz = pytz.timezone(local_tz_name)
+        utc_tz = pytz.utc
+        # create a timestamp of local noon:
+        noon_local = date.replace(hour=12, minute=0, second=0)
+        # only for developement: add 1 h 30 min
+        # TODO: Delete after developement!
+        # noon_local = noon_local + timedelta(hours=1, minutes=30)
+
+        # convert this to a localized timestamp using localize of pytz.
+        # this is neccesary since there is a bug in using the tzinfo of the
+        # datetime module:
+        tz_diff = utc_tz.localize(noon_local).astimezone(local_tz)\
+                  - local_tz.localize(noon_local)
+        noon_utc = noon_local - tz_diff
+
+        # next get a list of all *.map files of the needed date:
+        # TODO: Here we could check fo the correct lat and long as well!
+        srchstrg = f"{self.site_abbrev}_*_"\
+                   + f"{noon_utc.strftime('%Y%m%d')}*Z.map"
+        mapfiles = glob(os.path.join(self.map_path, srchstrg))
+        # find the right map files: bevore and after the hour of noon_utc:
+        ind = 0
+        noon_hour = noon_utc.hour
+        for i, file in enumerate(mapfiles):
+            hour_file = int(file[-7:-5])
+            if hour_file > noon_hour:
+                ind = i
+                break
+        # read in using line 10 as a header ab drop line 11 afterwards since it
+        # contains only the the units as a string
+        file1 = pd.read_csv(mapfiles[ind-1],
+                            skipinitialspace=True, header=11)
+        file1 = file1.to_numpy().transpose()
+        file2 = pd.read_csv(mapfiles[ind],
+                            skipinitialspace=True, header=11)
+        file2 =file2.to_numpy().transpose()
+        # interpolate between the files:
+        # since the difference between two file is allways 3 hours this can be
+        # hardcoded:
+        tdiff = 3 * 60 * 60   # seconds
+        # furthermore we need the date of file 1 for the requested time diff.
+        date_file1 = dt.strptime(
+                    (os.path.basename(mapfiles[ind-1])[12:22]), "%Y%m%d%H"
+                                )
+        for i in range(file1.shape[0]):
+            # do a linear interpolation, calculate everything in seconds:
+            file1[i,:] = file1[i,:] + (file2[i,:] - file1[i,:]) / tdiff\
+                   * (noon_utc - date_file1).total_seconds()
+        current_mapfile = \
+            f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+        current_mapfile = os.path.join(self.map_path, current_mapfile)
+
+        # Now after interpolation is done, read in Header:
+        with open(mapfiles[0], "r") as f:
+            header = f.readlines()[:12]
+        with open(current_mapfile, "w") as f:
+            for line in header:
+                f.write(line)
+        with open(current_mapfile, "a") as f:
+            frw = fortranformat.FortranRecordWriter(
+                "(2(f7.2,','),1p,4(e10.3,','),0p,1(f7.2,','),1p,"
+                "(e10.3,','),0p,(f9.3,','),(f7.1,','),(f8.2,','),"
+                "(f7.4,','),f6.3)")
+            file1 = file1.transpose()
+            for line in file1:
+                f.write(frw.write(line) + "\n")
+
+
+

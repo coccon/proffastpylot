@@ -103,6 +103,7 @@ class Pylot(FileMover):
     def run_pcxs_at(self, date):
         """ Run preprocess at a single day given as an argument """
         self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
+        self._interpolate_map_files(date)
         self.generate_prf_input("pcxs", date)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("pcxs", date))
