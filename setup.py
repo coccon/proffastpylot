@@ -8,6 +8,9 @@ setup(
     description="Run PROFFAST with Python",
     install_requires=[
         "pandas",
+        "PyYAML",
+        "timezonefinder",
+        "pytz",
         ],
     license='MIT',
     )
