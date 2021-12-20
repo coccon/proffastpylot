@@ -550,8 +550,12 @@ class Preparation():
                                 )
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
+            print(file1[i,:])
+            print("================")
             file1[i,:] = file1[i,:] + (file2[i,:] - file1[i,:]) / tdiff\
                    * (noon_utc - date_file1).total_seconds()
+            print(file1[i,:])
+            
         current_mapfile = \
             f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
         current_mapfile = os.path.join(self.map_path, current_mapfile)
@@ -559,16 +563,21 @@ class Preparation():
         # Now after interpolation is done, read in Header:
         with open(mapfiles[0], "r") as f:
             header = f.readlines()[:12]
+        # write header
         with open(current_mapfile, "w") as f:
             for line in header:
                 f.write(line)
+        # write the rest of the file
         with open(current_mapfile, "a") as f:
             frw = fortranformat.FortranRecordWriter(
-                "(2(f7.2,','),1p,4(e10.3,','),0p,1(f7.2,','),1p,"
-                "(e10.3,','),0p,(f9.3,','),(f7.1,','),(f8.2,','),"
-                "(f7.4,','),f6.3)")
+                "(2(f8.3,','),4(e10.3,','),1x,(f7.3,','),1x,(f7.3,','),"
+                "(e10.3,','),1x,(f6.1,','),(f8.3,','),1x,(f6.4,','),1x,"
+                "f5.3)")
             file1 = file1.transpose()
+            print(file1)
             for line in file1:
+                print(line)
+                print(f"FF Line{frw.write(line)}")
                 f.write(frw.write(line) + "\n")
 
 
