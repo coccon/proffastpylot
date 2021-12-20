@@ -3,37 +3,37 @@
 ## Content
 
 1. Get PROFFAST
-2. Clone the prfPylot repository
+2. Clone and install the prfPylot repository
 3. Copy the PROFAST directory into prfPylot
 
 ## Get PROFFAST
 
-To get PROFFAST with the prfPylot you first need to download an up-to-date version of PROFFAST.
+First, download and install an up-to-date version of PROFFAST.
 
-It can be found on the website of KIT:  
+Clone the PROFFAST Repository.   
+`git clone https://git.scc.kit.edu/imk-asf-bod/proffast.git`
 
-https://www.imk-asf.kit.edu/english/3225.php  
-
-
-Unzip the the downloaded package.
-
-**For Linux Users**: Run the script `Install-Proffast-Linux.sh`.
+**For Linux Users**: Run the script installation script to create the executables.  
+`./install_proffast_linux.sh`  
+For Windows users, the executables are already provided.
 
 
-## Clone the prfPylot repository
+## Clone and install the prfPylot repository
 
+Clone the prfpylot repository  
 `git clone git@git.scc.kit.edu:cw4643/prfpylot.git`
+
+Install it via pip:  
+`pip install --user --editable .`  
+prfPylot is written with python3. We recommend using python >= 3.7.
+
 
 ## Copy PROFFAST directory into prfPylot
 
-Go inside the PROFFAST directory move `prf96-EM27-fast` into `prfpylot`.
-Rename it to `prf`.
+Copy the PROFFAST directory into `prfpylot` and rename it to `prf`.
 
-
-## Installation of the prfpylot package with pip
-
-In Order to run prfpylot outside this directory you can install it with pip by running
-
-`pip install -e .`
-
-where the `setup.py` file is located.
+**For Linux Users**: Instead copying the directory you can create a symlink with e.g.
+```
+cd prfpylot
+ln -s ../proffast prf
+```
