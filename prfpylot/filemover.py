@@ -1,6 +1,5 @@
 import os
 from glob import glob
-import datetime as dt
 import shutil
 from prfpylot.prepare import Preparation
 
@@ -8,8 +7,8 @@ from prfpylot.prepare import Preparation
 class FileMover(Preparation):
     """Copy, Move and remove temporary profast Files."""
 
-    def __init__(self, input_file):
-        super(FileMover, self).__init__(input_file)
+    def __init__(self, input_file, logginglevel="info"):
+        super(FileMover, self).__init__(input_file, logginglevel=logginglevel)
         # create all folders
         self.init_folders()
 
@@ -23,11 +22,45 @@ class FileMover(Preparation):
         - logfiles
         """
         self._check_proffast_folders()
-        for date in self.dates:
-            self._create_pT_dir(date)
-            self._create_cal_dir(date)
+        self._create_analysis_subdirs()
         self._create_result_dir()
         self._create_logfile_dir()
+        # This is not necessary any more for the new preprocess version.
+        # TODO: Check if it can be deleted!
+        # for date in self.dates:
+        #     self._create_cal_dir(date)
+        
+
+    def _create_analysis_subdirs(self):
+        """
+        Create the subdirs of the analysis folder.
+        This includes 'cal'-folder for the spectra, 'VMR-dim' for the
+        VMR-files, pT
+        """
+        self.analysis_path = os.path.join(
+                    self.analysis_path,
+                    f"{self.site_name}_{self.instrument_number}")
+        # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
+        for date in self.dates:
+            datestring = date.strftime("%y%m%d")
+            # create cal-folder
+            calfolder = os.path.join(self.analysis_path, datestring, "cal")
+            if not os.path.exists(calfolder):
+                os.makedirs(calfolder)
+            else:
+                self.logger.warning(f"cal folder for date {datestring}"
+                                    " exists already."
+                                    " Content may be overwritten.")
+            # create VMR_dim folder:
+            vmrfolder = os.path.join(self.analysis_path, datestring, "VMR_dim")
+            if not os.path.exists(vmrfolder):
+                os.makedirs(vmrfolder)
+            else:
+                self.logger.warning(f"VMR_dim folder for date {datestring}"
+                                    " exists already."
+                                    " Content may be overwritten.")
+            self._create_pT_dir(date)
+
 
     def _check_proffast_folders(self):
         """Check if relevant Profast folders are in place."""
@@ -36,17 +69,19 @@ class FileMover(Preparation):
     def _create_pT_dir(self, date):
         """Create pt directory."""
         pt_path = os.path.join(
-            self.data_path,
+            self.analysis_path,
             date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
-            os.mkdir(pt_path)
+            os.makedirs(pt_path)
 
     def _create_cal_dir(self, date):
-        """Create the cal dir in the interferogram folder, overwrite if exists.
+        """
+        DEPRECATED!
+        Create the cal dir in the interferogram folder, overwrite if exists.
         """
         date_str = date.strftime("%y%m%d")
-        igram_folder = os.path.join(self.data_path, date_str)
+        igram_folder = os.path.join(self.igram_path, date_str)
         cal_path = os.path.join(igram_folder, 'cal')
         if os.path.exists(cal_path):
             shutil.rmtree(cal_path)
@@ -59,43 +94,26 @@ class FileMover(Preparation):
         backupX where X increases if an other backup does already exists.
         After renaming, a new folder is created.
         """
-        if os.path.exists(self.result_path):
+        # The result_foldername and result dir are already specified in
+        # the init of prepare
+
+        if os.path.exists(self.result_folder):
             # check if already other backuped folder exist as well:
-            backuped_results = glob(self.result_path + "_backup*")
+
+            backuped_results = glob(self.result_folder + "_backup*")
             # rename existing folder by adding _backupN where N is the N-th
             # backup
-            result_folder_backup = self.result_path\
+            result_folder_backup = self.result_folder\
                 + f"_backup{len(backuped_results)}"
-            self.logger.warning(f"Result directory {self.result_path} exists! "
-                                "Renamed existing one to "
-                                f"{result_folder_backup} and "
-                                "created a new one.")
+            self.logger.warning(
+                f"Result directory {self.result_folder} exists! "
+                "Renamed existing one to "
+                f"{result_folder_backup} and created a new one.")
             # rename and create new, empty folder
-            os.rename(self.result_path, result_folder_backup)
-            os.makedirs(self.result_path)
+            os.rename(self.result_folder, result_folder_backup)
+            os.makedirs(self.result_folder)
         else:
-            os.makedirs(self.result_path)
-
-    def mv_spec_to_prf():
-        """Move sectra to prf input folder?"""
-        pass
-
-    def move_bin_files(self, overwrite=True):
-        """Move binary files after running preprocessing."""
-
-        self.logger.debug("Start Moving files")
-        for date in self.dates:
-            date_str = date.strftime("%y%m%d")
-            self.logger.info(f"Move files of date {date_str}")
-
-            cal_folder = os.path.join(
-                self.spectra_path, date_str, "cal")
-            bin_files = glob(cal_folder, "*.BIN")
-            for bin_file in bin_files:
-                file_name = os.path.basename(bin_file)
-                target = os.path.join(cal_folder, file_name)
-                shutil.move(bin_file, target)
-                self.logger.debug(f"Moved {bin_file}->{target}")
+            os.makedirs(self.result_folder)
 
     def move_results(self):
         """Move the results to the data folder.
@@ -109,39 +127,82 @@ class FileMover(Preparation):
             "job04.spc",
             "job05.spc"
         ]
-        source_folder = os.path.join(self.base_path, "prf", "out_fast")
+        source_folder = os.path.join(self.proffast_path, "out_fast")
         for date in self.dates:
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
                 file = prefix + suffix
-                shutil.move(os.path.join(source_folder, file),
-                            os.path.join(self.result_path, file))
-
-    def clean_working_files(self):
-        """
-        Delete the files which where created from pylot and profast.
-        The files to be deleted are:
-        - Input file for preprocess:
-            - proffast/prf/preprocess/preprocess4.inp
-        - Input file for pxcs10 and inver10:
-            - proffast/prf/inp_fast/invers10_date.inp
-            - proffast/prf/inp_fast/pcxs10_date.inp
-        - abscos-bin files:
-            - proffast/prf/wrk_fast/SiteDate-abscos.bin
-        """
-        pass
+                source = os.path.join(source_folder, file)
+                target = os.path.join(self.result_folder, file)
+                try:
+                    shutil.move(source, target)
+                except FileNotFoundError:
+                    self.logger.error(f"File {source} was not found!")
+                except PermissionError:
+                    self.logger.error(f"Could not write {target} due to "
+                                      "permission issues.")
+                except OSError as e:
+                    self.logger.error("Unknown error while movig file "
+                                      f"{source}. Errormessage: {e}")
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files."""
-        wrk_fast_folder = os.path.join(
-            self.base_path, "wrk_fast")
-        # TODO: Implement deletion
-        pass
+        wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
+        for date in self.dates:
+            filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+            try:
+                os.remove(os.path.join(wrk_fast_folder, filename))
+            except FileNotFoundError:
+                self.logger.warning("File not Found: "
+                                    f"Could not delete {filename}")
 
-    def remove_temporary_files_from_prf():
-        """Remove all temporary files."""
-        pass
+    def check_abscosbin_summed_size(self):
+        """Get size of all abscos.bin files. Give warning if too large."""
+        wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
+        # the target folder doesnot exists, since this is an optional method
+        abscosbinfiles = glob(os.path.join(wrk_fast_folder,
+                                                "*-abscos.bin"))
+        size = 0
+        for file in abscosbinfiles:
+            size += os.path.getsize(file)
+        size = size / (1024 * 1024 * 1024)  # get size in GB, was in bytes
+        self.logger.debug(f"Size of all abscosbin files: {size} GB.")
+        if size > 100.:
+            self.logger.warning("The size of all abscos bin files is "
+                                + "{:6.2f} GB. ".format(size)
+                                + "Please delete some to reduce disk usage!")
+
+    def delete_input_files(self):
+        """Delete the input files for preprocess, pcxs and inv"""
+        for i, date in enumerate(self.dates):
+            for type in ["prep", "pcxs", "inv"]:
+                inp_file = self.get_prf_input_path(type, date)
+                try:
+                    os.remove(inp_file)
+                except FileNotFoundError:
+                    self.logger.warning("File not Found: "
+                                        f"Could not remove {type} input file"
+                                        f" {inp_file}")
+
+    def move_input_files(self):
+        """Move the input files for prep., pcxs and inv to result folder"""
+        # crate a folder in result dir for input files:
+        inp_folder = os.path.join(self.result_folder, "input_files")
+        if not os.path.exists(inp_folder):
+            os.mkdir(inp_folder)
+
+        for type in ["prep", "pcxs", "inv"]:
+            for i, date in enumerate(self.dates):
+                inp_file = self.get_prf_input_path(type, date)
+                try:
+                    shutil.move(
+                        inp_file,
+                        os.path.join(inp_folder, os.path.basename(inp_file)))
+                except FileNotFoundError:
+                    self.logger.warning("File not found: "
+                                        f"Could not move {type} input file"
+                                        f" {inp_file}")
 
     def _create_logfile_dir(self):
         """Create logfile dir if is does not exist."""
@@ -150,3 +211,31 @@ class FileMover(Preparation):
                 f"Logfile path did not exist, create {self.logfile_path}")
             os.makedirs(self.logfile_path)
         self.logger.debug(f"Logfile_path: {self.logfile_path}")
+
+    def _move_generallogfile_to_logdir(self):
+        """Move the general logfile to the logdir"""
+        # This have to be done at the end, since the folder is createt by the
+        # program itself.
+        for i, handler in enumerate(self.logger.handlers[:]):
+            if i == 1:
+                # TODO: BUGFIX!! Here happens some kind of black-python-magic
+                #       As soon as the below statement is printed an error
+                #       occurs at a place where I do not expect it..?
+                # print(isinstance(logger, logging.FileHandler))
+                #print(handler)
+                handler.close()
+                self.logger.removeHandler(handler)
+                del handler
+            # self.logger.handlers[:][1].close()
+        target = os.path.join(self.logfile_path,
+                              os.path.basename(self.generalLogfile))
+        try:
+            shutil.move(self.generalLogfile, target)
+            self.logger.info("Moved the general logfile to the"
+                             " result/logfiles folder")
+        except (FileNotFoundError) as e:
+            self.logger.debug(f"\nsource: {self.generalLogfile} "
+                              f"\ntarget: {target}")
+            self.logger.debug(e)
+            self.logger.error("Could not move logfile to new logfile dir! "
+                              f"File is located in: {self.generalLogfile}")        
