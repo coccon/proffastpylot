@@ -103,7 +103,24 @@ class Pylot(FileMover):
     def run_pcxs_at(self, date):
         """ Run preprocess at a single day given as an argument """
         self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
-        self._interpolate_map_files(date)
+        # search for GGG2020 map files:
+        srchstrg = f"{self.site_abbrev}_*_*Z.map"
+        mapfiles = glob(os.path.join(self.map_path, srchstrg))
+        if len(mapfiles) != 0:
+            self.logger.info("Detected GGG2020 map files!")
+            # GGG2020map files found!
+            self._interpolate_map_files(date)
+        else:
+            srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            mapfiles = glob(os.path.join(self.map_path, srchstrg))
+            if len(mapfiles) == 1:
+                self.logger.info("Detected GGG2014 map file!")
+            else:
+                self.logger.critical("No suitable map file found. "
+                                     f"Map-file path is: {self.map_path} "
+                                     )
+                raise(RuntimeError("No suitable map file found."))
+
         self.generate_prf_input("pcxs", date)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("pcxs", date))

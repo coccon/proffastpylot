@@ -532,8 +532,6 @@ class Preparation():
             if hour_file > noon_hour:
                 ind = i
                 break
-        # read in using line 10 as a header ab drop line 11 afterwards since it
-        # contains only the the units as a string
         file1 = pd.read_csv(mapfiles[ind-1],
                             skipinitialspace=True, header=11)
         file1 = file1.to_numpy().transpose()
