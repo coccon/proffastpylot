@@ -1,15 +1,19 @@
 import os
 import sys
-from pick import pick
 import datetime as dt
 
-class inputfile_generator():
-    """
-    This class generates the input file file for a specific location.
+
+class InputfileGenerator():
+    """Generation of input files.
+
+    functions:
+        generate_sod_example: create an input file for the provided
+            example data of Sodankyla.
+        interactive_inputfile_generation: fill in the required information
+            in a command line dialogue.
     """
     def __init__(self):
-        """
-        Safe path of current file and of the inpufile_template
+        """Create an input file for the provided example data of Sodankyla.
         """
 
         self.scriptpath = os.path.abspath(os.path.dirname(__file__))
@@ -39,8 +43,9 @@ class inputfile_generator():
         self.input_data["start_date"] = ""
         self.input_data["end_date"] = ""
         self.input_data["note"] = ""
-        inputpath =  os.path.join(self.scriptpath, "..", "example",
-                                  "input_data")
+        inputpath = os.path.join(
+            self.scriptpath, "..", "example",
+            "input_data")
         igram_path = os.path.join(inputpath, "inteferograms_sodankyla",
                                   "SN039")
         self.input_data["interferogram_path"] = os.path.normpath(igram_path)
@@ -60,30 +65,29 @@ class inputfile_generator():
 
         # TODO: Check if prf_path changed in case of the example.
         prf_path = os.path.join(self.scriptpath, "..", "prf")
-        self.input_data["profast_path"] = prf_path
+        self.input_data["proffast_path"] = prf_path
 
-        self.generate_inputfile()
+        self._generate_inputfile()
 
     def interactive_inputfile_generation(self):
         """
-        Provide a interactive possibility to generate the input file
+        Generate the input file interactivly with a command line dialogue.
         """
+        hashtg = "####################"
+        spaces = "                    "
         print(
-"""
-#######################################################################
-#                 Welcome to the Inputfile generator.                 #
-#                 This tool is part of the prfPylot.                  #
-#######################################################################
-"""
-             )
-
+            f"#{hashtg}######################################{hashtg}#\n"
+            f"#{spaces}  Welcome to the inputfile generator. {spaces}#\n"
+            f"#{spaces}  This tool is part of the prfPylot.  {spaces}#\n"
+            f"#{hashtg}######################################{hashtg}#\n"
+        )
 
         temp = input("To start the configuration press enter")
         print("############ Data paths ############\n")
-        temp = input("Please give the path of the profast executable:\n")
-        self.input_data["profast_path"] = temp
+        temp = input("Please give the path of the PROFFAST executable:\n")
+        self.input_data["proffast_path"] = temp
 
-        temp = input("\nPlease give the path of the interferogram.\n"
+        temp = input("\nPlease give the path of the interferograms.\n"
                      "The data has to be stored there in subfolder with "
                      "the convention 'YYMMDD/YYMMDDSN.XXX':\n")
         self.input_data["interferogram_path"] = temp
@@ -96,13 +100,13 @@ class inputfile_generator():
 
         temp = input("\nPlease give the path of the analysis folder.\n"
                      "In a standard installation it located in the same folder"
-                     " as the profast executables:\n")
+                     " as the PROFFAST executables:\n")
         self.input_data["analysis_path"] = temp
 
-        temp = input("\nPlease give the path where the results are going to be "
-                     "stored:\n")
+        temp = input(
+            "\nPlease give the path where the results are going to be "
+            "stored:\n")
         self.input_data["result_path"] = temp
-
 
         print("\n\n############ Site Specific Information ############\n")
         temp = input("Please give the name of your site (e.g. Sodankyla):\n")
@@ -164,13 +168,15 @@ class inputfile_generator():
             self.input_data["alt"] = temp
             
         # TODO: Find out in which format the UTC-offset is needed.
-        temp = input("\nIf your igrams have a UTC-offset plase give it "
-                        "here: \n")
+        temp = input(
+            "\nIf your igrams have a UTC-offset plase give it "
+            "here: \n")
         self.input_data["utc_offset"] = temp
 
-        print("\nIf you do not want to process all interferograms of your site\n"
-              "you can now specify a start and stop date.\n"
-              "Leave it empty if you want to process all data:\n")
+        print(
+            "\nIf you do not want to process all interferograms of your site\n"
+            "you can now specify a start and stop date.\n"
+            "Leave it empty if you want to process all data:\n")
         strt_stp = ["start", "end"]
         for i, strtstp in enumerate(strt_stp):
             temp = input(f"Please give the {strtstp} date in YYYY-MM-DD:\n")
@@ -182,12 +188,14 @@ class inputfile_generator():
                         temp = dt.date.fromisoformat(temp)
                         break
                     except ValueError:
-                        temp = input("Could not parse input. Plase give as "
-                                    "YYYY-MM-DD:\n")
+                        temp = input(
+                            "Could not parse input. Plase give as "
+                            "YYYY-MM-DD:\n")
                 self.input_data[f"{strtstp}_date"] = temp.isoformat()
 
-        temp = input("\nIf you want to add some notes to the spectra files please give"
-                     " it here. Limited to 80 characters:\n")
+        temp = input(
+            "\nIf you want to add some notes to the spectra files please give"
+            " it here. Limited to 80 characters:\n")
         while True:
             if len(temp) < 80:
                 self.input_data["note"] = temp
@@ -195,7 +203,7 @@ class inputfile_generator():
             else:
                 temp = input("Note was to long. Give a shorter one:\n")
 
-        print("\n############ config file path ############\n")
+        print("\n############ Config file path ############\n")
         temp = input("Please give the path (not the name!) where the new "
                      "config-file is supposed to be stored:\n")
         self.inptfl_path = temp
@@ -212,9 +220,9 @@ class inputfile_generator():
             temp += ".yml"
             self.inptfl = os.path.join(self.inptfl_path, temp)
         # Finally we have all information we need. Create the file:
-        self.generate_inputfile()
+        self._generate_inputfile()
 
-    def generate_inputfile(self):
+    def _generate_inputfile(self):
         """
         Generate the inpufile by replacing the %xxx% sections with the 
         corresponding value.
@@ -241,7 +249,7 @@ class inputfile_generator():
 if __name__ == "__main__":
     import argparse
 
-    MyGenerator = inputfile_generator()
+    MyGenerator = InputfileGenerator()
     parser = argparse.ArgumentParser()
     parser.add_argument("--example_mode",
                         help="Create the input file for the Sodankyla Example",
@@ -251,4 +259,3 @@ if __name__ == "__main__":
         MyGenerator.generate_sod_example()
     else:
         MyGenerator.interactive_inputfile_generation()
-    
