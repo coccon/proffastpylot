@@ -494,7 +494,7 @@ class Preparation():
         interpolates the new map files to genereate a map
         file at 12:00 local time
         """
-        print("Interpolate map files to local noon for date ", date)
+        # print("Interpolate map files to local noon for date ", date)
         # First find out, at which timezone the current files are recorded:
         if self.use_coordfile:
             self.get_coords_from_file(self.dates[0])
@@ -552,6 +552,7 @@ class Preparation():
             # do a linear interpolation, calculate everything in seconds:
             file1[i,:] = file1[i,:] + (file2[i,:] - file1[i,:]) / tdiff\
                    * (noon_utc - date_file1).total_seconds()
+            
         current_mapfile = \
             f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
         current_mapfile = os.path.join(self.map_path, current_mapfile)
@@ -559,14 +560,16 @@ class Preparation():
         # Now after interpolation is done, read in Header:
         with open(mapfiles[0], "r") as f:
             header = f.readlines()[:12]
+        # write header
         with open(current_mapfile, "w") as f:
             for line in header:
                 f.write(line)
+        # write the rest of the file
         with open(current_mapfile, "a") as f:
             frw = fortranformat.FortranRecordWriter(
-                "(2(f7.2,','),1p,4(e10.3,','),0p,1(f7.2,','),1p,"
-                "(e10.3,','),0p,(f9.3,','),(f7.1,','),(f8.2,','),"
-                "(f7.4,','),f6.3)")
+                "(2(f8.3,','),4(e10.3,','),1x,(f7.3,','),1x,(f7.3,','),"
+                "(e10.3,','),1x,(f6.1,','),(f8.3,','),1x,(f6.4,','),1x,"
+                "f5.3)")
             file1 = file1.transpose()
             for line in file1:
                 f.write(frw.write(line) + "\n")

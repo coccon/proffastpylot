@@ -23,13 +23,58 @@ class FileMover(Preparation):
         """
         self._check_proffast_folders()
         self._create_analysis_subdirs()
+        # TODO: remove comment of self._create_result_dir()
+        #       and self._create_logfile_dir()
+        #       This is only for developement
+        # self._move_rsults_back()
         self._create_result_dir()
         self._create_logfile_dir()
+
         # This is not necessary any more for the new preprocess version.
         # TODO: Check if it can be deleted!
         # for date in self.dates:
         #     self._create_cal_dir(date)
-        
+
+    def _move_results_back(self):
+        """
+        Move the results back to its original place for testing the combine
+        results method.
+        """
+        suffix_list = [
+            "colsens.dat",
+            "invparms.dat",
+            "job01.spc",
+            "job02.spc",
+            "job03.spc",
+            "job04.spc",
+            "job05.spc"
+        ]
+        #source_folder = os.path.join(self.proffast_path, "out_fast")
+        source_folder = self.result_folder
+        target_folder = os.path.join(self.proffast_path, "out_fast")
+        for date in self.dates:
+            datestr = date.strftime("%y%m%d")
+            prefix = self.site_name + datestr + "-"
+            for suffix in suffix_list:
+                file = prefix + suffix
+                source = os.path.join(source_folder, file)
+                target = os.path.join(target_folder, file)
+                self.logger.debug(
+                    "Move result files back:\n"
+                    f"Source: {source}\nTarget: {target}"
+                                    )
+                try:
+                    shutil.move(source, target)
+                except FileNotFoundError:
+                    self.logger.error(f"File {source} was not found!")
+                except PermissionError:
+                    self.logger.error(f"Could not write {target} due to "
+                                      "permission issues.")
+                except OSError as e:
+                    self.logger.error("Unknown error while movig file "
+                                      f"{source}. Errormessage: {e}")
+
+
 
     def _create_analysis_subdirs(self):
         """

@@ -180,7 +180,8 @@ class Pylot(FileMover):
                             )
         combined_file = os.path.join(
             self.result_folder, resultfile)
-        df.to_csv(combined_file, index=False, sep="\t")
+        df.to_csv(combined_file, index=False, sep="\t",
+                  float_format="%.5e")
         self.logger.info("Sucessfully wrote the combined invparams"
                          f" to {combined_file}")
 
