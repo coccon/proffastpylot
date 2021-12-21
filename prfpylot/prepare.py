@@ -494,7 +494,7 @@ class Preparation():
         interpolates the new map files to genereate a map
         file at 12:00 local time
         """
-        print("Interpolate map files to local noon for date ", date)
+        # print("Interpolate map files to local noon for date ", date)
         # First find out, at which timezone the current files are recorded:
         if self.use_coordfile:
             self.get_coords_from_file(self.dates[0])
@@ -550,11 +550,8 @@ class Preparation():
                                 )
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
-            print(file1[i,:])
-            print("================")
             file1[i,:] = file1[i,:] + (file2[i,:] - file1[i,:]) / tdiff\
                    * (noon_utc - date_file1).total_seconds()
-            print(file1[i,:])
             
         current_mapfile = \
             f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
@@ -574,10 +571,7 @@ class Preparation():
                 "(e10.3,','),1x,(f6.1,','),(f8.3,','),1x,(f6.4,','),1x,"
                 "f5.3)")
             file1 = file1.transpose()
-            print(file1)
             for line in file1:
-                print(line)
-                print(f"FF Line{frw.write(line)}")
                 f.write(frw.write(line) + "\n")
 
 
