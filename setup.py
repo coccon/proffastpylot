@@ -11,6 +11,7 @@ setup(
         "PyYAML",
         "timezonefinder",
         "pytz",
+        "fortranformat"
         ],
     license='MIT',
     )
