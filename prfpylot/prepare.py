@@ -99,6 +99,10 @@ class Preparation():
                 start_date=args["start_date"],
                 end_date=args["end_date"]
             )
+        if len(self.dates) == 0:
+            self.logger.critical("No igrams found! Please check the path!\n"
+                                 f"Current path is {self.igram_path}")
+            sys.exit()
         
         # record some notes about the behaviour of the pylot:
         if args["delete_abscos.bin_files"] is not None:
@@ -181,7 +185,6 @@ class Preparation():
         if end_date is not None:
             i = self._get_end_date_pos(end_date, dates)
             dates = dates[:i]
-
         return dates
 
     def get_template_path(self, template_type):

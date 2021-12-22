@@ -381,7 +381,14 @@ class Pylot(FileMover):
         search_string = os.path.join(self.pressure_path, filename)
         
         pressure_file = glob(search_string)
-        assert len(pressure_file) == 1
+        if len(pressure_file) == 0:
+            self.logger.critical(
+                f"Could not find pressure file {search_string}")
+            raise RuntimeError("Could not find pressure file!")
+        elif len(pressure_file) > 1:
+            self.logger.critical(
+                f"To many pressure files found matching {search_string}!")
+            raise RuntimeError("Unambigous pressure files!")
         pressure_file = pressure_file[0]
         return pressure_file
 
