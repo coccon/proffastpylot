@@ -8,8 +8,8 @@ if __name__ == "__main__":
         MyInpFileGen = InputfileGenerator()
         input_file = MyInpFileGen.generate_sod_example()
         
-        MyPRFpylot = Pylot(input_file, logginglevel="info")
-        MyPRFpylot.run(n_processes=2)
+        MyPRFpylot = Pylot(input_file, logginglevel="debug")
+        # MyPRFpylot.run(n_processes=2)
         MyPRFpylot.run_preprocess(n_processes=2)
         MyPRFpylot.run_pcxs(n_processes=2)
         MyPRFpylot.run_inv(n_processes=2)

@@ -33,12 +33,10 @@ $
 
 Quiet execution (no user requests)
 Output path diagnosis
-Output filename diagnosis
 Output path bin spectra
 $
-.true.
+T
 %path_preprocess_log%
-%filename_logfile%
 %path_spectra%
 
 
