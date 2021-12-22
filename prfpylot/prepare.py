@@ -19,6 +19,9 @@ class Preparation():
         "inv": "invers20",
         "pcxs": "pcxs20"
     }
+    # in 'pylot.run_pcxs_at' it is tested if ggg2014 or ggg2020 map files are
+    # used
+    ggg2020mapfiles = False
 
     def __init__(self, input_path="input.yml", logginglevel="info"):
         # read input file
@@ -364,9 +367,12 @@ class Preparation():
             "SPECTRA_LIST": "\n".join(spectra_list)
         }
         # in case of pcxs20 the parameter %WET_VMR% is needed in addition:
-        if self.template_types["pcxs"] == "pcxs20":
+
+        if self.ggg2020mapfiles:
             # in case of GGG2014 map files it is dry air (False)
             # in case of GGG2020 map files it is wet air. (True)
+            parameters["WET_VMR"] = True
+        else:
             parameters["WET_VMR"] = False
         return parameters
 

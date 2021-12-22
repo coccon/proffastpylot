@@ -109,12 +109,14 @@ class Pylot(FileMover):
         if len(mapfiles) != 0:
             self.logger.info("Detected GGG2020 map files!")
             # GGG2020map files found!
+            self.ggg2020mapfiles = True
             self._interpolate_map_files(date)
         else:
             srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
             if len(mapfiles) == 1:
                 self.logger.info("Detected GGG2014 map file!")
+                self.ggg2020mapfiles = False
             else:
                 self.logger.critical("No suitable map file found. "
                                      f"Map-file path is: {self.map_path} "
