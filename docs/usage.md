@@ -1,14 +1,23 @@
 # Usage
 
+## Out of the box example: execution of an example
+
+The prfPylot provides a out-of-the-box example which can be run directly after
+the installation. For this you only have to execute `example\run.py`.
+Everything else is executed automatically.
+
 ## Input file
 
-In the input file you can specify the information about the program as the location of you in- and output files
-and information about the processed data.  
+In the input file you can specify the information about the program as the location of your in- and output files
+as well as information about the processed data.  
 It is stored in the `yaml` format.
 In the file `example_sodankyla_input.yml` you can find and example with comments.
-Adjust this file for your requirements.
+It is possible to either adjust this file to your requirements or to use the
+program `prfpylot/create_inputfile.py` This program starts an assistant which
+guides you step by step trough all relevant settings to create an input file
+suitable for your site and needs.
 
-## Starting the program
+## General use of the prfPylot
 
 For starting the program you need to create an instance of the Pylot class with a input file.
 
