@@ -11,7 +11,6 @@ from timezonefinder import TimezoneFinder
 import pytz
 import fortranformat
 import inspect
-import importlib
 
 class Preparation():
     """Import input parameters, and create input files."""
@@ -41,12 +40,11 @@ class Preparation():
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
 
-        self.prfpylot_path = prfpylot.__path__[0]
-        # TODO: solve this issue here!!
-        # print(inspect.getfile(prfpylot))  # needs __init__.py
-        # print(prfpylot.__path__[0])
-        # print(importlib.util.find_spec(yaml))
-        # a = input()    
+        
+        # TODO: This is a temporary solution! Think about if this is needed
+        #       for future versions.
+        # inspect.getsourcefile needes __init__.py!
+        self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
         # path to the PROFFAST executables
         self.proffast_path = args["proffast_path"]
         if self.proffast_path is None:
