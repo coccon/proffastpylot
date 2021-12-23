@@ -29,7 +29,10 @@ class InputfileGenerator():
         This methods contains the hardcoded path to the example files
         """
         # the path where the final inputfile is writte to
-        self.inptfl_path = os.path.join(self.scriptpath, "..", "example")
+        # Old version, does not work if installed without --editable
+        # self.inptfl_path = os.path.join(self.scriptpath, "..", "example")
+        # New version, more robust
+        self.inptfl_path = os.getcwd()
         self.inptfl = os.path.join(
                                 self.inptfl_path,
                                 "input_sodankyla_example.yml")
