@@ -13,7 +13,8 @@ site_name: %site_name%
 site_abbrev: %site_abbrev%
 
 # give coordinates
-# leave empty if coordinates should be taken from file
+# leave empty if coordinates should be taken from file. An example file can
+# be found in examples/input_data/coords.csv
 coords:
   lat: %lat%
   lon: %lon%
@@ -39,6 +40,9 @@ utc_offset: %utc_offset%
 # Start the processing chain with already available spectra. This can for 
 # example be the case, if you have processed some data already but you want to
 # reprocesse them with an other pressure value or an other map-file.
+# The directory to the spectra is given as the 'analysis_path'.
+# Please NOTE: In this case the folder this path points to must have a
+# substructure like analysis/SiteName_InstrumentNumber/YYMMDD.
 start_with_spectra: %start_with_spectra%
 
 
@@ -79,12 +83,14 @@ pressure_type: log
 
 
 # PATH
-#==============================
+# ==============================
 
-# The path to the profast folder as it is downloaded from git
+# proffast_path have to point to the folder containing the proffast files.
+# The structure of this folder have to be kept like downloaded.
 proffast_path: %proffast_path%
 
 # input data
+# -----------
 # a folder where the data are located like YYMMDD/YYMMDDSN.XXX
 interferogram_path: %interferogram_path%
 map_path: %map_path%
@@ -93,6 +99,20 @@ pressure_path: %pressure_path%
 
 
 # output data
+# -----------
+# In the analysis path the spectra produced by preprocess are written to.
+# The folder can be located anywhere on the disk. It is NOT mandatory to name
+# the folder 'analysis'. In principle it can be named as you like. However,
+# it is strongly recommended to use this name to keep the data structure
+# compatibility to older proffast version as well as to profit.
+# Within this folder the prfPylot will create a folder structure like
+# analysis/SiteName_InstrumentNumber/YYMMDD.
+# Please note: If you are using prfPylot to process already available spectra
+# (*.bin files), you need to provide a folder structure as given above!
 analysis_path: %analysis_path%
+
+# In the result path, the final results, the logfiles and if you want to keep
+# them, the inputfiles are written to. Within the folder given here, prfPylot
+# will create a folder named 'SiteName_InstrumentNumber_StartDate_EndDate'
 result_path: %result_path%
 #==============================

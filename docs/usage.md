@@ -45,6 +45,19 @@ my_pylot.run(n_processes)
 
 You can execute `run.py` to test this with the example data provided.
 
+
+## Special case: Process already available spectra
+How to start the processing chain with already available spectra, is explained
+here.
+One would like to do this for example if one have to reprocessed some data 
+with an other pressure value or an other map-file.   
+In this case you have to set the option `start_with_spectra: True`.
+The path to the spectra is given to prfPylot as `analysis_path`.
+Please NOTE: In this case the folder `analysis_path` point to must have the 
+following substructur: `analysis/SiteName_InstrumentNumber/YYMMDD`
+
+
+
 # Recommended folder sturcture
 
 We propose a folder structure. It is explained in `folder_structure.md`.
