@@ -36,6 +36,12 @@ utc_offset: %utc_offset%
 # BEHAVIOUR:
 #==============================
 
+# Start the processing chain with already available spectra. This can for 
+# example be the case, if you have processed some data already but you want to
+# reprocesse them with an other pressure value or an other map-file.
+start_with_spectra: %start_with_spectra%
+
+
 # process only dates in a specific time range
 # date format: YYYY-MM-DD.
 # Leave empty to process all dates in the data folder

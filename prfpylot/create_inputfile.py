@@ -49,8 +49,10 @@ class InputfileGenerator():
         self.input_data["start_date"] = ""
         self.input_data["end_date"] = ""
         self.input_data["note"] = ""
+
         self.input_data["delete_abscos.bin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
+        self.input_data["start_with_spectra"] = "False"
         
  
         igram_path = os.path.join(inputpath, "interferograms_sodankyla",
@@ -242,6 +244,26 @@ you have to enter 'D:\RawDataEM27'
                 temp = input("Note was to long. Give a shorter one:\n")
 
         print("\n############ Behaviour settings ############\n")
+        temp = input(
+"""Process already available spectra:
+If the spectra of a measurement are already available this has to be given
+here. This can happen if e.g. you want to reprocess some data with other
+pressure values or a-priori files.
+Only process spectra? Yes/No
+"""
+        )
+        while True:
+            if temp == "Yes":
+                self.input_data["start_with_spectra"] = True
+                break
+            elif temp == "No":
+                self.input_data["start_with_spectra"] = False
+                break
+            else:
+                temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
+
+
+
         temp = input(
 """Do you want to delete the abscos.bin files after the execution?
 These file contain the simulation of the atmosphere which is the result or the 

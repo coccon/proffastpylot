@@ -10,6 +10,8 @@ import logging
 from timezonefinder import TimezoneFinder
 import pytz
 import fortranformat
+import inspect
+import importlib
 
 class Preparation():
     """Import input parameters, and create input files."""
@@ -40,12 +42,21 @@ class Preparation():
         self.note = args["note"]
 
         self.prfpylot_path = prfpylot.__path__[0]
-        
+        # TODO: solve this issue here!!
+        # print(inspect.getfile(prfpylot))  # needs __init__.py
+        # print(prfpylot.__path__[0])
+        # print(importlib.util.find_spec(yaml))
+        # a = input()    
         # path to the PROFFAST executables
         self.proffast_path = args["proffast_path"]
         if self.proffast_path is None:
             head, _ = os.path.split(self.prfpylot_path)
             self.proffast_path = os.path.join(head, "prf")
+            if not os.path.exists(self.proffast_path):
+                self.logger.critical(
+                    "Could not automatically find the proffast path. Please "
+                    "specify it in the input file!")
+                sys.exit()
         
         # coordinates
         if None not in args["coords"].values():
@@ -96,18 +107,17 @@ class Preparation():
         if self.analysis_path is None:
             self.logger.error("analysis_path is not specified!")
             sys.exit()
+        
+       
+        # record some notes about the behaviour of the pylot:
 
-        # list of dates
-        self.dates = self.get_dates(
-                start_date=args["start_date"],
-                end_date=args["end_date"]
-            )
-        if len(self.dates) == 0:
-            self.logger.critical("No igrams found! Please check the path!\n"
-                                 f"Current path is {self.igram_path}")
+        if args["start_with_spectra"] is not None:
+            self.start_with_spectra = args["start_with_spectra"]
+        else:
+            self.logger.error("start_with_spectra not specified!")
             sys.exit()
         
-        # record some notes about the behaviour of the pylot:
+
         if args["delete_abscos.bin_files"] is not None:
             self.delete_abscosbin = args["delete_abscos.bin_files"]
         else:
@@ -118,6 +128,16 @@ class Preparation():
             self.bool_delete_input_files = args["delete_input_files"]
         else:
             self.logger.error("delete_input_files not specified!")
+            sys.exit()
+
+        # list of dates
+        self.dates = self.get_dates(
+                start_date=args["start_date"],
+                end_date=args["end_date"]
+            )
+        if len(self.dates) == 0:
+            self.logger.critical("No igrams found! Please check the path!\n"
+                                 f"Current path is {self.igram_path}")
             sys.exit()
 
         # only the base where the result folder is to be safed
@@ -173,12 +193,26 @@ class Preparation():
         """Return a list of dates for the given site, instrument and
         start- and end date.
         """
-        date_paths = glob(os.path.join(self.igram_path, "*"))
+        if not self.start_with_spectra:
+            self.logger.debug("Search for all interferogram files of the "
+                              "side and device")
+            date_paths = glob(os.path.join(self.igram_path, "*"))
+
+        else:
+            # in filemover.py the analysis path is extended to its final
+            # version (i.e. analysis/Site_Instrumentnumer). However this is
+            # NOT done here yet. Hence do this temporarily by hand:
+            self.logger.debug("Search for all spectra files of the "
+                              "side and device")
+            date_paths = glob(os.path.join(
+                self.analysis_path,
+                f"{self.site_name}_{self.instrument_number}", "*"))
         dates = []
 
         # create a list of all dates available on the disk
         for date_path in date_paths:
             date = os.path.split(date_path)[1]
+            # TODO: Catch for invalid folder names (i.e. not YYMMDD)
             date = dt.strptime(date, "%y%m%d")
             dates.append(date)
         # if start and/or end date is given truncate the list
