@@ -10,6 +10,7 @@ import logging
 from timezonefinder import TimezoneFinder
 import pytz
 import fortranformat
+import inspect
 
 class Preparation():
     """Import input parameters, and create input files."""
@@ -19,6 +20,9 @@ class Preparation():
         "inv": "invers20",
         "pcxs": "pcxs20"
     }
+    # in 'pylot.run_pcxs_at' it is tested if ggg2014 or ggg2020 map files are
+    # used
+    ggg2020mapfiles = False
 
     def __init__(self, input_path="input.yml", logginglevel="info"):
         # read input file
@@ -36,13 +40,21 @@ class Preparation():
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
 
-        self.prfpylot_path = prfpylot.__path__[0]
         
+        # TODO: This is a temporary solution! Think about if this is needed
+        #       for future versions.
+        # inspect.getsourcefile needes __init__.py!
+        self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
         # path to the PROFFAST executables
         self.proffast_path = args["proffast_path"]
         if self.proffast_path is None:
             head, _ = os.path.split(self.prfpylot_path)
             self.proffast_path = os.path.join(head, "prf")
+            if not os.path.exists(self.proffast_path):
+                self.logger.critical(
+                    "Could not automatically find the proffast path. Please "
+                    "specify it in the input file!")
+                sys.exit()
         
         # coordinates
         if None not in args["coords"].values():
@@ -93,14 +105,17 @@ class Preparation():
         if self.analysis_path is None:
             self.logger.error("analysis_path is not specified!")
             sys.exit()
-
-        # list of dates
-        self.dates = self.get_dates(
-                start_date=args["start_date"],
-                end_date=args["end_date"]
-            )
         
+       
         # record some notes about the behaviour of the pylot:
+
+        if args["start_with_spectra"] is not None:
+            self.start_with_spectra = args["start_with_spectra"]
+        else:
+            self.logger.error("start_with_spectra not specified!")
+            sys.exit()
+        
+
         if args["delete_abscos.bin_files"] is not None:
             self.delete_abscosbin = args["delete_abscos.bin_files"]
         else:
@@ -111,6 +126,16 @@ class Preparation():
             self.bool_delete_input_files = args["delete_input_files"]
         else:
             self.logger.error("delete_input_files not specified!")
+            sys.exit()
+
+        # list of dates
+        self.dates = self.get_dates(
+                start_date=args["start_date"],
+                end_date=args["end_date"]
+            )
+        if len(self.dates) == 0:
+            self.logger.critical("No igrams found! Please check the path!\n"
+                                 f"Current path is {self.igram_path}")
             sys.exit()
 
         # only the base where the result folder is to be safed
@@ -166,12 +191,26 @@ class Preparation():
         """Return a list of dates for the given site, instrument and
         start- and end date.
         """
-        date_paths = glob(os.path.join(self.igram_path, "*"))
+        if not self.start_with_spectra:
+            self.logger.debug("Search for all interferogram files of the "
+                              "side and device")
+            date_paths = glob(os.path.join(self.igram_path, "*"))
+
+        else:
+            # in filemover.py the analysis path is extended to its final
+            # version (i.e. analysis/Site_Instrumentnumer). However this is
+            # NOT done here yet. Hence do this temporarily by hand:
+            self.logger.debug("Search for all spectra files of the "
+                              "side and device")
+            date_paths = glob(os.path.join(
+                self.analysis_path,
+                f"{self.site_name}_{self.instrument_number}", "*"))
         dates = []
 
         # create a list of all dates available on the disk
         for date_path in date_paths:
             date = os.path.split(date_path)[1]
+            # TODO: Catch for invalid folder names (i.e. not YYMMDD)
             date = dt.strptime(date, "%y%m%d")
             dates.append(date)
         # if start and/or end date is given truncate the list
@@ -181,7 +220,6 @@ class Preparation():
         if end_date is not None:
             i = self._get_end_date_pos(end_date, dates)
             dates = dates[:i]
-
         return dates
 
     def get_template_path(self, template_type):
@@ -361,9 +399,12 @@ class Preparation():
             "SPECTRA_LIST": "\n".join(spectra_list)
         }
         # in case of pcxs20 the parameter %WET_VMR% is needed in addition:
-        if self.template_types["pcxs"] == "pcxs20":
+
+        if self.ggg2020mapfiles:
             # in case of GGG2014 map files it is dry air (False)
             # in case of GGG2020 map files it is wet air. (True)
+            parameters["WET_VMR"] = True
+        else:
             parameters["WET_VMR"] = False
         return parameters
 
@@ -532,8 +573,6 @@ class Preparation():
             if hour_file > noon_hour:
                 ind = i
                 break
-        # read in using line 10 as a header ab drop line 11 afterwards since it
-        # contains only the the units as a string
         file1 = pd.read_csv(mapfiles[ind-1],
                             skipinitialspace=True, header=11)
         file1 = file1.to_numpy().transpose()

@@ -1,5 +1,6 @@
 # Usage
 
+
 The usage of the prfPylot is explained with the help of an example from Sodankyla which is provided in `example/`.
 The example interferograms, as well as the pressure and atmospheric data is located in `example/input_data`.
 
@@ -20,14 +21,19 @@ and information about the processed data.
 It is stored in the `yaml` format.
 
 In the file `example_sodankyla_input.yml` you can find and example with comments.
-Adjust this file for your requirements.
+It is possible to either adjust this file to your requirements or to use the
+program `prfpylot/create_inputfile.py` This program starts an assistant which
+guides you step by step trough all relevant settings to create an input file
+suitable for your site and needs.
 
-The prfPylot provides also a interactive tool to create a input file.
+<<<<<<< HEAD
+The prfPylot provides also a interactive tool to create an input file.
 You can run
 ```
 python prfpylot/create_inputfile.py
 ```
 And you will be asked about all input parameters.
+
 
 ## Starting the run
 
@@ -55,6 +61,21 @@ Or run all these steps together
 my_pylot.run(n_processes)
 ```
 
-## Folder structure
+You can execute `run.py` to test this with the example data provided.
+
+
+## Special case: Process already available spectra
+
+How to start the processing chain with already available spectra, is explained
+here.
+One would like to do this for example if one have to reprocessed some data 
+with an other pressure value or an other map-file.   
+In this case you have to set the option `start_with_spectra: True`.
+The path to the spectra is given to prfPylot as `analysis_path`.
+Please NOTE: In this case the folder `analysis_path` point to must have the 
+following substructur: `analysis/SiteName_InstrumentNumber/YYMMDD`
+
+
+# Folder sturcture
 
 The results will be created automatically. Please see [`docs/folder_structure.md`](https://git.scc.kit.edu/cw4643/prfpylot/-/blob/master/docs/folder_structure.md) about how the results are organized.

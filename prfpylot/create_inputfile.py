@@ -16,21 +16,30 @@ class InputfileGenerator():
         """Create an input file for the provided example data of Sodankyla.
         """
 
+        # self.prfpylot_path = prfpylot.__path__[0]
         self.scriptpath = os.path.abspath(os.path.dirname(__file__))
         self.inptfl_template = os.path.join(self.scriptpath, "templates",
                                             "template_input.yml")
         # a dict where the config is safed:
         self.input_data = {}
+        
 
     def generate_sod_example(self):
         """
         This methods contains the hardcoded path to the example files
         """
         # the path where the final inputfile is writte to
-        self.inptfl_path = os.path.join(self.scriptpath, "..", "example")
+        # Old version, does not work if installed without --editable
+        # self.inptfl_path = os.path.join(self.scriptpath, "..", "example")
+        # New version, more robust
+        self.inptfl_path = os.getcwd()
         self.inptfl = os.path.join(
                                 self.inptfl_path,
                                 "input_sodankyla_example.yml")
+        inputpath = os.path.normpath(os.path.join(self.scriptpath, "..",
+                                     "example", "input_data"))
+ 
+ 
         # the data which is used to fill the template
         self.input_data["instrument_number"] = "SN039"
         self.input_data["site_name"] = "Sodankyla"
@@ -38,15 +47,18 @@ class InputfileGenerator():
         self.input_data["lat"] = ""
         self.input_data["lon"] = ""
         self.input_data["alt"] = ""
-        self.input_data["coord_file"] = ""
+        self.input_data["coord_file"] = os.path.join(inputpath, "coords.csv")
         self.input_data["utc_offset"] = ""
         self.input_data["start_date"] = ""
         self.input_data["end_date"] = ""
         self.input_data["note"] = ""
-        inputpath = os.path.join(
-            self.scriptpath, "..", "example",
-            "input_data")
-        igram_path = os.path.join(inputpath, "inteferograms_sodankyla",
+
+        self.input_data["delete_abscos.bin_files"] = "True"
+        self.input_data["delete_input_files"] = "False"
+        self.input_data["start_with_spectra"] = "False"
+        
+ 
+        igram_path = os.path.join(inputpath, "interferograms_sodankyla",
                                   "SN039")
         self.input_data["interferogram_path"] = os.path.normpath(igram_path)
         map_path = os.path.join(inputpath, "map_sodankyla")
@@ -55,19 +67,19 @@ class InputfileGenerator():
         pressure_path = os.path.join(inputpath, "pressure_sodankyla")
         self.input_data["pressure_path"] = os.path.normpath(pressure_path)        
         
-        # TODO: Check if this changes in a later version
-        result_path = os.path.join(self.scriptpath, "..", "example", "result")
+        result_path = os.path.join(self.scriptpath, "..", "example",
+                                   "result_data", "results_sodankyla")
         self.input_data["result_path"] = os.path.normpath(result_path)
         
-        # TODO: Check if this folder changes in case of an example
-        analysis_path = os.path.join(self.scriptpath, "..", "prf", "analysis")
+        analysis_path = os.path.join(self.scriptpath, "..", "example",
+                                     "analysis")
         self.input_data["analysis_path"] = os.path.normpath(analysis_path)
 
-        # TODO: Check if prf_path changed in case of the example.
         prf_path = os.path.join(self.scriptpath, "..", "prf")
-        self.input_data["proffast_path"] = prf_path
+        self.input_data["proffast_path"] = os.path.normpath(prf_path)
 
         self._generate_inputfile()
+        return self.inptfl
 
     def interactive_inputfile_generation(self):
         """
@@ -81,15 +93,44 @@ class InputfileGenerator():
             f"#{spaces}  This tool is part of the prfPylot.  {spaces}#\n"
             f"#{hashtg}######################################{hashtg}#\n"
         )
-
+        print(
+"""
+This tool helps you to create the inputfile of your PrfPylot to run the files
+of one device at one location.
+Please generate a unique inputfile (manually or by using this tool) for each
+instrument and each location. Please note, that files like pressure and *.map
+files can be shared among various intruments at the same site.
+"""
+        )
         temp = input("To start the configuration press enter")
         print("############ Data paths ############\n")
-        temp = input("Please give the path of the PROFFAST executable:\n")
+        print("Please give the path to the PROFFAST executable.\n"
+                     "In this folder the PROFFAST executable have to be"
+                     " located.")
+        defaultprf = os.path.abspath(
+            os.path.join(self.scriptpath, "..", "prf"))
+        print("As the automatic detected default value the following path is "
+              f"used:\n{defaultprf}\n"
+              "To use this path do not enter anything and press enter:")
+        temp = input()
+        if temp == "":
+            temp = defaultprf
         self.input_data["proffast_path"] = temp
 
-        temp = input("\nPlease give the path of the interferograms.\n"
-                     "The data has to be stored there in subfolder with "
-                     "the convention 'YYMMDD/YYMMDDSN.XXX':\n")
+        temp = input(
+"""Please give the path to the interferograms.
+Within this folder the igrams have to be stored using
+the convention 'YYMMDD/YYMMDDSN.XXX':
+Example: If your data are saved like this
+D:\RawDataEM27
+|__170608
+|  |_170608.001
+|  |_170608.002
+|  |_...
+|__YYMMDD
+|  |_YYMMDD.XXX
+you have to enter 'D:\RawDataEM27'
+""")
         self.input_data["interferogram_path"] = temp
 
         temp = input("\nPlease give the path of the map files:\n")
@@ -100,12 +141,16 @@ class InputfileGenerator():
 
         temp = input("\nPlease give the path of the analysis folder.\n"
                      "In a standard installation it located in the same folder"
-                     " as the PROFFAST executables:\n")
+                     " as the PROFFAST executables.\n"
+                     "To use the default value press enter without any input."
+                     "\nDefault: proffast_path/analysis\n")
+        if temp == "":
+            temp = os.path.join(self.input_data["proffast_path"], "analysis")
         self.input_data["analysis_path"] = temp
 
         temp = input(
-            "\nPlease give the path where the results are going to be "
-            "stored:\n")
+            "\nPlease give the path where the results are to be saved:\n"
+            )
         self.input_data["result_path"] = temp
 
         print("\n\n############ Site Specific Information ############\n")
@@ -115,7 +160,7 @@ class InputfileGenerator():
         temp = input("\nPlease give the instrument number (e.g. SN039):\n")
         self.input_data["instrument_number"] = str(temp)
 
-        temp = input("\nPlease give the site abbeviation as given in the map"
+        temp = input("\nPlease give the site abbreviation as given in the map"
                      "-files:\n")
         self.input_data["site_abbrev"] = temp
 
@@ -136,9 +181,7 @@ class InputfileGenerator():
             self.input_data["lat"] = ""
             self.input_data["lon"] = ""
             self.input_data["alt"] = ""
-            temp = input("\nPlease give the path to the coord-file. "
-                         "If nothing is entered the default path"
-                         "(rootpath/TODO!!!!) is used:\n")
+            temp = input("\nPlease give the path to the coord-file:\n")
             self.input_data["coord_file"] = temp
         elif temp == "custom":
             self.input_data["coord_file"] = ""
@@ -170,13 +213,13 @@ class InputfileGenerator():
         # TODO: Find out in which format the UTC-offset is needed.
         temp = input(
             "\nIf your igrams have a UTC-offset plase give it "
-            "here: \n")
+            "here. If not just leave it empty and press enter: \n")
         self.input_data["utc_offset"] = temp
 
         print(
             "\nIf you do not want to process all interferograms of your site\n"
             "you can now specify a start and stop date.\n"
-            "Leave it empty if you want to process all data:\n")
+            "Leave it empty if you want to process all dates:")
         strt_stp = ["start", "end"]
         for i, strtstp in enumerate(strt_stp):
             temp = input(f"Please give the {strtstp} date in YYYY-MM-DD:\n")
@@ -203,9 +246,82 @@ class InputfileGenerator():
             else:
                 temp = input("Note was to long. Give a shorter one:\n")
 
-        print("\n############ Config file path ############\n")
-        temp = input("Please give the path (not the name!) where the new "
-                     "config-file is supposed to be stored:\n")
+        print("\n############ Behaviour settings ############\n")
+        temp = input(
+"""Process already available spectra:
+If the spectra of a measurement are already available this has to be given
+here. This can happen if e.g. you want to reprocess some data with other
+pressure values or a-priori files.
+Only process spectra? Yes/No
+"""
+        )
+        while True:
+            if temp == "Yes":
+                self.input_data["start_with_spectra"] = True
+                break
+            elif temp == "No":
+                self.input_data["start_with_spectra"] = False
+                break
+            else:
+                temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
+
+
+
+        temp = input(
+"""Do you want to delete the abscos.bin files after the execution?
+These file contain the simulation of the atmosphere which is the result or the 
+'pcxs' program. To keep the files can save computation time if you want to
+calculate some spectra of the same location in the same datetime range again.
+Delete absocs.bin file? Yes/No?\n
+"""
+        )
+        while True:
+            if temp == "Yes":
+                self.input_data["delete_abscos.bin_files"] = True
+                break
+            elif temp == "No":
+                self.input_data["delete_abscos.bin_files"] = False
+                break
+            else:
+                temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
+
+        temp = input(
+"""Do you want to delete the input files after the execution?
+If the inpuf files are not deleted they are moved after execution to the result
+folder specified earlier. It could be usefull to keep the input files for to
+find potential errors and to understand the evaluation after some time.
+Delete input files? Yes/No?\n
+"""
+        )
+        while True:
+            if temp == "Yes":
+                self.input_data["delete_input_files"] = True
+                break
+            elif temp == "No":
+                self.input_data["delete_input_files"] = False
+                break
+            else:
+                temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
+        
+        temp = input(
+"""How to should PrfPylot handle your pressure input?
+There is the possibility to create the 'pt_intraday.inp' directly. To choose
+this option enter 'original'.
+The other implemented option is to use the datalogger format as used in KA.
+For this type 'log'.
+Default is 'log':\n
+"""            
+        )
+        if temp == "":
+            self.input_data["pressure_type"] = "log"
+        else:
+            self.input_data = temp
+        
+
+        print("\n############ Path of config file ############\n")
+        temp = input("Please give the path (not the filename!) where the new "
+                     "config-file (the output file of this tool) is supposed"
+                     " to be stored:\n")
         self.inptfl_path = temp
         temp = input("\nPlease give the filename of the new config file. "
                      "If nothing is given the filename will be \n"
@@ -214,9 +330,9 @@ class InputfileGenerator():
             temp = f"{self.input_data['site_name']}_"\
                    + f"{self.input_data['instrument_number']}.yml"
             self.inptfl = os.path.join(self.inptfl_path, temp)
-        elif temp[:-4] == ".yml":
+        elif ".yml" in temp:
             self.inptfl = os.path.join(self.inptfl_path, temp)
-        elif temp[:-4] != ".yml":
+        else:
             temp += ".yml"
             self.inptfl = os.path.join(self.inptfl_path, temp)
         # Finally we have all information we need. Create the file:
@@ -256,6 +372,7 @@ if __name__ == "__main__":
                         action="store_true")
     args = parser.parse_args()
     if args.example_mode:
-        MyGenerator.generate_sod_example()
+        inputfile = MyGenerator.generate_sod_example()
+        print(f"The inputfile was saved under {inputfile}")
     else:
         MyGenerator.interactive_inputfile_generation()

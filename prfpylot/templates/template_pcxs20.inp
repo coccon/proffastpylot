@@ -41,44 +41,44 @@ inp_fwd\hitran\solspec-jpl\solspec.dat
 0.6
 
 
+
 number of species
 H2O (major isotopes)
-HDO, CO2, CH4, N2O, CO, O2, HF
+HDO
+CO2
+CH4
+N2O
+CO
+O2
+HF
 $
 8
 
 
+
 for each species (note: H2O must be at first position):
-  line list
-  limit for clipping weak lines
-  calculate far wings (True/False)
-  isotope handle
+    line list
+    isotope handle
 $
-inp_fwd\hitran\linedata\01_hit09-corr140821.par
+inp_fwd\hitran\linedata\01_HIT20.par
 3
 011
 012
 013
-inp_fwd\hitran\linedata\01_hit09-corr140821.par
+inp_fwd\hitran\linedata\01_HIT20.par
 1
 014
-inp_fwd\hitran\linedata\02_hit12.par
-6
-021
-022
-023
-024
-025
-026
-inp_fwd\hitran\linedata\06_hit08.par
+inp_fwd\hitran\linedata\02_HIT20.par
 0
-inp_fwd\hitran\linedata\04_hit08.par
+inp_fwd\hitran\linedata\06_HIT20.par
 0
-inp_fwd\hitran\linedata\05_hit12.par
+inp_fwd\hitran\linedata\04_HIT20.par
 0
-inp_fwd\hitran\linedata\07_hit_gfit.par
+inp_fwd\hitran\linedata\05_HIT20.par
 0
-inp_fwd\hitran\linedata\14_hit12.par
+inp_fwd\hitran\linedata\07_HIT20.par
+0
+inp_fwd\hitran\linedata\14_HIT20.par
 0
 
 

@@ -103,7 +103,26 @@ class Pylot(FileMover):
     def run_pcxs_at(self, date):
         """ Run preprocess at a single day given as an argument """
         self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
-        self._interpolate_map_files(date)
+        # search for GGG2020 map files:
+        srchstrg = f"{self.site_abbrev}_*_*Z.map"
+        mapfiles = glob(os.path.join(self.map_path, srchstrg))
+        if len(mapfiles) != 0:
+            self.logger.info("Detected GGG2020 map files!")
+            # GGG2020map files found!
+            self.ggg2020mapfiles = True
+            self._interpolate_map_files(date)
+        else:
+            srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            mapfiles = glob(os.path.join(self.map_path, srchstrg))
+            if len(mapfiles) == 1:
+                self.logger.info("Detected GGG2014 map file!")
+                self.ggg2020mapfiles = False
+            else:
+                self.logger.critical("No suitable map file found. "
+                                     f"Map-file path is: {self.map_path} "
+                                     )
+                raise(RuntimeError("No suitable map file found."))
+
         self.generate_prf_input("pcxs", date)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("pcxs", date))
@@ -364,7 +383,14 @@ class Pylot(FileMover):
         search_string = os.path.join(self.pressure_path, filename)
         
         pressure_file = glob(search_string)
-        assert len(pressure_file) == 1
+        if len(pressure_file) == 0:
+            self.logger.critical(
+                f"Could not find pressure file {search_string}")
+            raise RuntimeError("Could not find pressure file!")
+        elif len(pressure_file) > 1:
+            self.logger.critical(
+                f"To many pressure files found matching {search_string}!")
+            raise RuntimeError("Unambigous pressure files!")
         pressure_file = pressure_file[0]
         return pressure_file
 
