@@ -3,9 +3,9 @@
 ## Content
 
 1. General Use
-	2. Input file
-	3. Starting the run
-4. Special case: Process already available spectra
+	- Input file creation
+	- Starting the run
+2. Special case: Process already available spectra
 
 ## General use
 
@@ -67,7 +67,7 @@ You can execute `run.py` to test this with the example data provided.
 
 ## Special case: Process already available spectra
 
-If the spectra are already available, set the option `start_with_spectra` to `True` in the inputfile.
+If the spectra are already available, set the option `start_with_spectra` to `True` in the inputfile.  
 The path to the spectra is given to prfPylot by the entry `analysis_path`.
 Note, that the folder `analysis_path` must have the
 following substructure: `analysis/SiteName_InstrumentNumber/YYMMDD`.  
