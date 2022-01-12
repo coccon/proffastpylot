@@ -393,4 +393,3 @@ class Pylot(FileMover):
             raise RuntimeError("Unambigous pressure files!")
         pressure_file = pressure_file[0]
         return pressure_file
-

@@ -3,7 +3,6 @@ import os
 import sys
 import yaml
 from datetime import datetime as dt
-from datetime import timedelta
 import pandas as pd
 from glob import glob
 import logging
@@ -11,6 +10,7 @@ from timezonefinder import TimezoneFinder
 import pytz
 import fortranformat
 import inspect
+
 
 class Preparation():
     """Import input parameters, and create input files."""
@@ -20,6 +20,7 @@ class Preparation():
         "inv": "invers20",
         "pcxs": "pcxs20"
     }
+
     # in 'pylot.run_pcxs_at' it is tested if ggg2014 or ggg2020 map files are
     # used
     ggg2020mapfiles = False
@@ -39,8 +40,7 @@ class Preparation():
         self.site_name = args["site_name"]
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
-
-        
+   
         # TODO: This is a temporary solution! Think about if this is needed
         #       for future versions.
         # inspect.getsourcefile needes __init__.py!
@@ -105,8 +105,7 @@ class Preparation():
         if self.analysis_path is None:
             self.logger.error("analysis_path is not specified!")
             sys.exit()
-        
-       
+
         # record some notes about the behaviour of the pylot:
 
         if args["start_with_spectra"] is not None:
@@ -114,7 +113,6 @@ class Preparation():
         else:
             self.logger.error("start_with_spectra not specified!")
             sys.exit()
-        
 
         if args["delete_abscos.bin_files"] is not None:
             self.delete_abscosbin = args["delete_abscos.bin_files"]
@@ -422,7 +420,7 @@ class Preparation():
 
         try:
             ils_df = ils_df.loc[self.instrument_number]
-        except KeyError as e:
+        except KeyError:
             self.logger.critical(
                 f"{self.instrument_number} is not in ILS-file.\n"
                 "Please ensure you downloaded the newest version from GitLab\n"
@@ -556,8 +554,8 @@ class Preparation():
         # convert this to a localized timestamp using localize of pytz.
         # this is neccesary since there is a bug in using the tzinfo of the
         # datetime module:
-        tz_diff = utc_tz.localize(noon_local).astimezone(local_tz)\
-                  - local_tz.localize(noon_local)
+        tz_diff = utc_tz.localize(noon_local).astimezone(local_tz) \
+            - local_tz.localize(noon_local)
         noon_utc = noon_local - tz_diff
 
         # next get a list of all *.map files of the needed date:
@@ -578,7 +576,7 @@ class Preparation():
         file1 = file1.to_numpy().transpose()
         file2 = pd.read_csv(mapfiles[ind],
                             skipinitialspace=True, header=11)
-        file2 =file2.to_numpy().transpose()
+        file2 = file2.to_numpy().transpose()
         # interpolate between the files:
         # since the difference between two file is allways 3 hours this can be
         # hardcoded:
@@ -589,8 +587,8 @@ class Preparation():
                                 )
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
-            file1[i,:] = file1[i,:] + (file2[i,:] - file1[i,:]) / tdiff\
-                   * (noon_utc - date_file1).total_seconds()
+            file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
+                * (noon_utc - date_file1).total_seconds()
             
         current_mapfile = \
             f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
@@ -612,6 +610,3 @@ class Preparation():
             file1 = file1.transpose()
             for line in file1:
                 f.write(frw.write(line) + "\n")
-
-
-
