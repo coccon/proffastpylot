@@ -17,7 +17,7 @@ class PressureParameters():
         }
     }
 
-    df_parameters = {
+    dataframe_parameters = {
         "log": {
             "key_pressure": "BaroTHB40",
             "key_time": "UTCtime___",

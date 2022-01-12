@@ -168,7 +168,7 @@ class Pylot(FileMover):
             shutil.copy(src_intraday_file, intraday_file)
             return
 
-        params = PressureParameters.df_parameters[self.pressure_type]
+        params = PressureParameters.dataframe_parameters[self.pressure_type]
         filename = self._get_pressure_file_at(date)
         pt_input_file = os.path.join(self.pressure_path, filename)
         p_list = read_pressure_from_file(
