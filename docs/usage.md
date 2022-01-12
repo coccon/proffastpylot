@@ -25,7 +25,7 @@ Both steps will be explained in more detail, in the following.
 ### Input file creation
 
 The input file (stored in the yaml format) contains all the key information required by prfPylot and PROFFAST, e.g. the location of the input and output files, or meta information about the data to be processed.
-In the input file “example_sodankyla_input.yml” for the test data set is provided as an example with plenty of comments and explanations.
+In the input file “example_sodankyla_input.yml” for the test data set is serves as an example with plenty of comments and explanations.
 Adjust this file to your requirements.
 
 Alternatively, the prfPylot provides an interactive tool to create an input file.  
@@ -33,12 +33,12 @@ You can run
 ```
 python prfpylot/create_inputfile.py
 ```
-You will be asked about all input parameters.
+A step by step wizards helps you to generate the input file for your side.
 
 
-### Starting the run
+### Starting the processing
 
-For starting the program you need to create an instance of the Pylot class with an input file.
+For starting the processing you need to create an instance of the Pylot class with an input file.
 
 ```python
 from prfpylot.pylot import Pylot

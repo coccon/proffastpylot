@@ -2,13 +2,13 @@
 
 This article explains how handle pressure data with the prfPylot.
 To perform the retrieval PROFFAST needs pressure data from the measurement site.
-This data ist provided to PRFFAST in the file `pt_intraday.inp`.
-A template for this file can be found in `prfpylot/prfpylot/templates`.
+This data ist provided for PROFFAST using the file `pt_intraday.inp`.
+A template for this file can be found in the `prfpylot/templates` folder.
 
 
-## Provided options 
+## Provided options in PrfPylot
 
-Two parameters in the input file specify how the pressure in handled:
+Two parameters in the input file specify how the pressure is handled by prfPylot.
 
 - `pressure_path` is the location of the pressure files
 - `pressure_type` specifies the format of the pressure file
@@ -21,7 +21,8 @@ Then, the files in the pressure_path are assumed to be named in the following wa
 
 ### pressure_type: log
 
-For users of the KIT DataLogger, the pressure_type `log` can be specified. The pressure files recorded by the datalogger need to be placed inside the `pressure_path`.
+For users using the dataformat in the KIT-style, the pressure_type `log` have to be used.
+The pressure files recorded by the datalogger need to be placed inside the `pressure_path`.
 
 ### Custom pressure types
 
@@ -64,4 +65,4 @@ df = pd.read_csv(filename, **csv_kwargs)
 
 `df[key_time]` is should be the time column and will be converted with the `fmt_time` format string. `df[key_pressure]` should contain the corresponding pressure values.
 
-For more information you can look at the pandas documentation of `read_csv()` [[1](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)] and the datetime package [[2](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior)] can be consulted about the format string.
+For more information you can look at the pandas [[documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)] of `read_csv()` and the [[datetime package](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior)].
