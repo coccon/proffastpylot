@@ -2,7 +2,7 @@
 
 ## Content
 
-1. General Use
+1. General use
 	- Input file creation
 	- Starting the run
 2. Special case: Process already available spectra
@@ -13,8 +13,8 @@ We explain the usage of the prfPylot with the help of an example from Sodankyla 
 The example interferograms, as well as the pressure and atmospheric data is located in `example/input_data`.
 
 **Executing PROFFAST with the prfPylot takes two steps**:
-1. Create a input file with the required information
-2. Execute prfPylot via a python script.
+1. Create an input file with the required information
+2. Execute prfPylot via a Python script.
 
 `example/run.py` is a ready to use example where the corresponding input file is created automatically.
 
@@ -33,7 +33,7 @@ You can run
 ```
 python prfpylot/create_inputfile.py
 ```
-A step by step wizard helps you to generate the input file for your side.
+A step by step wizard helps you to generate the input file for your site.
 
 
 ### Starting the processing
@@ -54,7 +54,7 @@ n_processes = 2
 MyPylot.run_preprocess(n_processes)
 MyPylot.run_pcxs(n_processes)
 MyPylot.run_inv(n_processes)
-MyPylot.combine_results(n_processes)
+MyPylot.combine_results()
 ```
 Or run all these steps automatically one after the other
 
@@ -67,7 +67,7 @@ You can execute `run.py` to test this with the example data provided.
 
 ## Special case: Process already available spectra
 
-If the spectra are already available, set the option `start_with_spectra` to `True` in the inputfile.  
+If the spectra are already available, set the option `start_with_spectra` to `True` in the input file.  
 The path to the spectra is given to prfPylot by the entry `analysis_path`.
 Note, that the folder `analysis_path` must have the
 following substructure: `analysis/SiteName_InstrumentNumber/YYMMDD`.  
