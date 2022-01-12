@@ -43,6 +43,7 @@ utc_offset: %utc_offset%
 # The directory to the spectra is given as the 'analysis_path'.
 # Please NOTE: In this case the folder this path points to must have a
 # substructure like analysis/SiteName_InstrumentNumber/YYMMDD.
+# Set to True/False.
 start_with_spectra: %start_with_spectra%
 
 
@@ -62,6 +63,7 @@ note: %note%
 # the 'pcxs' program. To keep the files can save computation time if you want 
 # to calculate some spectra of the same location in the same datetime range
 # again.
+# Set to True/False.
 delete_abscos.bin_files: %delete_abscos.bin_files%
 delete_input_files: %delete_input_files%
 
