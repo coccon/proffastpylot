@@ -239,9 +239,9 @@ class Pylot(FileMover):
 
         if return_value != 0:
             self.logger.error(
-                f"Error while processesing {joined_commands}!"
-                "PROFAST Error message: {err}")
-        return(out, err)
+                f"Error while processesing {joined_commands}!\n"
+                f"PROFAST Error message: {err}")
+        return (out, err)
 
     def _run_parallel(self, method, n_processes):
         """
