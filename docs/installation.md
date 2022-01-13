@@ -31,8 +31,8 @@ For Windows users, the executables are already provided.
 
 We recommend using a virtual environment (venv) to avoid conflicts between any other packages or Python modules.
 
-1. Create a new folder for storing the prfPylot (e.g.
-   `prfpylot`)
+1. Create a new folder for your virtual environment (e.g.
+   `my_virtual_environments`)
 2. Navigate to this folder using a terminal
 3. Enter `python -m venv prf_venv`
    This command will create a folder named `prf_venv` which contains the virtual
@@ -44,6 +44,8 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.
 
+In case of a problem, take a look at the [Troubleshooting](https://git.scc.kit.edu/cw4643/prfpylot/-/blob/master/docs/troubleshooting.md) page.
+
 
 ## 3. Clone and install the prfPylot repository
 
@@ -51,6 +53,7 @@ Note that all packages to be installed with `pip install` will only affect the v
 ```   
 git clone git@git.scc.kit.edu:cw4643/prfpylot.git
 ```
+A folder `prfpylot` containing all program files will be created.
 
 Alternatively download and unpack the zip file 
 https://git.scc.kit.edu/cw4643/prfpylot/-/archive/master/prfpylot-master.zip
