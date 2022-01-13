@@ -229,12 +229,18 @@ class Pylot(FileMover):
         This method calls a external program and returns the output and the
         error
         """
-        self.logger.debug("Command List: " + " ".join(command_list))
+        joined_commands = " ".join(command_list)
+        self.logger.debug("Command List: " + joined_commands)
         p = Popen(command_list, stdout=PIPE, stderr=PIPE, **kwargs)
         out, err = p.communicate()
-        p.wait()
+        return_value = p.wait()
         out = out.decode("utf-8")
         err = err.decode("utf-8")
+
+        if return_value != 0:
+            self.logger.error(
+                f"Error while processesing {joined_commands}!"
+                "PROFAST Error message: {err}")
         return(out, err)
 
     def _run_parallel(self, method, n_processes):
