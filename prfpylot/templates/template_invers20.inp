@@ -5,11 +5,13 @@ site name
 date
 absco file
 pT detail dec (True/False)
+quiet run option (True/False)
 $
 %DATAPATH%\%DATE%
 %SITE%
 %DATE%
 %SITE%%DATE%-abscos.bin
+.true.
 .true.
 
 

@@ -1,4 +1,4 @@
-Input file pcxs10 (fast precalc of x-sections)
+Input file pcxs20 (fast precalc of x-sections)
 
 observer location:
 altitude [km]
@@ -21,6 +21,7 @@ date folder
 site name
 date
 test files to disc (True/False)
+quiet run option (True/False)
 pT file
 construct H2O and HDO from pT file (True/False)
 n_Tdisturb
@@ -29,6 +30,7 @@ $
 %SITE%
 %DATE%
 .false.
+.true.
 %MAPPATH%\%SITE_ABBREV%%DATE_LONG%.map
 .true.
 6
