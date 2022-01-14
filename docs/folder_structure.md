@@ -7,7 +7,9 @@ The needed folders can be divided into three categories:
  3. The PROFAST path: the folder where the binaries of the profast files are located.
 
  Please note that those three folders do not have to be in the same parent folder.
- The user is free to choose the folder structure as he likes.
+ The user is free to choose the folder structure as he likes.  
+ **However, for the first usage we recommend to use the folder structure as
+  given in [`docs/installationpressure_input.md`]()**
 
 ## 1. Input data
 
@@ -80,8 +82,7 @@ The prfPylot needs the information where the binaries of the profast folder
 are stored in. This information is passed to prfPylot by `<profast_path>`.
 
 
-
-# Example folder structure:
+# Example for a possible folder structure:
 An example of how a folder structure could look like is given below.
 ```
 D:\EM27_InputData
