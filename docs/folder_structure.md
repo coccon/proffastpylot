@@ -98,7 +98,7 @@ D:\EM27_OutputData
         └── results_sodankyla
 
 
-D:\prfPylot
+D:\prfPylot_master
     ├── docs
     ├── run_sodankyla.py
     ├── input_sodankyla.yml
@@ -118,7 +118,7 @@ D:\prfPylot
 ```
 In this example some of the paths would be:
 ```
-proffast_path: D:\prfPylot\prf
+proffast_path: D:\prfPylot_master\prf
 interferogram_path: D:\EM27_InputData\interferograms_sodankyla
 analysis_path: D:\EM27_OutputData\analysis
 ```
