@@ -211,6 +211,7 @@ class Preparation():
             # TODO: Catch for invalid folder names (i.e. not YYMMDD)
             date = dt.strptime(date, "%y%m%d")
             dates.append(date)
+            dates.sort()
         # if start and/or end date is given truncate the list
         if start_date is not None:
             i = self._get_start_date_pos(start_date, dates)
@@ -491,21 +492,22 @@ class Preparation():
             i = len(dates)
             self.logger.warning("End_date is larger than the date"
                                 "of the last interferogram on disk.")
-        elif self.end_date < self.dates[0]:
+        elif end_date < self.dates[0]:
             self.logger.error("The end date is earlier than the"
                               + " date of the first interferogram on disk."
                               + "\nTerminate program.")
             quit()  # better raise an error here?
         else:
-            i = self._find_closest(self.dates, self.end_date)
+            i = self._find_closest(self.dates, end_date)
         return i
 
-    def _find_closest(self, list, item):
-        '''Find the closest entry in a list compared to item.'''
+    def _find_closest(self, datelist, date):
+        '''Find the closest entry in a list of dates compared 
+        to a specific date.'''
         i = 0
-        diff1 = abs(list[0] - item)
-        for j, entry in enumerate(list):
-            diff0 = abs(entry - item)
+        diff1 = abs(datelist[0] - date)
+        for j, entry in enumerate(datelist):
+            diff0 = abs(entry - date)
             if diff0 < diff1:
                 i = j
                 diff1 = diff0
