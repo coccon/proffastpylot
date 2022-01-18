@@ -65,4 +65,4 @@ df = pd.read_csv(filename, **csv_kwargs)
 
 `df[key_time]` is should be the time column and will be converted with the `fmt_time` format string. `df[key_pressure]` should contain the corresponding pressure values.
 
-For more information you can look at the pandas [[documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)] of `read_csv()` and the [[datetime package](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior)].
+For more information you can look at the pandas [documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) of `read_csv()` and the [datetime package](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).

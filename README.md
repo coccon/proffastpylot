@@ -1,10 +1,10 @@
-# prfPylot
+# PROFFASTpylot
 
 Running PROFFAST with Python.  
 This is a reimplementation of the Python scripts to run PROFFAST written by Qiansi Tu and Darko Dubravica.
 
 Please follow the instructions in 
-[`docs/installation.md`](https://git.scc.kit.edu/cw4643/prfpylot/-/blob/master/docs/installation.md) first.  
+[`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md) first.  
 Information about the usage and installation of this package can be found in `docs`.  
 For more information about PROFFAST, see
 https://www.imk-asf.kit.edu/english/3225.php.

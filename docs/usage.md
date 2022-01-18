@@ -75,4 +75,4 @@ Afterwards, run the functions `run_pcxs`, `run_inv` and `combine_results`.
 
 # Folder structure
 
-The results will be created automatically. Please see [`docs/folder_structure.md`](https://git.scc.kit.edu/cw4643/prfpylot/-/blob/master/docs/folder_structure.md) about how the results are organized.
+The results will be created automatically. Please see [`docs/folder_structure.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/folder_structure.md) about how the results are organized.
