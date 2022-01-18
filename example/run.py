@@ -1,13 +1,16 @@
 from prfpylot.create_inputfile import InputfileGenerator
+from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.pylot import Pylot
 
 if __name__ == "__main__":
+    # check if data is already available on disk. If now download it
+    MyDownloader = ExampleDownloadHandler()
+    MyDownloader.check_and_download_example_data()
 
     # create the input file for the example data
     MyInputfileGenerator = InputfileGenerator()
-    MyInputfileGenerator.generate_sod_example()
+    input_file = MyInputfileGenerator.generate_sod_example()
         
-    # run proffast using the prfPylot
-    input_file = "input_sodankyla_example.yml"
-    MyPylot = Pylot(input_file, logginglevel="debug")
+    # create prfPylot and run PROFFAST using the prfPylot
+    MyPylot = Pylot(input_file, logginglevel="info")
     MyPylot.run(n_processes=2)

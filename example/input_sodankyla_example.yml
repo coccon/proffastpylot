@@ -26,7 +26,7 @@ coords:
 #       during the chosen time period, the it can happen that the local time
 #       in the ouputfile is not correct anymore, since it is determined using
 #       the coordinates of the first day in the run.
-coord_file: e:\profast_pylot_dev\example\input_data\coords.csv
+coord_file: e:\proffastpylot\example\input_data\coords.csv
 
 # if times of the recorded data is not stored in UTC, insert the offset here
 # default: 0.0
@@ -43,6 +43,7 @@ utc_offset:
 # The directory to the spectra is given as the 'analysis_path'.
 # Please NOTE: In this case the folder this path points to must have a
 # substructure like analysis/SiteName_InstrumentNumber/YYMMDD.
+# Set to True/False.
 start_with_spectra: False
 
 
@@ -62,6 +63,7 @@ note:
 # the 'pcxs' program. To keep the files can save computation time if you want 
 # to calculate some spectra of the same location in the same datetime range
 # again.
+# Set to True/False.
 delete_abscos.bin_files: True
 delete_input_files: False
 
@@ -87,14 +89,14 @@ pressure_type: log
 
 # proffast_path have to point to the folder containing the proffast files.
 # The structure of this folder have to be kept like downloaded.
-proffast_path: e:\profast_pylot_dev\prf
+proffast_path: e:\proffastpylot\prf
 
 # input data
 # -----------
 # a folder where the data are located like YYMMDD/YYMMDDSN.XXX
-interferogram_path: e:\profast_pylot_dev\example\input_data\interferograms_sodankyla\SN039
-map_path: e:\profast_pylot_dev\example\input_data\map_sodankyla
-pressure_path: e:\profast_pylot_dev\example\input_data\pressure_sodankyla
+interferogram_path: e:\proffastpylot\example\input_data\interferograms_sodankyla\SN039
+map_path: e:\proffastpylot\example\input_data\map_sodankyla
+pressure_path: e:\proffastpylot\example\input_data\pressure_sodankyla
 
 
 
@@ -109,10 +111,10 @@ pressure_path: e:\profast_pylot_dev\example\input_data\pressure_sodankyla
 # analysis/SiteName_InstrumentNumber/YYMMDD.
 # Please note: If you are using prfPylot to process already available spectra
 # (*.bin files), you need to provide a folder structure as given above!
-analysis_path: e:\profast_pylot_dev\example\analysis
+analysis_path: e:\proffastpylot\example\analysis
 
 # In the result path, the final results, the logfiles and if you want to keep
 # them, the inputfiles are written to. Within the folder given here, prfPylot
 # will create a folder named 'SiteName_InstrumentNumber_StartDate_EndDate'
-result_path: e:\profast_pylot_dev\example\result_data\results_sodankyla
+result_path: e:\proffastpylot\example\result_data\results_sodankyla
 #==============================

@@ -1,13 +1,10 @@
 *__pycache__*
 .venv/
+.prfvenv/
 *.BIN
-data/*/spectra/
-data/*/results/
-data/Sodankyla/SN039/results/*
 prf/*
 *subl*
 ./Logfile.txt
-Logfile.txt
 *pT*
 data/
 *.yml
@@ -15,7 +12,6 @@ data/
 build/
 example/*
 prfpylot/templates/template_preprocess4_old.inp
-Notes_Besprechung.txt
 desktop.ini
 GeneralLogfile.log
 .vscode/launch.json
