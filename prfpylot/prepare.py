@@ -492,13 +492,13 @@ class Preparation():
             i = len(dates)
             self.logger.warning("End_date is larger than the date"
                                 "of the last interferogram on disk.")
-        elif end_date < self.dates[0]:
+        elif end_date < dates[0]:
             self.logger.error("The end date is earlier than the"
                               + " date of the first interferogram on disk."
                               + "\nTerminate program.")
             quit()  # better raise an error here?
         else:
-            i = self._find_closest(self.dates, end_date)
+            i = self._find_closest(dates, end_date)
         return i
 
     def _find_closest(self, datelist, date):
