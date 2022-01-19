@@ -7,8 +7,8 @@
 1. Download the PROFFASTpylot repository
 2. Get PROFFAST and copy it to proffastpylot
 3. Create a virtual environment in python
-5. Resulting folder_structure
 4. Install PROFFASTpylot
+5. Resulting folder structure
 
 
 
@@ -77,7 +77,7 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
 In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/troubleshooting.md) page.
 
-You need to activate the virtual environment bevore each run of the PROFFASTpylot by executing the command from step 4.
+You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4.
 
 
 

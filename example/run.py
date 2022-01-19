@@ -3,7 +3,8 @@ from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.pylot import Pylot
 
 if __name__ == "__main__":
-    # check if data is already available on disk. If now download it
+    
+    # check if data is already available on disk. If not download it
     MyDownloader = ExampleDownloadHandler()
     MyDownloader.check_and_download_example_data()
 

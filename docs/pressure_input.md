@@ -22,7 +22,7 @@ Then, the files in the pressure_path are assumed to be named in the following wa
 ### pressure_type: log
 
 For users using the dataformat in the KIT-style, the pressure_type `log` have to be used.
-The pressure files recorded by the datalogger need to be placed inside the `pressure_path`.
+The pressure files recorded by the KIT datalogger need to be placed inside the `pressure_path`.
 
 ### Custom pressure types
 
@@ -59,9 +59,17 @@ The pressure file will be read in the following way.
 
 ```python
 import pandas as pd
-filename = "".join([params["basename"],
-                    date.strftime(params["time_format"]),
-                    params["ending"]])
+params = filename_parameters
+csv_kwargs = dataframe_parameters["csv_kwargs"]
+
+filename = "".join(
+    [
+        params["basename"],
+        date.strftime(params["time_format"]),
+        params["ending"]
+    ]
+)
+
 df = pd.read_csv(filename, **csv_kwargs)
 ```
 

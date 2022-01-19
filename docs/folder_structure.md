@@ -2,8 +2,8 @@
 
 This articles gives an overview about the folder structure used by PROFFASTpylot.    
 The needed folders can be divided into three categories:
- 1. Input data: E.g. Interferograms, pressure files, map files.
- 2. Output data: E.g. the spectra, the results of the processing, some config files.
+ 1. Input data: Interferograms, pressure files, map files
+ 2. Output data: Spectra, results of the processing, config files
  3. PROFFAST path: the folder where the binaries of the PROFFAST files are located
 
  Please note that those three folders do not have to be in the same parent folder.
@@ -39,7 +39,7 @@ interferogram_path
 ### Pressure input
 Inside the `pressure_path` for each day of measurements a pressure file should be provided.
 The filename should include the date information, apart from this the naming and the format of the file are flexible.
-More information on the input of pressure data can be found in [`docs/pressure_input.md`]().
+More information on the input of pressure data can be found in [`docs/pressure_input.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/pressure_input.md).
 
 
 ### Map Files
@@ -66,16 +66,16 @@ analysis_path
 ...
 ```
 
-It is compatible to PROFFIT
+It is compatible to PROFFIT.
 
 ### Result path
-In the result folder run specific information is stored.
+In the result folder run-specific information is stored.
 In ths folder the retrieval of all days are stored. Those files are merged to a
 single file `combined_invparms_<site_name>_StartStopDates<YYYYMMDD>_<YYYYMMDD>.csv`.
 Furhtermore the logfiles of the runs are stored in `result_path/logfiles`.
 
 
-## 3. The PROFAST path
+## 3. The PROFFAST path
 
 PROFFASTpylot needs the information where the binaries of the PROFFAST folder
 are stored in. This information is passed to PROFFASTpylot by `<proffast_path>`.
