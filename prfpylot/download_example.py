@@ -6,8 +6,7 @@ import sys
 
 
 class ExampleDownloadHandler:
-    """
-    This class checks if the example data is available in the installation path
+    """Check if the example data is available in the installation path
     of PROFFASTpylot and downloads it if not.
     """
     def __init__(self):
@@ -19,17 +18,19 @@ class ExampleDownloadHandler:
         """ Download and extract the example data. """
         # Code for download copied from here:
         # https://www.simplifiedpython.net/python-download-file/
-        url = \
-        "https://www.imk-asf.kit.edu/downloads/Coccon-SW/example_data_sodankyla.zip"
-        req = requests.get(url, stream = True)
+        url = (
+            "https://www.imk-asf.kit.edu/downloads/"
+            "Coccon-SW/example_data_sodankyla.zip")
+        req = requests.get(url, stream=True)
         total_size = int(req.headers['content-length'])
 
         # Download the data
         target_file = os.path.join(self.scriptpath, "example_data_temp.zip")
         chunk_size = 1024
         with open(target_file, "wb") as file:
-            for data in tqdm(iterable=req.iter_content(chunk_size=chunk_size),
-                            total = total_size/chunk_size, unit='KB'):
+            for data in tqdm(
+                    iterable=req.iter_content(chunk_size=chunk_size),
+                    total=total_size/chunk_size, unit='KB'):
                 file.write(data)
 
         # Extract it
@@ -40,7 +41,7 @@ class ExampleDownloadHandler:
         print("Download Completed")
 
     def check_and_download_example_data(self):
-        """ Check if example data is available and download it. """
+        """Check if example data is available and download it."""
 
         input_data_path = os.path.join(self.example_path, "input_data")
         if os.path.exists(input_data_path):
