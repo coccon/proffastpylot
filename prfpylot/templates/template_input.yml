@@ -1,5 +1,7 @@
 # input to run PRFpylot
 # leave empty if the default value should be used
+# An example of a file structure and derived path can be found in
+# 'docs/folder_strucutre.md'
 
 # SITE AND INSTRUMENT
 #==============================

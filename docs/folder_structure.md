@@ -8,8 +8,7 @@ The needed folders can be divided into three categories:
 
  Please note that those three folders do not have to be in the same parent folder.
  The user is free to choose the folder structure as he likes.  
- **However, for the first usage we recommend to use the folder structure as
-  given in [`docs/installationpressure_input.md`]()**
+_However, to run the example files using [`run.py`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) the folder structure must be as given in [`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md)_
 
 ## 1. Input data
 
@@ -29,8 +28,8 @@ It needs to have the following structure:
 ```
 interferogram_path
 ├── YYMMDD
-│	├── <YYMMDD>SN.XXX
-│	├── <YYMMDD>SN.XXX
+│	├── YYMMDDSN.XXX
+│	├── YYMMDDSN.XXX
 │	└── ...
 ├── YYMMDD
 │	├── ...
@@ -99,7 +98,7 @@ D:\EM27_OutputData
         └── results_sodankyla
 
 
-D:\prfPylot_master
+D:\proffastpylot
     ├── docs
     ├── run_sodankyla.py
     ├── input_sodankyla.yml
@@ -109,17 +108,21 @@ D:\prfPylot_master
     │    ├── ...
     │    ├── preprocess
     │    │    └── preprocess4.exe
+    │    ├── out_fast
+    │    ├── inp_fast
+    │    ├── ...
     │    └── wrk_fast
     └── prfpylot
         ├── ILS-List.csv
         ├── prepare.py
         ├── ...
         └── templates
+              └── ...
 
 ```
 In this example some of the paths would be:
 ```
-proffast_path: D:\prfPylot_master\prf
+proffast_path: D:\proffastpylot\prf
 interferogram_path: D:\EM27_InputData\interferograms_sodankyla
 analysis_path: D:\EM27_OutputData\analysis
 ```
