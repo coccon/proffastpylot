@@ -69,18 +69,6 @@ class FileMover(Preparation):
         if not os.path.exists(pt_path):
             os.makedirs(pt_path)
 
-    def _create_cal_dir(self, date):
-        """
-        DEPRECATED!
-        Create the cal dir in the interferogram folder, overwrite if exists.
-        """
-        date_str = date.strftime("%y%m%d")
-        igram_folder = os.path.join(self.igram_path, date_str)
-        cal_path = os.path.join(igram_folder, 'cal')
-        if os.path.exists(cal_path):
-            shutil.rmtree(cal_path)
-        os.mkdir(cal_path)
-
     def _create_result_dir(self):
         """Create a result dir and a backup if previous results exist.
 
