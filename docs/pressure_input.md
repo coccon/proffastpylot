@@ -1,14 +1,14 @@
 # Pressure Input
 
-This article explains how handle pressure data with the prfPylot.
+This article explains how handle pressure data with PROFFASTpylot.
 To perform the retrieval PROFFAST needs pressure data from the measurement site.
 This data ist provided for PROFFAST using the file `pt_intraday.inp`.
 A template for this file can be found in the `prfpylot/templates` folder.
 
 
-## Provided options in PrfPylot
+## Provided options in PROFFASTpylot
 
-Two parameters in the input file specify how the pressure is handled by prfPylot.
+Two parameters in the input file specify how the pressure is handled by PROFFASTpylot.
 
 - `pressure_path` is the location of the pressure files
 - `pressure_type` specifies the format of the pressure file

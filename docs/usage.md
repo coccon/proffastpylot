@@ -23,10 +23,9 @@ The example input data are downloaded automatically when running `run.py` the fi
 It is a ready to use example where all needed input files are downloaded and created automatically.
 
 
-**Executing PROFFAST with the prfPylot takes two steps**:
+### Executing PROFFAST with the PROFFASTpylot takes two steps
 1. Create an input file with the required information
-2. Execute prfPylot via a Python script.
-
+2. Execute PROFFASTpylot via a Python script.
 
 Both steps will be explained in more detail, in the following.
 
@@ -36,7 +35,7 @@ The input file (stored in the yaml format) contains all the key information requ
 An example with explanations (`example_sodankyla_input.yml`) is provided. It contains all options that are required to process the example data set.
 Adjust this file to your requirements.
 
-Alternatively, the prfPylot provides an interactive tool to create an input file.  
+Alternatively, PROFFASTpylot provides an interactive tool to create an input file.  
 You can run
 ```
 python prfpylot/create_inputfile.py
@@ -76,7 +75,7 @@ You can execute `run.py` to test this with the example data provided.
 ## 3. Special case: Process spectra directly
 
 If the spectra are already available, set the option `start_with_spectra` to `True` in the input file.  
-The path to the spectra is given to prfPylot by the entry `analysis_path`.
+The path to the spectra is given to PROFFASTpylot by the entry `analysis_path`.
 Note, that the folder `analysis_path` must have the
 following substructure: `analysis/SiteName_InstrumentNumber/YYMMDD`.  
 Afterwards, run the functions `run_pcxs`, `run_inv` and `combine_results`.

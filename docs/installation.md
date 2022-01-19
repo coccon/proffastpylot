@@ -1,14 +1,14 @@
 # Installation
 
-**For using prfPylot you need Python 3.7 or newer.**
+**For using PROFFASTpylot you need Python 3.7 or newer.**
 
 ## Content
 
-1. Download the prfPylot repository
-2. Get PROFFAST and copy it to profffastpylot
+1. Download the PROFFASTpylot repository
+2. Get PROFFAST and copy it to proffastpylot
 3. Create a virtual environment in python
-4. Install the prfPylot repository
 5. Resulting folder_structure
+4. Install PROFFASTpylot
 
 
 
@@ -36,7 +36,7 @@ Extracting it will create the folder `proffastpylot`.
 
 
 
-## 2. Get PROFFAST and copy it to profffastpylot
+## 2. Get PROFFAST and copy it to `proffastpylot`
 
 ### Download PROFFAST
 Download and install an up-to-date version of PROFFAST.
@@ -50,7 +50,7 @@ https://www.imk-asf.kit.edu/english/3225.php
 For Windows users, the executables are already provided.
 
 
-### Copy the PROFFAST directory into proffastpylot
+### Copy the PROFFAST directory into `proffastpylot`
 
 Copy the PROFFAST directory into `proffastpylot` and rename it to `prf`.
 

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name="prfPylot",
+    name="PROFFASTpylot",
     packages=["prfpylot"],
     version="0.1",
     author="Benedikt Herkommer, Lena Feld",
