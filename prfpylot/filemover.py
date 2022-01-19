@@ -5,7 +5,7 @@ from prfpylot.prepare import Preparation
 
 
 class FileMover(Preparation):
-    """Copy, Move and remove temporary profast Files."""
+    """Copy, Move and remove temporary proffast Files."""
 
     def __init__(self, input_file, logginglevel="info"):
         super(FileMover, self).__init__(input_file, logginglevel=logginglevel)
@@ -15,7 +15,7 @@ class FileMover(Preparation):
     def init_folders(self):
         """Create all relevant folders on startup if nonexistant.
 
-        Check if relevant profast folders are existant.
+        Check if relevant proffast folders are existant.
         Folders to be created:
         - pT, cal directories
         - result folder (backup of previous results)
@@ -106,9 +106,8 @@ class FileMover(Preparation):
                                     " Content may be overwritten.")
             self._create_pT_dir(date)
 
-
     def _check_proffast_folders(self):
-        """Check if relevant Profast folders are in place."""
+        """Check if relevant Proffast folders are in place."""
         pass
 
     def _create_pT_dir(self, date):
