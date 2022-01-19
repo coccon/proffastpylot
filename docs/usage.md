@@ -1,31 +1,39 @@
 # Usage
 
 ## Content
-
-1. General use
+1. Run the Sodankyla "out-of-the-box" example
+2. General use
 	- Input file creation
 	- Starting the run
-2. Special case: Process already available spectra
+3. Special case: Process spectra directly
 
-## General use
+## 1. Run the Sodankyla "out-of-the-box" example
 
-We explain the usage of the prfPylot with the help of an example from Sodankyla which is provided in `example/`.
-The example interferograms, as well as the pressure and atmospheric data is located in `example/input_data`.
+prfPylot comes with the ready to use example `example/run.py`.
+At the first run, it downloads the example interferogram, map- and pressure files automatically.
+Furthermore, it generates the `input_sodankyla_example.yml` file matching the paths on your computer.
+
+By the use of this script the general use of the prfPylot is explained in the next section.
+
+## 2. General use
+
+We explain the usage of the prfPylot with the help of an example from Sodankyla which is provided as `example/run.py`.
+The example input data are downloaded automatically when running `run.py` the first time.
+
+It is a ready to use example where all needed input files are downloaded and created automatically.
+
 
 **Executing PROFFAST with the prfPylot takes two steps**:
 1. Create an input file with the required information
 2. Execute prfPylot via a Python script.
 
-`example/run.py` is a ready to use example where the corresponding input file is created automatically.
 
 Both steps will be explained in more detail, in the following.
-
-
 
 ### Input file creation
 
 The input file (stored in the yaml format) contains all the key information required by prfPylot and PROFFAST, e.g. the location of the input and output files, or meta information about the data to be processed.
-An example with explanations (`example_sodankyla_input.yml`) is provided. It contains the options that are required to process the example data set.
+An example with explanations (`example_sodankyla_input.yml`) is provided. It contains all options that are required to process the example data set.
 Adjust this file to your requirements.
 
 Alternatively, the prfPylot provides an interactive tool to create an input file.  
@@ -56,7 +64,7 @@ MyPylot.run_pcxs(n_processes)
 MyPylot.run_inv(n_processes)
 MyPylot.combine_results()
 ```
-Or run all these steps automatically one after the other
+Or run all these steps automatically one after the other by the command
 
 ```python
 my_pylot.run(n_processes)
@@ -65,7 +73,7 @@ my_pylot.run(n_processes)
 You can execute `run.py` to test this with the example data provided.
 
 
-## Special case: Process already available spectra
+## 3. Special case: Process spectra directly
 
 If the spectra are already available, set the option `start_with_spectra` to `True` in the input file.  
 The path to the spectra is given to prfPylot by the entry `analysis_path`.
