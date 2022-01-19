@@ -1,6 +1,4 @@
 *__pycache__*
-.venv/
-.prfvenv/
 *.BIN
 prf/*
 *subl*
@@ -11,8 +9,7 @@ data/
 *.egg-info/
 build/
 example/*
-prfpylot/templates/template_preprocess4_old.inp
 desktop.ini
 GeneralLogfile.log
 .vscode/launch.json
-prfpylot/ILSListeConverter/*
+prf_venv/
