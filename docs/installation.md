@@ -1,40 +1,42 @@
 # Installation
 
-_For using prfPylot you need Python 3.7 or newer._
+**For using prfPylot you need Python 3.7 or newer.**
 
 ## Content
 
 1. Download the prfPylot repository
-2. Get PROFFAST and copy to prfPylot
+2. Get PROFFAST and copy it to profffastpylot
 3. Create a virtual environment in python
 4. Install the prfPylot repository
 5. Resulting folder_structure
 
 
 
-## 1. Download the prfPylot repository
+## 1. Download the PROFFASTpylot repository
 
 **We recommend downloading the files using [git](https://www.git-scm.com).**   
+
 It will make future updates easier.
-
-
-### Clone the prfpylot repository using git
-
-```   
-git clone git@git.scc.kit.edu:cw4643/prfpylot.git
-```
-A folder `proffastpylot` containing all program files will be created.
 
 
 ### Clone the PROFFASTpylot repository using git
 
+```   
+git clone https://gitlab.eudat.eu/coccon-kit/proffastpylot.git
+```
+A folder `proffastpylot` containing all program files will be created.
+
+
+### Download the PROFFASTpylot repository as a zip file
+
 Alternatively download and unpack the zip file 
 https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/archive/master/proffastpylot-master.zip
+
 Extracting it will create the folder `proffastpylot`.
 
 
 
-## 3. Get PROFFAST and copy it to the program folder
+## 2. Get PROFFAST and copy it to profffastpylot
 
 ### Download PROFFAST
 Download and install an up-to-date version of PROFFAST.
@@ -54,8 +56,7 @@ Copy the PROFFAST directory into `proffastpylot` and rename it to `prf`.
 
 **For Linux Users**: Instead copying the directory you can create a symlink with e.g.
 ```
-cd proffastpylot
-ln -s ../proffast prf
+ln -s /path/to/proffast /path/to/proffastpylot/prf
 ```
 
 
@@ -74,7 +75,7 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 5. To deactivate run `deactivate`
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
-In case of a problem, take a look at the [Troubleshooting](https://git.scc.kit.edu/cw4643/prfpylot/-/blob/master/docs/troubleshooting.md) page.
+In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/troubleshooting.md) page.
 
 You need to activate the virtual environment bevore each run of the PROFFASTpylot by executing the command from step 4.
 
@@ -89,10 +90,11 @@ Navigate to `proffastpylot` and enter
 pip install --editable .
 ```
 
+To test the installation execute the `run.py` script. For details see [usage.md](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/usage.md).
 
 ## 5. Resulting folder structure
 
-If you follow the exactly the installation guide your folder strucutre should look like the following:
+If you follow exactly the installation guide your folder strucutre should look like the following:
 ```
 proffastpylot
 ├── prf_venv
@@ -100,7 +102,6 @@ proffastpylot
 ├── docs
 │   ├── ...
 ├── example
-│   ├── input_data
 │   ├── input_sodankyla_example.yml
 │   └── run.py
 ├── prf
@@ -109,6 +110,7 @@ proffastpylot
 │   ├── inp_fwd
 │   ├── preprocess
 │   ├── source
+│   ├── out_fast
 │   └── wrk_fast
 ├── prfpylot
 │   ├── ...
