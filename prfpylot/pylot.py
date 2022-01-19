@@ -26,10 +26,13 @@ class Pylot(FileMover):
         Run preporcessing, pcxs, invers.
         The generated data is moved and merged in a result folder.
         """
-        self.run_preprocess(n_processes=n_processes)
-        self.run_pcxs(n_processes=n_processes)
-        self.run_inv(n_processes=n_processes)
-        self.combine_results()
+        try:
+            self.run_preprocess(n_processes=n_processes)
+            self.run_pcxs(n_processes=n_processes)
+            self.run_inv(n_processes=n_processes)
+            self.combine_results()
+        finally:
+            self.clean_files()
 
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""

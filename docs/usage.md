@@ -54,10 +54,13 @@ Afterwards you can either run all steps of PROFFAST individually with the follow
 
 ```python
 n_processes = 2
-MyPylot.run_preprocess(n_processes)
-MyPylot.run_pcxs(n_processes)
-MyPylot.run_inv(n_processes)
-MyPylot.combine_results()
+try:
+    MyPylot.run_preprocess(n_processes)
+    MyPylot.run_pcxs(n_processes)
+    MyPylot.run_inv(n_processes)
+    MyPylot.combine_results()
+finally:
+    MyPylot.clean_files()
 ```
 Or run all these steps automatically one after the other by the command
 
