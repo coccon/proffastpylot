@@ -74,8 +74,6 @@ class FileMover(Preparation):
                     self.logger.error("Unknown error while movig file "
                                       f"{source}. Errormessage: {e}")
 
-
-
     def _create_analysis_subdirs(self):
         """
         Create the subdirs of the analysis folder.
@@ -205,8 +203,8 @@ class FileMover(Preparation):
         """Get size of all abscos.bin files. Give warning if too large."""
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         # the target folder doesnot exists, since this is an optional method
-        abscosbinfiles = glob(os.path.join(wrk_fast_folder,
-                                                "*-abscos.bin"))
+        abscosbinfiles = glob(
+            os.path.join(wrk_fast_folder, "*-abscos.bin"))
         size = 0
         for file in abscosbinfiles:
             size += os.path.getsize(file)
