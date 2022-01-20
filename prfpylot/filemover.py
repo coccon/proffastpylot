@@ -136,8 +136,9 @@ class FileMover(Preparation):
             try:
                 os.remove(os.path.join(wrk_fast_folder, filename))
             except FileNotFoundError:
-                self.logger.warning("File not Found: "
-                                    f"Could not delete {filename}")
+                self.logger.error(
+                    "File not Found: "
+                    f"Could not delete {filename}")
 
     def check_abscosbin_summed_size(self):
         """Get size of all abscos.bin files. Give warning if too large."""
@@ -163,9 +164,10 @@ class FileMover(Preparation):
                 try:
                     os.remove(inp_file)
                 except FileNotFoundError:
-                    self.logger.warning("File not Found: "
-                                        f"Could not remove {type} input file"
-                                        f" {inp_file}")
+                    self.logger.error(
+                        "File not Found: "
+                        f"Could not remove {type} input file"
+                        f" {inp_file}")
 
     def move_input_files(self):
         """Move the input files for prep., pcxs and inv to result folder"""
@@ -182,9 +184,10 @@ class FileMover(Preparation):
                         inp_file,
                         os.path.join(inp_folder, os.path.basename(inp_file)))
                 except FileNotFoundError:
-                    self.logger.warning("File not found: "
-                                        f"Could not move {type} input file"
-                                        f" {inp_file}")
+                    self.logger.error(
+                        "File not found: "
+                        f"Could not move {type} input file"
+                        f" {inp_file}")
 
     def _create_logfile_dir(self):
         """Create logfile dir if is does not exist."""
@@ -209,8 +212,9 @@ class FileMover(Preparation):
                               os.path.basename(self.generalLogfile))
         try:
             shutil.move(self.generalLogfile, target)
-            self.logger.info("Moved the general logfile to the"
-                             " result/logfiles folder")
+            self.logger.debug(
+                "Moved the general logfile to the"
+                " result/logfiles folder")
         except (FileNotFoundError) as e:
             self.logger.debug(f"\nsource: {self.generalLogfile} "
                               f"\ntarget: {target}")
