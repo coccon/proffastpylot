@@ -234,6 +234,7 @@ class Pylot(FileMover):
             self.move_input_files()
         
         self._move_generallogfile_to_logdir()
+        self._move_prf_config_file()
         self.logger.info("Done.")
 
     def _call_external_program(self, command_list, **kwargs):
