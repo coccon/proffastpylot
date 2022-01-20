@@ -1,10 +1,14 @@
-# input to run PRFpylot
+# Input file to run PROFFASTpylot
+
 # leave empty if the default value should be used
-# An example of a file structure and derived path can be found in
+# An example of a file structure and derived paths can be found in
 # 'docs/folder_strucutre.md'
 
-# SITE AND INSTRUMENT
-#==============================
+
+
+#######################
+# SITE AND INSTRUMENT #
+#######################
 
 instrument_number: %instrument_number%
 
@@ -21,11 +25,13 @@ coords:
   lat: %lat%
   lon: %lon%
   alt: %alt%  # km over sea level
+
 # full path to the coord file.
 # This file contains the coordinates of the sites.
-# NOTE: The data retrieved of all dates in a single run are collected in
-#       one single file. Hence, if the coordinates of the spectrometer changes
-#       during the chosen time period, the it can happen that the local time
+#
+# Warning: 
+#       If the coordinates of the spectrometer changed
+#       during the chosen time period, it can happen that the local time zone
 #       in the ouputfile is not correct anymore, since it is determined using
 #       the coordinates of the first day in the run.
 coord_file: %coord_file%
@@ -33,30 +39,30 @@ coord_file: %coord_file%
 # if times of the recorded data is not stored in UTC, insert the offset here
 # default: 0.0
 utc_offset: %utc_offset%
-#==============================
 
 
-# BEHAVIOUR:
-#==============================
 
-# Start the processing chain with already available spectra. This can for 
-# example be the case, if you have processed some data already but you want to
-# reprocesse them with an other pressure value or an other map-file.
+#############
+# BEHAVIOUR #
+#############
+
+# Start the processing chain with already available spectra.
 # The directory to the spectra is given as the 'analysis_path'.
-# Please NOTE: In this case the folder this path points to must have a
-# substructure like analysis/SiteName_InstrumentNumber/YYMMDD.
+# NOTE: 
+#     In this case the folder this path points to must have a
+#     substructure like analysis/SiteName_InstrumentNumber/YYMMDD.
 # Set to True/False.
 start_with_spectra: %start_with_spectra%
 
 
-# process only dates in a specific time range
+# Process only dates in a specific time range
 # date format: YYYY-MM-DD.
 # Leave empty to process all dates in the data folder
 start_date: %start_date%
 end_date: %end_date%
 
-# optional comment included in bin-files by PREPROCESS, string
-# Leave empty adding no comment
+# Optional comment included in bin-files by PREPROCESS
+# Leave empty for adding no comment
 note: %note%
 
 
@@ -83,10 +89,12 @@ pressure_type: log
 
 
 
-# PATH
-# ==============================
+#########
+# PATHS #
+#########
 
-# proffast_path have to point to the folder containing the proffast files.
+# Optional
+# The proffast_path should point to the folder containing PROFFAST.
 # The structure of this folder have to be kept like downloaded.
 proffast_path: %proffast_path%
 
@@ -102,18 +110,16 @@ pressure_path: %pressure_path%
 # output data
 # -----------
 # In the analysis path the spectra produced by preprocess are written to.
-# The folder can be located anywhere on the disk. It is NOT mandatory to name
-# the folder 'analysis'. In principle it can be named as you like. However,
-# it is strongly recommended to use this name to keep the data structure
-# compatibility to older proffast version as well as to profit.
-# Within this folder the prfPylot will create a folder structure like
+# We recommend to call it analysis.
+# Within this folder the PROFFASTpylot will create a folder structure like
 # analysis/SiteName_InstrumentNumber/YYMMDD.
-# Please note: If you are using prfPylot to process already available spectra
-# (*.bin files), you need to provide a folder structure as given above!
+# 
+# If you process already available spectra (*.bin files),
+# you need to provide a folder structure as described above
+# and set start_with_spectra to True.
 analysis_path: %analysis_path%
 
-# In the result path, the final results, the logfiles and if you want to keep
-# them, the inputfiles are written to. Within the folder given here, prfPylot
-# will create a folder named 'SiteName_InstrumentNumber_StartDate_EndDate'
+# The merged results, the logfiles and optionally the inputfiles are written to
+# the result path. Within it, PROFFASTpylot will create 
+# a folder named 'SiteName_InstrumentNumber_StartDate-EndDate'
 result_path: %result_path%
-#==============================
