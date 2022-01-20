@@ -60,29 +60,26 @@ end_date: %end_date%
 note: %note%
 
 
-# Do you want to delete the abscos.bin files after the execution?
-# These file contain the simulation of the atmosphere which is the result or
-# the 'pcxs' program. To keep the files can save computation time if you want 
-# to calculate some spectra of the same location in the same datetime range
-# again.
-# Set to True/False.
-delete_abscos.bin_files: %delete_abscos.bin_files%
+
+# Delete the abscos.bin files? (True/False)
+# The abscos.bin file contains the simulation of the atmosphere which is
+# the result of the 'pcxs' program part of PROFFAST.
+delete_abscosbin_files: %delete_abscosbin_files%
+
+# Delete PROFFAST input files? (True/False)   Default: False
+# If False: Files will be moved to results folder
 delete_input_files: %delete_input_files%
 
 
-# the pressure type defines the format of the pressure file
-# type original if you want to create the pt_intraday.inp file by yourself
-# in the documentation about the pressure is described how to create your own
-# filetype if type is original, naming of the files should be
-# <site_abbrev>_<yy-mm-dd>.inp
-# The information where the corresponding files can be found is located in the
-# PATH section.
-
-# log refers to the 'MIRA-datalogger' format as used by KIT.
+# The pressure_type defines the format of the pressure file
+# Options:
+#    original: 
+#        create the pt_intraday.inp file by yourself,
+#        naming of the files should be <site_abbrev>_<yy-mm-dd>.inp
+#    log: 
+#        the 'MIRA-datalogger' format as used by KIT
+# (It is possible to define own pressure types)
 pressure_type: log
-#==============================
-
-
 
 
 

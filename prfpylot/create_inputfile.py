@@ -53,7 +53,7 @@ class InputfileGenerator():
         self.input_data["end_date"] = ""
         self.input_data["note"] = ""
 
-        self.input_data["delete_abscos.bin_files"] = "True"
+        self.input_data["delete_abscosbin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
         self.input_data["start_with_spectra"] = "False"
         
@@ -277,10 +277,10 @@ Delete absocs.bin file? Yes/No?\n
         )
         while True:
             if temp == "Yes":
-                self.input_data["delete_abscos.bin_files"] = True
+                self.input_data["delete_abscosbin_files"] = True
                 break
             elif temp == "No":
-                self.input_data["delete_abscos.bin_files"] = False
+                self.input_data["delete_abscosbin_files"] = False
                 break
             else:
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")

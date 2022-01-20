@@ -210,12 +210,13 @@ class Pylot(FileMover):
     def clean_files(self):
         """After execution clean up the files not needed anymore"""
         if self.delete_abscosbin:
-            self.logger.info("Delete abscos-bin files")
+            self.logger.debug("Deleting abscos.bin files ...")
             self.delete_abscos_files()
         else:
-            self.logger.info("Do not delete abscos-bin files. "
-                             "They are located in "
-                             f"{os.path.join(self.proffast_path, 'wrk-fast')}")
+            self.logger.info(
+                "Keeping abscos.bin files ...\n"
+                "They are located in "
+                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
             self.check_abscosbin_summed_size()
         
         if self.bool_delete_input_files:

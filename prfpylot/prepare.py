@@ -114,10 +114,10 @@ class Preparation():
             self.logger.error("start_with_spectra not specified!")
             sys.exit()
 
-        if args["delete_abscos.bin_files"] is not None:
-            self.delete_abscosbin = args["delete_abscos.bin_files"]
+        if args["delete_abscosbin_files"] is not None:
+            self.delete_abscosbin = args["delete_abscosbin_files"]
         else:
-            self.logger.error("delete_abscos.bin_files not specified!")
+            self.logger.error("delete_abscosbin_files not specified!")
             sys.exit()
         
         if args["delete_input_files"] is not None:
