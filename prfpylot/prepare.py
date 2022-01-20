@@ -25,10 +25,11 @@ class Preparation():
     # used
     ggg2020mapfiles = False
 
-    def __init__(self, input_path="input.yml", logginglevel="info"):
+    def __init__(self, input_file, logginglevel="info"):
         # read input file
-        with open(input_path, "r") as f:
+        with open(input_file, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
+        self.input_file = input_file
 
         # now, the logfile can be created:
         self.logger = self.get_logger(logginglevel=logginglevel)

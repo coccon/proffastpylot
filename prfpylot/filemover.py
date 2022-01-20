@@ -21,7 +21,6 @@ class FileMover(Preparation):
         - result folder (backup of previous results)
         - logfiles
         """
-        self._check_proffast_folders()
         self._create_analysis_subdirs()
         self._create_result_dir()
         self._create_logfile_dir()
@@ -35,6 +34,12 @@ class FileMover(Preparation):
         self.analysis_path = os.path.join(
                     self.analysis_path,
                     f"{self.site_name}_{self.instrument_number}")
+        
+        if os.path.exists(self.analysis_path):
+            self.logger.warning(
+                f"The analysis folder {self.analysis_path} exists already! "
+                "The content may be overwritten.")
+        
         # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
         for date in self.dates:
             datestring = date.strftime("%y%m%d")
@@ -42,23 +47,11 @@ class FileMover(Preparation):
             calfolder = os.path.join(self.analysis_path, datestring, "cal")
             if not os.path.exists(calfolder):
                 os.makedirs(calfolder)
-            else:
-                self.logger.warning(f"cal folder for date {datestring}"
-                                    " exists already."
-                                    " Content may be overwritten.")
             # create VMR_dim folder:
             vmrfolder = os.path.join(self.analysis_path, datestring, "VMR_dim")
             if not os.path.exists(vmrfolder):
                 os.makedirs(vmrfolder)
-            else:
-                self.logger.warning(f"VMR_dim folder for date {datestring}"
-                                    " exists already."
-                                    " Content may be overwritten.")
             self._create_pT_dir(date)
-
-    def _check_proffast_folders(self):
-        """Check if relevant Proffast folders are in place."""
-        pass
 
     def _create_pT_dir(self, date):
         """Create pt directory."""
@@ -88,7 +81,7 @@ class FileMover(Preparation):
             result_folder_backup = self.result_folder\
                 + f"_backup{len(backuped_results)}"
             self.logger.warning(
-                f"Result directory {self.result_folder} exists! "
+                f"The result directory {self.result_folder} exists already! "
                 "Renamed existing one to "
                 f"{result_folder_backup} and created a new one.")
             # rename and create new, empty folder
@@ -220,4 +213,11 @@ class FileMover(Preparation):
                               f"\ntarget: {target}")
             self.logger.debug(e)
             self.logger.error("Could not move logfile to new logfile dir! "
-                              f"File is located in: {self.generalLogfile}")        
+                              f"File is located in: {self.generalLogfile}")
+
+    def _move_prf_config_file(self):
+        """Copy the PROFFASTpylot input file to the result folder."""
+        self.logger.debug(
+            "Copying the PROFFASTpylot input_file "
+            f"{self.input_file} to {self.result_folder}")
+        shutil.copy(self.input_file, self.result_folder)

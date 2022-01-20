@@ -68,7 +68,7 @@ class InputfileGenerator():
         self.input_data["pressure_path"] = os.path.normpath(pressure_path)        
         
         result_path = os.path.join(self.scriptpath, "..", "example",
-                                   "result_data", "results_sodankyla")
+                                   "results")
         self.input_data["result_path"] = os.path.normpath(result_path)
         
         analysis_path = os.path.join(self.scriptpath, "..", "example",

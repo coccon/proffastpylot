@@ -37,7 +37,7 @@ class Pylot(FileMover):
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""
         self.logger.info(
-            f"Running preprocess4 with {n_processes} task(s) ...")
+            f"Running preprocess with {n_processes} task(s) ...")
         output = []
         if n_processes <= 1:
             for date in self.dates:
@@ -74,7 +74,7 @@ class Pylot(FileMover):
         If n_processes > 1, run_inv_at() is called directly. 
         Otherwise it is called via run_parallel.
         """
-        self.logger.info(f"Running inverse with {n_processes} task(s) ...")
+        self.logger.info(f"Running invers with {n_processes} task(s) ...")
         output = []
         if n_processes <= 1:
             for date in self.dates:
@@ -85,7 +85,7 @@ class Pylot(FileMover):
                                          n_processes)
             output = tmp_out
         self._write_logfile("inv", output)
-        self.logger.info("Finished inverse.")
+        self.logger.info("Finished invers.")
 
     def run_preprocess_at(self, date):
         """Run preprocess at date."""
@@ -207,7 +207,7 @@ class Pylot(FileMover):
         df.to_csv(combined_file, index=False, sep="\t",
                   float_format="%.5e")
         self.logger.info(
-            "The combined results of PROFFAST inverse were written "
+            "The combined results of PROFFAST were written "
             f"to {combined_file}.")
 
     def clean_files(self):
