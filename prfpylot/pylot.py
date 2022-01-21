@@ -37,18 +37,18 @@ class Pylot(FileMover):
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""
         self.logger.info(
-            f"Running preprocess4 with {n_processes} task(s) ...")
+            f"Running preprocess with {n_processes} task(s) ...")
         output = []
         if n_processes <= 1:
             for date in self.dates:
                 tmp_out = self.run_preprocess_at(date)
                 output.append(tmp_out)
         else:
-            self.logger.info("...start parallel processing...")
+            self.logger.debug("...start parallel processing...")
             tmp_out = self._run_parallel(self.run_preprocess_at, n_processes)
             output = tmp_out
         self._write_logfile("preprocess", output)        
-        self.logger.info("... finished preprocessing.")
+        self.logger.info("Finished preprocessing.")
 
     def run_pcxs(self, n_processes=1):
         """
@@ -67,13 +67,14 @@ class Pylot(FileMover):
                                          n_processes)
             output = tmp_out
         self._write_logfile("pcsx", output)
+        self.logger.info("Finished pcxs.")
 
     def run_inv(self, n_processes=1):
+        """Run inverse.
+        If n_processes > 1, run_inv_at() is called directly. 
+        Otherwise it is called via run_parallel.
         """
-        Main method to run inv. If n_processes > 1, run_inv_at is
-        called directly. Otherwise it is called via run_parallel
-        """
-        self.logger.info(f"Running inv with {n_processes} task(s) ...")
+        self.logger.info(f"Running invers with {n_processes} task(s) ...")
         output = []
         if n_processes <= 1:
             for date in self.dates:
@@ -84,9 +85,10 @@ class Pylot(FileMover):
                                          n_processes)
             output = tmp_out
         self._write_logfile("inv", output)
+        self.logger.info("Finished invers.")
 
     def run_preprocess_at(self, date):
-        """Run preprocess on a single day"""
+        """Run preprocess at date."""
         self.logger.info("Running preprocess at "
                          f"{date.strftime('%Y-%m-%d')} ...")
         self.generate_prf_input("prep", date)
@@ -104,13 +106,13 @@ class Pylot(FileMover):
         return outlist
 
     def run_pcxs_at(self, date):
-        """ Run preprocess at a single day given as an argument """
+        """ Run preprocess at date."""
         self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
         # search for GGG2020 map files:
         srchstrg = f"{self.site_abbrev}_*_*Z.map"
         mapfiles = glob(os.path.join(self.map_path, srchstrg))
         if len(mapfiles) != 0:
-            self.logger.info("Detected GGG2020 map files!")
+            self.logger.debug("Detected GGG2020 map files!")
             # GGG2020map files found!
             self.ggg2020mapfiles = True
             self._interpolate_map_files(date)
@@ -118,13 +120,13 @@ class Pylot(FileMover):
             srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
             if len(mapfiles) == 1:
-                self.logger.info("Detected GGG2014 map file!")
+                self.logger.debug("Detected GGG2014 map file!")
                 self.ggg2020mapfiles = False
             else:
-                self.logger.critical("No suitable map file found. "
-                                     f"Map-file path is: {self.map_path} "
-                                     )
-                raise(RuntimeError("No suitable map file found."))
+                self.logger.critical(
+                    "No suitable map file found at "
+                    f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
+                sys.exit()
 
         self.generate_prf_input("pcxs", date)
         prf_input_path = os.path.basename(
@@ -188,14 +190,14 @@ class Pylot(FileMover):
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
-        self.logger.info("Move results to final output folder")
+        self.logger.debug("Moving results to final output folder ...")
         self.move_results()
 
         df = self._get_merged_df()
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
         # TODO: Create 
-        resultfile = "combined_invparms_{}_StartStopDates{}_{}.csv".format(
+        resultfile = "combined_invparms_{}_{}-{}.csv".format(
                             self.site_name,
                             self.dates[0].strftime("%Y%m%d"),
                             self.dates[-1].strftime("%Y%m%d")
@@ -204,28 +206,36 @@ class Pylot(FileMover):
             self.result_folder, resultfile)
         df.to_csv(combined_file, index=False, sep="\t",
                   float_format="%.5e")
-        self.logger.info("Sucessfully wrote the combined invparams"
-                         f" to {combined_file}")
+        self.logger.info(
+            "The combined results of PROFFAST were written "
+            f"to {combined_file}.")
 
     def clean_files(self):
         """After execution clean up the files not needed anymore"""
+        self.logger.info("Removing temporary files ...")
+        
+        # handling abscosbin
         if self.delete_abscosbin:
-            self.logger.info("Delete abscos-bin files")
+            self.logger.debug("Deleting abscos.bin files ...")
             self.delete_abscos_files()
         else:
-            self.logger.info("Do not delete abscos-bin files. "
-                             "They are located in "
-                             f"{os.path.join(self.proffast_path, 'wrk-fast')}")
+            self.logger.info(
+                "Keeping abscos.bin files ...\n"
+                "They are located in "
+                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
             self.check_abscosbin_summed_size()
-        
+
+        # handling input files
         if self.bool_delete_input_files:
-            self.logger.info("delete input files")
+            self.logger.debug("Deleting input files ...")
             self.delete_input_files()
         else:
-            self.logger.info("Move input files")
+            self.logger.debug("Moving input files ...")
             self.move_input_files()
         
         self._move_generallogfile_to_logdir()
+        self._move_prf_config_file()
+        self.logger.info("Done.")
 
     def _call_external_program(self, command_list, **kwargs):
         """
@@ -243,52 +253,22 @@ class Pylot(FileMover):
         if return_value != 0:
             self.logger.error(
                 f"Error while processesing {joined_commands}!\n"
-                f"PROFAST Error message: {err}")
+                f"PROFAST error message: {err}")
         return (out, err)
 
     def _run_parallel(self, method, n_processes):
-        """
-        Run pcxs in parallel using python multiprocessing
-        """
+        """Run method in parallel using python multiprocessing."""
         pool = multiprocessing.Pool(processes=n_processes)
         output = pool.map(method, self.dates)
         return output
-
-    def _write_preprocess_log(self, p_list):
-        """Loop over list of processes and write output to logfile."""
-        filename = "prfPylots_PreprocessLog_{}_{}.log".format(
-                                    self.dates[0].strftime("%y%m%d"),
-                                    self.dates[-1].strftime("%y%m%d"))
-        logfile = os.path.join(self.logfile_path, filename)
-        f = open((logfile), 'w')
-        for c, p in enumerate(p_list):
-            out, err = p.communicate()
-            p.wait()
-            out = out.decode('utf-8')
-            err = err.decode('utf-8')
-            if len(err) != 0:
-                self.logger.error(
-                    'Error while running preprocess\n' + err)
-            f.write(
-                f'\n===================== Task {c} =====================\n'
-                f'Output of Preprocess Task {c}: \n {out}'
-                f'Error of Preprocess: Task {c}\n {err}'
-                '=====================================================\n'
-            )
-        f.close()
-        self.logger.info(
-            f"PROFFAST preprocess4 output was written to {logfile}")
-        # TODO: Implement the following method in filemover!
-        # self.rename_prep_internal_logfile(logfile)
 
     def _write_logfile(self, program_name, output):
         """
         Write the output of preprocess, pcxs and inv to a logfile.
         """
-        self.logger.info(f"... Write logfile of {program_name} ...")
+        self.logger.debug(f"... Write logfile of {program_name} ...")
 
-        # TODO: Add PID or something similar to logfile?
-        file = os.path.join(self.logfile_path, f"Output_of_{program_name}.log")
+        file = os.path.join(self.logfile_path, f"{program_name}_output.log")
 
         logfile = open(file, "w")
         for i, entry in enumerate(output):
@@ -303,8 +283,6 @@ class Pylot(FileMover):
             logfile.write("============================================\n\n\n")
 
         logfile.close()
-        if err != "":
-            self.logger.error(f"Error while running {program_name}:" + err)
 
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""

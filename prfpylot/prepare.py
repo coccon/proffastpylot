@@ -25,15 +25,17 @@ class Preparation():
     # used
     ggg2020mapfiles = False
 
-    def __init__(self, input_path="input.yml", logginglevel="info"):
+    def __init__(self, input_file, logginglevel="info"):
         # read input file
-        with open(input_path, "r") as f:
+        with open(input_file, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
+        self.input_file = input_file
 
         # now, the logfile can be created:
         self.logger = self.get_logger(logginglevel=logginglevel)
-        self.logger.info("++++ Welcome to Proffast powered by PrfPylot ++++")
-        self.logger.info("Start reading input file...")
+        self.logger.info(
+            "++++ Welcome to PROFFASTpylot ++++")
+        self.logger.debug("Start reading input file...")
 
         # set parameters from input file
         self.instrument_number = args["instrument_number"]
@@ -50,11 +52,13 @@ class Preparation():
         if self.proffast_path is None:
             head, _ = os.path.split(self.prfpylot_path)
             self.proffast_path = os.path.join(head, "prf")
-            if not os.path.exists(self.proffast_path):
-                self.logger.critical(
-                    "Could not automatically find the proffast path. Please "
-                    "specify it in the input file!")
-                sys.exit()
+        if not os.path.exists(self.proffast_path):
+            self.logger.critical(
+                    "PROFFAST does not exist! Make sure to download PROFFAST "
+                    "before running PROFFASTpylot. Either copy it to "
+                    "proffastpylot/prf or specify the path "
+                    "where it is located.")
+            sys.exit()
         
         # coordinates
         if None not in args["coords"].values():
@@ -114,17 +118,16 @@ class Preparation():
             self.logger.error("start_with_spectra not specified!")
             sys.exit()
 
-        if args["delete_abscos.bin_files"] is not None:
-            self.delete_abscosbin = args["delete_abscos.bin_files"]
+        if args["delete_abscosbin_files"] is not None:
+            self.delete_abscosbin = args["delete_abscosbin_files"]
         else:
-            self.logger.error("delete_abscos.bin_files not specified!")
+            self.logger.error("delete_abscosbin_files not specified!")
             sys.exit()
         
         if args["delete_input_files"] is not None:
             self.bool_delete_input_files = args["delete_input_files"]
         else:
-            self.logger.error("delete_input_files not specified!")
-            sys.exit()
+            delete_input_files = False
 
         # list of dates
         self.dates = self.get_dates(
@@ -132,8 +135,8 @@ class Preparation():
                 end_date=args["end_date"]
             )
         if len(self.dates) == 0:
-            self.logger.critical("No igrams found! Please check the path!\n"
-                                 f"Current path is {self.igram_path}")
+            self.logger.critical(
+                f"No interferograms were found at {self.igram_path}!")
             sys.exit()
 
         # only the base where the result folder is to be safed
@@ -153,7 +156,7 @@ class Preparation():
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
         
-        self.logger.info("... read in finished!")
+        self.logger.debug("... read in finished!")
 
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
@@ -276,12 +279,13 @@ class Preparation():
 
         date_str = dt.strftime(date, "%y%m%d")
         if template_type == "prep":
-            self.logger.info(
+            self.logger.debug(
                 f"Generating preprocess inp file for {date_str}..")
             parameters = self.get_prep_parameters(date)
         else:
-            self.logger.info(f"Generating {self.template_types[template_type]}"
-                             f" inp file for {date_str}..")
+            self.logger.debug(
+                f"Generating {self.template_types[template_type]}"
+                f" inp file for {date_str}..")
             parameters = self.get_pcxs_and_inv_parameters(date)
 
         self.replace_params_in_template(parameters, template_type, date)
@@ -373,7 +377,7 @@ class Preparation():
     def get_pcxs_and_inv_parameters(self, date):
         """Return Parameters to replace in the pcxs10.inp
         or invers10.inp files."""
-        self.logger.info("create pcxs and inv input parameter")
+        self.logger.debug("Create pcxs and inv input parameters ...")
         if self.use_coordfile:
             self.get_coords_from_file(date)
         lat = self.coords.get("lat", -1.)

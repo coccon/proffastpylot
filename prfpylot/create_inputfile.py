@@ -53,7 +53,7 @@ class InputfileGenerator():
         self.input_data["end_date"] = ""
         self.input_data["note"] = ""
 
-        self.input_data["delete_abscos.bin_files"] = "True"
+        self.input_data["delete_abscosbin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
         self.input_data["start_with_spectra"] = "False"
         
@@ -68,7 +68,7 @@ class InputfileGenerator():
         self.input_data["pressure_path"] = os.path.normpath(pressure_path)        
         
         result_path = os.path.join(self.scriptpath, "..", "example",
-                                   "result_data", "results_sodankyla")
+                                   "results")
         self.input_data["result_path"] = os.path.normpath(result_path)
         
         analysis_path = os.path.join(self.scriptpath, "..", "example",
@@ -90,12 +90,12 @@ class InputfileGenerator():
         print(
             f"#{hashtg}######################################{hashtg}#\n"
             f"#{spaces}  Welcome to the inputfile generator. {spaces}#\n"
-            f"#{spaces}  This tool is part of the prfPylot.  {spaces}#\n"
+            f"#{spaces}  This tool is part of PROFFASTpylot. {spaces}#\n"
             f"#{hashtg}######################################{hashtg}#\n"
         )
         print(
 """
-This tool helps you to create the inputfile of your PrfPylot to run the files
+This tool helps you to create the inputfile of PROFFASTpylot to run the files
 of one device at one location.
 Please generate a unique inputfile (manually or by using this tool) for each
 instrument and each location. Please note, that files like pressure and *.map
@@ -277,10 +277,10 @@ Delete absocs.bin file? Yes/No?\n
         )
         while True:
             if temp == "Yes":
-                self.input_data["delete_abscos.bin_files"] = True
+                self.input_data["delete_abscosbin_files"] = True
                 break
             elif temp == "No":
-                self.input_data["delete_abscos.bin_files"] = False
+                self.input_data["delete_abscosbin_files"] = False
                 break
             else:
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
@@ -304,7 +304,7 @@ Delete input files? Yes/No?\n
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
         
         temp = input(
-"""How to should PrfPylot handle your pressure input?
+"""How to should PROFFASTpylot handle your pressure input?
 There is the possibility to create the 'pt_intraday.inp' directly. To choose
 this option enter 'original'.
 The other implemented option is to use the datalogger format as used in KA.
