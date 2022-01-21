@@ -50,7 +50,7 @@ utc_offset: %utc_offset%
 # The directory to the spectra is given as the 'analysis_path'.
 # NOTE: 
 #     In this case the folder this path points to must have a
-#     substructure like analysis/SiteName_InstrumentNumber/YYMMDD.
+#     substructure like analysis/SiteName_InstrumentNumber/YYMMDD/cal.
 # Set to True/False.
 start_with_spectra: %start_with_spectra%
 
