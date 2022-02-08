@@ -315,9 +315,8 @@ Default is 'log':\n
         if temp == "":
             self.input_data["pressure_type"] = "log"
         else:
-            self.input_data = temp
+            self.input_data["pressure_type"] = temp
         
-
         print("\n############ Path of config file ############\n")
         temp = input("Please give the path (not the filename!) where the new "
                      "config-file (the output file of this tool) is supposed"
