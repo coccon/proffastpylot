@@ -472,50 +472,60 @@ class Preparation():
             self.coords["lon"] = row["Longitude"].iloc[-1]
             self.coords["lat"] = row["Latitude"].iloc[-1]
             self.coords["alt"] = row["Altitude_kmasl"].iloc[-1]
- 
+
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""
         start_date = dt.combine(start_date, dt.min.time())
-        if start_date < dates[0]:
-            i = 0
-            self.logger.warning("Start_date given in input file is earlier"
-                                + " than earliest date on disk.")
-        elif start_date > dates[-1]:
-            self.logger.error("The start date is later than the"
-                              + " date of the last interferogram on disk."
-                              + "\nTerminate program.")
-            quit()  # better raise an error here?
+
+        if start_date > dates[-1]:
+            self.logger.error(
+                "The start date is later than the date of the last "
+                "interferogram on disk. Terminating program.")
+            quit()
         else:
-            i = self._find_closest(dates, start_date)
+            i = self._find_closest("after", start_date, dates)
         return i
 
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
         end_date = dt.combine(end_date, dt.min.time())
-        if end_date > dates[-1]:
-            i = len(dates)
-            self.logger.warning("End_date is larger than the date"
-                                "of the last interferogram on disk.")
-        elif end_date < dates[0]:
-            self.logger.error("The end date is earlier than the"
-                              + " date of the first interferogram on disk."
-                              + "\nTerminate program.")
-            quit()  # better raise an error here?
+
+        if end_date < dates[0]:
+            self.logger.error(
+                "The end date is earlier than the date of the first "
+                "interferogram on disk. Terminating program.")
+            quit()
         else:
-            i = self._find_closest(dates, end_date)
+            i = self._find_closest("before", end_date, dates)
         return i
 
-    def _find_closest(self, datelist, date):
-        '''Find the closest entry in a list of dates compared 
-        to a specific date.'''
-        i = 0
-        diff1 = abs(datelist[0] - date)
-        for j, entry in enumerate(datelist):
-            diff0 = abs(entry - date)
-            if diff0 < diff1:
-                i = j
-                diff1 = diff0
-        return i
+    def _find_closest(self, when, date, datelist):
+        """Find the closest entry in a date list.
+        Before or after a given date.
+        
+        Params:
+            when (str): 'before' or 'after'
+            date: date to slice the list
+            datelist (list): list of all dates
+        """
+        if when == "before":
+            assert date < datelist[0]
+            if datelist[0] > date:
+                return 0
+        if when == "after":
+            assert date > datelist[-1]
+            if datelist[-1] < date:
+                return len(datelist)
+
+        for i, date_i in enumerate(datelist):
+            if date_i == date:
+                return i
+            if date_i > date:
+                assert datelist[i-1] < date
+                if when == "before":
+                    return i-1
+                if when == "after":
+                    return i
 
     def _replace_backslash(self, line):
         """Replace backslash with slash if run on linux."""
