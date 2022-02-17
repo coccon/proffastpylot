@@ -109,6 +109,9 @@ class Preparation():
         if self.analysis_path is None:
             self.logger.error("analysis_path is not specified!")
             sys.exit()
+        self.analysis_instrument_path = os.path.join(
+                    self.analysis_path,
+                    f"{self.site_name}_{self.instrument_number}")
 
         # record some notes about the behaviour of the pylot:
 
@@ -188,40 +191,58 @@ class Preparation():
         FHandler.setFormatter(StreamFormat)
         return logger
 
-    def get_dates(self, start_date, end_date):
-        """Return a list of dates for the given site, instrument and
-        start- and end date.
+    def get_dates(self, start_date=None, end_date=None):
+        """Return a list of dates for the given site, instrument.
+        Truncate the list if start_date and end_date are given.
+
+        Params:
+            start_date (dt.date): optional start date
+            end_date (dt.date): optional end date
         """
         if not self.start_with_spectra:
-            self.logger.debug("Search for all interferogram files of the "
-                              "side and device")
-            date_paths = glob(os.path.join(self.igram_path, "*"))
-
+            self.logger.debug(
+                "Searching for all interferogram folders ...")
+            datapath = os.path.join(self.igram_path, "*")
         else:
-            # in filemover.py the analysis path is extended to its final
-            # version (i.e. analysis/Site_Instrumentnumer). However this is
-            # NOT done here yet. Hence do this temporarily by hand:
-            self.logger.debug("Search for all spectra files of the "
-                              "side and device")
-            date_paths = glob(os.path.join(
-                self.analysis_path,
-                f"{self.site_name}_{self.instrument_number}", "*"))
-        dates = []
+            self.logger.debug(
+                "Searching for all spectra folders ...")
+            datapath = os.path.join(self.analysis_instrument_path, "*")
 
-        # create a list of all dates available on the disk
-        for date_path in date_paths:
-            date = os.path.split(date_path)[1]
-            # TODO: Catch for invalid folder names (i.e. not YYMMDD)
-            date = dt.strptime(date, "%y%m%d")
-            dates.append(date)
-            dates.sort()
-        # if start and/or end date is given truncate the list
+        dates = self._create_datelist(datapath)
+
         if start_date is not None:
             i = self._get_start_date_pos(start_date, dates)
             dates = dates[i:]
         if end_date is not None:
             i = self._get_end_date_pos(end_date, dates)
             dates = dates[:i]
+
+        return dates
+
+    def _create_datelist(self, path):
+        """Create datelist of given path.
+        Skip elements that are not folders of the format "YYMMDD".
+        """
+        date_paths = glob(path)
+
+        dates = []
+        for date_path in date_paths:
+            date = os.path.split(date_path)[1]
+
+            if not os.path.isdir(date):
+                self.logger.debug(
+                    f"Skipping invalid element in datelist: {date}.")
+                continue
+            try:
+                date = dt.strptime(date, "%y%m%d")
+            except ValueError:
+                self.logger.debug(
+                    f"Skipping invalid element in datelist: {date}.")
+                continue
+
+            dates.append(date)
+
+        dates.sort()
         return dates
 
     def get_template_path(self, template_type):
