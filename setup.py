@@ -17,5 +17,5 @@ setup(
         "requests",
         "tqdm",
         ],
-    license='MIT',
+    license='GPLv3',
     )
