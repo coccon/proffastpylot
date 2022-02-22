@@ -17,6 +17,7 @@ class Preparation():
 
     template_types = {
         "prep": "preprocess4",
+        "tccon": "tccon",
         "inv": "invers20",
         "pcxs": "pcxs20"
     }
@@ -129,6 +130,15 @@ class Preparation():
         else:
             delete_input_files = False
 
+        # check if tccon mode is activated. Raise warning if it is activated       
+        if args["tccon_mode"]:
+            self.tccon_mode = True
+            self.tccon_setting = args["tccon_setting"]
+            self._tccon_mode_warning()
+        else:
+            self.tccon_mode = False
+            self.tccon_setting = args["tccon_setting"]
+
         # list of dates
         self.dates = self.get_dates(
                 start_date=args["start_date"],
@@ -240,7 +250,7 @@ class Preparation():
                 [self.template_types[template_type],
                     f"{self.site_name}_{date_str}.inp"]
             )
-        if template_type == "prep":
+        elif template_type == "prep":
             folder_path = os.path.join(self.proffast_path, "preprocess")
             date_str = dt.strftime(date, "%y%m%d")
             filename = "".join(
@@ -248,6 +258,10 @@ class Preparation():
                     f"{self.site_name}_{date_str}",
                     ".inp"]
                 )
+        elif template_type == "tccon":
+            folder_path = os.path.join(self.proffast_path, "preprocess")
+            filename = "".join([self.template_types[template_type], ".inp"])
+
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
@@ -267,21 +281,24 @@ class Preparation():
 
         return map_file
 
-    def generate_prf_input(self, template_type, date):
+    def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
 
         Calling the corresponding collect parameters function
         and replace template function.
 
         params:
-            template_type (str): Can be "prep", "pt", "inv" or "pcxc"
+            template_type (str): Can be "prep", "tccon", "pt", "inv" or "pcxc"
         """
+        if date is not None:
+            date_str = dt.strftime(date, "%y%m%d")
 
-        date_str = dt.strftime(date, "%y%m%d")
         if template_type == "prep":
             self.logger.debug(
                 f"Generating preprocess inp file for {date_str}..")
             parameters = self.get_prep_parameters(date)
+        elif template_type == "tccon":
+            parameters = {"tccon_setting": self.tccon_setting}
         else:
             self.logger.debug(
                 f"Generating {self.template_types[template_type]}"
@@ -322,6 +339,8 @@ class Preparation():
             prf_input_stream.write(new_line)
         templ_stream.close()
         prf_input_stream.close()
+        if template_type == "tccon":
+            self.tccon_file = prf_input_file
 
     def get_prep_parameters(self, date):
         '''
@@ -616,3 +635,10 @@ class Preparation():
             file1 = file1.transpose()
             for line in file1:
                 f.write(frw.write(line) + "\n")
+    
+    def _tccon_mode_warning(self):
+        """ Print warning if TCCON mode is activated """
+        self.logger.warning(
+            "TCCON Mode is activated!\nThis will not work with standard"
+            " EM27/SUN interferograms.\nOnly continue if this setting"
+            " was choosen by purpose. Otherwise break the execution!")

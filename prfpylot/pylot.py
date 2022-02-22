@@ -39,6 +39,10 @@ class Pylot(FileMover):
         """Main method to run preprocess."""
         self.logger.info(
             f"Running preprocess with {n_processes} task(s) ...")
+        # check if TCCON Mode is activated. If yes create the tccon input file
+        if self.tccon_mode:
+            self.logger.debug("...create tccon file...")
+            self.generate_prf_input("tccon")
         output = []
         if n_processes <= 1:
             for date in self.dates:
@@ -48,7 +52,11 @@ class Pylot(FileMover):
             self.logger.debug("...start parallel processing...")
             tmp_out = self._run_parallel(self.run_preprocess_at, n_processes)
             output = tmp_out
-        self._write_logfile("preprocess", output)        
+        self._write_logfile("preprocess", output)
+        if self.tccon_mode:
+            # delete tccon input file:
+            os.remove(self.tccon_file)
+            self.logger.debug("... delete TCCON file")
         self.logger.info("Finished preprocessing.")
 
     def run_pcxs(self, n_processes=1):

@@ -56,7 +56,8 @@ class InputfileGenerator():
         self.input_data["delete_abscosbin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
         self.input_data["start_with_spectra"] = "False"
-        
+        self.input_data["tccon_mode"] = "False"
+        self.input_data["tccon_setting"] = "0"
  
         igram_path = os.path.join(inputpath, "interferograms_sodankyla",
                                   "SN039")
@@ -316,7 +317,43 @@ Default is 'log':\n
             self.input_data["pressure_type"] = "log"
         else:
             self.input_data["pressure_type"] = temp
-        
+
+        temp = input(
+"""
+Do you want to enable TCCON mode?
+This setting is only needed if you want to process interferograms which where
+recoreded with a TCCON-Spectrometer.
+Default: 'No'. Yes/No.\n
+"""     )
+        while True:
+            if temp == "Yes":
+                self.input_data["tccon_mode"] = "True"
+                break
+            elif temp == "No":
+                self.input_data["tccon_mode"] = "False"
+                self.input_data["tccon_setting"] = 0
+                break
+            else:
+                temp = input("Could not parse input. Enter 'Yes' or 'No'.\n")
+
+        if self.input_data["tccon_mode"] == "True":
+            temp = input(
+"""What kind of TCCON setup do you use? Enter 1 or 2:
+1: OPUS file containing one interferogram covering extended InGaAs
+   spectral range (standard TCCON setup)
+2: OPUS file containing two interferograms
+   (CO band in separate filter band, KA setup)
+Enter "1/2":\n
+"""
+                )
+            while True:
+                if temp == "1" or temp == "2":
+                    self.input_data["tccon_setting"] = temp
+                    break
+                else:
+                    temp = input("Could not parse input. Enter '1' or '2' \n")
+
+
         print("\n############ Path of config file ############\n")
         temp = input("Please give the path (not the filename!) where the new "
                      "config-file (the output file of this tool) is supposed"
