@@ -49,29 +49,30 @@ class FileMover(Preparation):
         self._create_logfile_dir()
 
     def _create_analysis_subdirs(self):
+        """Create subdirs of the analysis folder.
+
+        Created folders: 
+            - 'cal' (for the spectra),
+            - 'VMR-dim' (VMR-files),
+            - pT
         """
-        Create the subdirs of the analysis folder.
-        This includes 'cal'-folder for the spectra, 'VMR-dim' for the
-        VMR-files, pT
-        """
-        self.analysis_path = os.path.join(
-                    self.analysis_path,
-                    f"{self.site_name}_{self.instrument_number}")
-        
-        if os.path.exists(self.analysis_path):
+        if os.path.exists(self.analysis_instrument_path):
             self.logger.warning(
-                f"The analysis folder {self.analysis_path} exists already! "
+                f"The analysis folder {self.analysis_instrument_path} "
+                "exists already! "
                 "The content may be overwritten.")
         
         # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
         for date in self.dates:
             datestring = date.strftime("%y%m%d")
             # create cal-folder
-            calfolder = os.path.join(self.analysis_path, datestring, "cal")
+            calfolder = os.path.join(
+                self.analysis_instrument_path, datestring, "cal")
             if not os.path.exists(calfolder):
                 os.makedirs(calfolder)
             # create VMR_dim folder:
-            vmrfolder = os.path.join(self.analysis_path, datestring, "VMR_dim")
+            vmrfolder = os.path.join(
+                self.analysis_instrument_path, datestring, "VMR_dim")
             if not os.path.exists(vmrfolder):
                 os.makedirs(vmrfolder)
             self._create_pT_dir(date)
@@ -79,7 +80,7 @@ class FileMover(Preparation):
     def _create_pT_dir(self, date):
         """Create pt directory."""
         pt_path = os.path.join(
-            self.analysis_path,
+            self.analysis_instrument_path,
             date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
