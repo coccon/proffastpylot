@@ -205,6 +205,8 @@ class Pylot(FileMover):
                             )
         combined_file = os.path.join(
             self.result_folder, resultfile)
+        df["UTC"] = df["UTC"].apply(lambda x: x.strftime("%Y-%m-%d %X"))
+        df["LocalTime"] = df["LocalTime"].apply(lambda x: x.strftime("%Y-%m-%d %X"))
 
         format_list = [
             "%s", "%s", "%11.4f", "%6.1f", "%5.2f", "%5.2f", "%7.5f", "%7.5f",
