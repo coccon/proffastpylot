@@ -10,6 +10,7 @@ import multiprocessing
 from timezonefinder import TimezoneFinder
 import pytz
 import shutil
+import numpy as np
 
 
 class Pylot(FileMover):
@@ -204,8 +205,15 @@ class Pylot(FileMover):
                             )
         combined_file = os.path.join(
             self.result_folder, resultfile)
-        df.to_csv(combined_file, index=False, sep="\t",
-                  float_format="%.5e")
+
+        format_list = [
+            "%s", "%s", "%11.4f", "%6.1f", "%5.2f", "%5.2f", "%7.5f", "%7.5f",
+            "%4.2f", "%5.2f", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e",
+            "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e"
+                      ]
+        np.savetxt(combined_file, df.values, fmt=format_list, 
+                   delimiter=', ', header=', '.join(df.columns), comments='')            
+
         self.logger.info(
             "The combined results of PROFFAST were written "
             f"to {combined_file}.")

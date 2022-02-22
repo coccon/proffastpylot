@@ -16,6 +16,7 @@ setup(
         "fortranformat",
         "requests",
         "tqdm",
+        "numpy",
         ],
     license='MIT',
     )
