@@ -18,5 +18,5 @@ setup(
         "tqdm",
         "numpy",
         ],
-    license='MIT',
+    license='GPLv3',
     )

@@ -1,3 +1,34 @@
+"""create_inputfile is a module of PROFFASTpylot.
+
+The InputfileGenerator class can produce input files in an interactive mode,
+or matching the Sodankyla example data.
+
+It can be executed as a standalone script.
+
+Usage:
+If started without additional arguments the
+If started as `python create_inputfile.py --example-mode`
+The inputfile for the Sodankyla example is created.
+
+
+License information:
+PROFFASTpylot - Running PROFFAST with Python
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+                        Karlsruhe Institut of Technology (KIT)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 3 as published by
+the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import os
 import sys
 import datetime as dt
