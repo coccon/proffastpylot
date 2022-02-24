@@ -55,6 +55,7 @@ class InputfileGenerator():
 
         self.input_data["delete_abscosbin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
+        self.input_data["igram_size_filter"] = 3.7355880737304688
         self.input_data["start_with_spectra"] = "False"
         self.input_data["tccon_mode"] = "False"
         self.input_data["tccon_setting"] = "0"
@@ -248,6 +249,26 @@ you have to enter 'D:\RawDataEM27'
                 temp = input("Note was to long. Give a shorter one:\n")
 
         print("\n############ Behaviour settings ############\n")
+        temp = input(
+"""File size filter for interferograms:
+All interferograms with a size less than the value entered here are assumed to
+be corrupted and are NOT used in the processing chain.
+The default value is: 3.7355880737304688 MB
+Enter a filesize in MegaBytes:
+"""            
+        )
+        while True:
+            if temp == "":
+                self.input_data["igram_size_filter"] = 3.7355880737304688
+                break
+            try:
+                temp = float(temp)
+                break
+            except (ValueError):
+                temp = input("Could not parse the input."
+                             "Please enter a floating point number:\n"
+                             )
+
         temp = input(
 """Process already available spectra:
 If the spectra of a measurement are already available this has to be given
