@@ -54,7 +54,6 @@ class InputfileGenerator():
         # a dict where the config is safed:
         self.input_data = {}
         
-
     def generate_sod_example(self):
         """
         This methods contains the hardcoded path to the example files
@@ -69,8 +68,7 @@ class InputfileGenerator():
                                 "input_sodankyla_example.yml")
         inputpath = os.path.normpath(os.path.join(self.scriptpath, "..",
                                      "example", "input_data"))
- 
- 
+  
         # the data which is used to fill the template
         self.input_data["instrument_number"] = "SN039"
         self.input_data["site_name"] = "Sodankyla"
@@ -88,7 +86,6 @@ class InputfileGenerator():
         self.input_data["delete_input_files"] = "False"
         self.input_data["start_with_spectra"] = "False"
         
- 
         igram_path = os.path.join(inputpath, "interferograms_sodankyla",
                                   "SN039")
         self.input_data["interferogram_path"] = os.path.normpath(igram_path)
@@ -125,43 +122,43 @@ class InputfileGenerator():
             f"#{hashtg}######################################{hashtg}#\n"
         )
         print(
-"""
-This tool helps you to create the inputfile of PROFFASTpylot to run the files
-of one device at one location.
-Please generate a unique inputfile (manually or by using this tool) for each
-instrument and each location. Please note, that files like pressure and *.map
-files can be shared among various intruments at the same site.
-"""
+            "This tool helps you to create the inputfile of PROFFASTpylot to "
+            "run the files of one device at one location.\n"
+            "Please generate a unique inputfile (manually or by using this "
+            "tool) for each instrument and each location. Please note, that "
+            "files like pressure and *.map files can be shared among various "
+            "intruments at the same site."
         )
         temp = input("To start the configuration press enter")
-        print("############ Data paths ############\n")
-        print("Please give the path to the PROFFAST executable.\n"
-                     "In this folder the PROFFAST executable have to be"
-                     " located.")
+        print(
+            "############ Data paths ############\n\n"
+            "Please give the path to the PROFFAST executable.\n"
+            "In this folder the PROFFAST executable have to be"
+            " located.")
         defaultprf = os.path.abspath(
             os.path.join(self.scriptpath, "..", "prf"))
-        print("As the automatic detected default value the following path is "
-              f"used:\n{defaultprf}\n"
-              "To use this path do not enter anything and press enter:")
+        print(
+            "As the automatic detected default value the following path is "
+            f"used:\n{defaultprf}\n"
+            "To use this path do not enter anything and press enter:")
         temp = input()
         if temp == "":
             temp = defaultprf
         self.input_data["proffast_path"] = temp
 
         temp = input(
-"""Please give the path to the interferograms.
-Within this folder the igrams have to be stored using
-the convention 'YYMMDD/YYMMDDSN.XXX':
-Example: If your data are saved like this
-D:\RawDataEM27
-|__170608
-|  |_170608.001
-|  |_170608.002
-|  |_...
-|__YYMMDD
-|  |_YYMMDD.XXX
-you have to enter 'D:\RawDataEM27'
-""")
+            "Please give the path to the interferograms. "
+            "Within this folder the igrams have to be stored using "
+            "the convention 'YYMMDD/YYMMDDSN.XXX':\n"
+            "Example: If your data are saved like this\n"
+            "D:\\RawDataEM27\n"
+            "|__170608\n"
+            "|  |_170608.001\n"
+            "|  |_170608.002\n"
+            "|  |_...\n"
+            "|__YYMMDD\n"
+            "|  |_YYMMDD.XXX\n"
+            "you have to enter 'D:\\RawDataEM27'\n")
         self.input_data["interferogram_path"] = temp
 
         temp = input("\nPlease give the path of the map files:\n")
@@ -279,12 +276,11 @@ you have to enter 'D:\RawDataEM27'
 
         print("\n############ Behaviour settings ############\n")
         temp = input(
-"""Process already available spectra:
-If the spectra of a measurement are already available this has to be given
-here. This can happen if e.g. you want to reprocess some data with other
-pressure values or a-priori files.
-Only process spectra? Yes/No
-"""
+            "Process already available spectra:\n"
+            "If the spectra of a measurement are already available this has "
+            "to be given here. This can happen if e.g. you want to reprocess "
+            "some data with other pressure values or a-priori files.\n"
+            "Only process spectra? Yes/No\n"
         )
         while True:
             if temp == "Yes":
@@ -296,15 +292,15 @@ Only process spectra? Yes/No
             else:
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
-
-
         temp = input(
-"""Do you want to delete the abscos.bin files after the execution?
-These file contain the simulation of the atmosphere which is the result or the 
-'pcxs' program. To keep the files can save computation time if you want to
-calculate some spectra of the same location in the same datetime range again.
-Delete absocs.bin file? Yes/No?\n
-"""
+            "Do you want to delete the abscos.bin files after the execution?\n"
+            "These file contain the simulation of the atmosphere which is the "
+            "result or the "
+            "'pcxs' program. To keep the files can save computation time if "
+            "you want to "
+            "calculate some spectra of the same location in the same datetime "
+            "range again. "
+            "Delete absocs.bin file? Yes/No?\n"
         )
         while True:
             if temp == "Yes":
@@ -317,12 +313,14 @@ Delete absocs.bin file? Yes/No?\n
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
         temp = input(
-"""Do you want to delete the input files after the execution?
-If the inpuf files are not deleted they are moved after execution to the result
-folder specified earlier. It could be usefull to keep the input files for to
-find potential errors and to understand the evaluation after some time.
-Delete input files? Yes/No?\n
-"""
+            "Do you want to delete the input files after the execution?\n"
+            "If the inpuf files are not deleted they are moved after "
+            "execution to the result "
+            "folder specified earlier. It could be usefull to keep the input "
+            "files for to "
+            "find potential errors and to understand the evaluation after "
+            "some time. "
+            "Delete input files? Yes/No?\n"
         )
         while True:
             if temp == "Yes":
@@ -335,13 +333,12 @@ Delete input files? Yes/No?\n
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
         
         temp = input(
-"""How to should PROFFASTpylot handle your pressure input?
-There is the possibility to create the 'pt_intraday.inp' directly. To choose
-this option enter 'original'.
-The other implemented option is to use the datalogger format as used in KA.
-For this type 'log'.
-Default is 'log':\n
-"""            
+            "How to should PROFFASTpylot handle your pressure input? "
+            "There is the possibility to create the 'pt_intraday.inp' "
+            "directly. To choose this option enter 'original'. "
+            "The other implemented option is to use the datalogger format as "
+            "used in KA. For this type 'log'. "
+            "Default is 'log':\n "
         )
         if temp == "":
             self.input_data["pressure_type"] = "log"
