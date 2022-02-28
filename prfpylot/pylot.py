@@ -1,12 +1,12 @@
 """Pylot is a module of PROFFASTpylot.
 
-Steer all parts of PROFFASTpylot by initialising an instance of the 
+Steer all parts of PROFFASTpylot by initialising an instance of the
 Pylot class and executing the different run methods.
 See also in proffastpylot/doc for more inforamation about the usage.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
-Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
                         Karlsruhe Institut of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
