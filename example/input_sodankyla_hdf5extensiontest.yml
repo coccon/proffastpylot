@@ -1,0 +1,145 @@
+# Input file to run PROFFASTpylot
+
+# leave empty if the default value should be used
+# An example of a file structure and derived paths can be found in
+# 'docs/folder_strucutre.md'
+
+
+
+#######################
+# SITE AND INSTRUMENT #
+#######################
+
+instrument_number: SN039
+
+site_name: Sodankyla
+
+# abbreviation of the site name as used in map file:
+# <site_abbrev><date>.map
+site_abbrev: so
+
+# give coordinates
+# leave empty if coordinates should be taken from file. An example file can
+# be found in examples/input_data/coords.csv
+coords:
+  lat: 
+  lon: 
+  alt:   # km over sea level
+
+# full path to the coord file.
+# This file contains the coordinates of the sites.
+#
+# Warning: 
+#       If the coordinates of the spectrometer changed
+#       during the chosen time period, it can happen that the local time zone
+#       in the ouputfile is not correct anymore, since it is determined using
+#       the coordinates of the first day in the run.
+coord_file: e:\01_proffastpylot_dev\example\input_data\coords.csv
+
+# if times of the recorded data is not stored in UTC, insert the offset here
+# default: 0.0
+utc_offset: 
+
+
+
+#############
+# BEHAVIOUR #
+#############
+
+# File size filter for igrams: all igrams with a filesize less than the value
+# specified here are assumed to be corrupt. Filesize in MegaBytes
+igram_size_filter: 3.7355880737304688
+
+
+# Start the processing chain with already available spectra.
+# The directory to the spectra is given as the 'analysis_path'.
+# NOTE: 
+#     In this case the folder this path points to must have a
+#     substructure like analysis/SiteName_InstrumentNumber/YYMMDD/cal.
+# Set to True/False.
+start_with_spectra: False
+
+
+# Process only dates in a specific time range
+# date format: YYYY-MM-DD.
+# Leave empty to process all dates in the data folder
+start_date: 
+end_date: 
+
+# Optional comment included in bin-files by PREPROCESS
+# Leave empty for adding no comment
+note: 
+
+
+
+# Delete the abscos.bin files? (True/False)
+# The abscos.bin file contains the simulation of the atmosphere which is
+# the result of the 'pcxs' program part of PROFFAST.
+delete_abscosbin_files: True
+
+# Delete PROFFAST input files? (True/False)   Default: False
+# If False: Files will be moved to results folder
+delete_input_files: False
+
+
+# The pressure_type defines the format of the pressure file
+# Options:
+#    original: 
+#        create the pt_intraday.inp file by yourself,
+#        naming of the files should be <site_abbrev>_<yy-mm-dd>.inp
+#    log: 
+#        the 'MIRA-datalogger' format as used by KIT
+# (It is possible to define own pressure types)
+pressure_type: log
+
+# Activate TCCON Mode (True/False)
+# Use preprocess to evaluate low resolution spectra recorded with a 125HR
+# instrument.
+tccon_mode: False
+# Setting of the TCCON instrument.
+# Will be evaluated in case of tccon_mode: True only
+# 1: Standard TCCON Setting
+# 2: Karlsruhe TCCON Setting
+tccon_setting:  0
+
+#########
+# PATHS #
+#########
+
+# Optional
+# The proffast_path should point to the folder containing PROFFAST.
+# The structure of this folder have to be kept like downloaded.
+proffast_path: e:\01_proffastpylot_dev\prf
+
+# input data
+# -----------
+# a folder where the data are located like YYMMDD/YYMMDDSN.XXX
+interferogram_path: e:\01_proffastpylot_dev\example\input_data\interferograms_sodankyla\SN039
+map_path: e:\01_proffastpylot_dev\example\input_data\map_sodankyla
+pressure_path: e:\01_proffastpylot_dev\example\input_data\pressure_sodankyla
+
+
+
+# output data
+# -----------
+# In the analysis path the spectra produced by preprocess are written to.
+# We recommend to call it analysis.
+# Within this folder the PROFFASTpylot will create a folder structure like
+# analysis/SiteName_InstrumentNumber/YYMMDD.
+# 
+# If you process already available spectra (*.bin files),
+# you need to provide a folder structure as described above
+# and set start_with_spectra to True.
+analysis_path: e:\01_proffastpylot_dev\example\analysis
+
+# The merged results, the logfiles and optionally the inputfiles are written to
+# the result path. Within it, PROFFASTpylot will create 
+# a folder named 'SiteName_InstrumentNumber_StartDate-EndDate'
+result_path: e:\01_proffastpylot_dev\example\results
+
+#################
+#HDF5 GEOMS Info#
+#################
+
+doi: https://doi.org/xx.xxxxx/xxxxxxxx
+
