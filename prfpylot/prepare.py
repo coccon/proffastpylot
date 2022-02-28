@@ -160,10 +160,6 @@ class Preparation():
                 start_date=args["start_date"],
                 end_date=args["end_date"]
             )
-        if len(self.dates) == 0:
-            self.logger.critical(
-                f"No interferograms were found at {self.igram_path}!")
-            sys.exit()
 
         # only the base where the result folder is to be safed
         # is given. The final folder is created every runtime.
@@ -232,6 +228,15 @@ class Preparation():
             datapath = os.path.join(self.analysis_instrument_path, "*")
 
         dates = self._create_datelist(datapath)
+        if len(dates) == 0:
+            self.logger.critical(
+                f"No interferograms were found at {self.igram_path}!")
+            sys.exit()
+
+        date_str_list = [date.strftime("%y-%m-%d") for date in dates]
+        self.logger.debug(
+            f"The following dates were found at {self.igram_path}:\n"
+            f"{date_str_list}")
 
         if start_date is not None:
             i = self._get_start_date_pos(start_date, dates)
@@ -250,17 +255,19 @@ class Preparation():
 
         dates = []
         for date_path in date_paths:
-            date = os.path.split(date_path)[1]
+            date_str = os.path.split(date_path)[1]
 
-            if not os.path.isdir(date):
+            if not os.path.isdir(date_path):
                 self.logger.debug(
-                    f"Skipping invalid element in datelist: {date}.")
+                    f"Skipping invalid element in datelist: {date_str}. "
+                    "No Directory!")
                 continue
             try:
-                date = dt.strptime(date, "%y%m%d")
+                date = dt.strptime(date_str, "%y%m%d")
             except ValueError:
                 self.logger.debug(
-                    f"Skipping invalid element in datelist: {date}.")
+                    f"Skipping invalid element in datelist: {date_str}. "
+                    "Could not parse date!")
                 continue
 
             dates.append(date)
@@ -388,18 +395,15 @@ class Preparation():
         # TODO: Add to comment things like version of Profast, PrfPylot, ...
         comment = (
             "This spectrum is generated using preprocess4, a part of "
-            "PROFAST controlled by PRFpylot.")
+            "PROFAST controlled by PROFFASTpylot.")
         if self.note is not None:
             comment = " ".join([comment, self.note])
 
         igrams = "\n".join(self.get_igrams(date))
-        # generate path to outputfolder for this date:
-        datestring = date.strftime("%y%m%d")
-        # NOTE: the 'cal' is necessary since "invers" automatically adds
-        #       a "cal" string to the spectra path.
-        outfolder = os.path.join(self.analysis_path, datestring, "cal")
         
-        # Give the logfile a name:
+        datestring = date.strftime("%y%m%d")
+        outfolder = os.path.join(
+            self.analysis_instrument_path, datestring, "cal")
         logfile = f"Internal_preprocess_log_{datestring}.log"
 
         parameters = {
@@ -441,7 +445,7 @@ class Preparation():
             "DATE": date.strftime("%y%m%d"),
             "DATE_LONG": date.strftime("%Y%m%d"),
             "SITE_ABBREV": self.site_abbrev,
-            "DATAPATH": self.analysis_path,
+            "DATAPATH": self.analysis_instrument_path,
             "MAPPATH": self.map_path,
             "SPECTRA_LIST": "\n".join(spectra_list)
         }
@@ -519,6 +523,7 @@ class Preparation():
 
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""
+        self.logger.debug("Locating the first date in the given interval.")
         start_date = dt.combine(start_date, dt.min.time())
 
         if start_date > dates[-1]:
@@ -532,6 +537,7 @@ class Preparation():
 
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
+        self.logger.debug("Locating the last date in the given interval.")
         end_date = dt.combine(end_date, dt.min.time())
 
         if end_date < dates[0]:
@@ -552,13 +558,17 @@ class Preparation():
             date: date to slice the list
             datelist (list): list of all dates
         """
-        if when == "before":
-            assert date < datelist[0]
-            if datelist[0] > date:
+        self.logger.debug(
+            "Finding the closest date in datelist "
+            f"{when} {date.strftime('%y-%m-%d')}")
+
+        if when == "after":  # in case of finding the start date
+            assert date <= datelist[-1]
+            if datelist[0] >= date:
                 return 0
-        if when == "after":
-            assert date > datelist[-1]
-            if datelist[-1] < date:
+        if when == "before":  # in case of finding the end date
+            assert date >= datelist[0]
+            if datelist[-1] <= date:
                 return len(datelist)
 
         for i, date_i in enumerate(datelist):
@@ -581,11 +591,13 @@ class Preparation():
         """Return list of spectra files generated by preprocess."""
         date_str = date.strftime("%y%m%d")
         spectra_search_str = os.path.join(
-            self.analysis_path, date_str, "cal", "*SN.BIN")
+            self.analysis_instrument_path, date_str, "cal", "*SN.BIN")
         spectra_list = glob(spectra_search_str)
         spectra_list = [os.path.basename(spectra) for spectra in spectra_list]
         if len(spectra_list) == 0:
-            raise(RuntimeError("No spectra were found"))
+            self.logger.critical(
+                f"No spectra were found at {spectra_search_str}")
+            sys.exit()
         return spectra_list
         
     def _interpolate_map_files(self, date):

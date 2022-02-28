@@ -186,7 +186,7 @@ class Pylot(FileMover):
         """
         self.logger.debug("Call 'prepare_pressure_at'")
         date_str = date.strftime("%y%m%d")
-        pt_folder = os.path.join(self.analysis_path, date_str, "pT")
+        pt_folder = os.path.join(self.analysis_instrument_path, date_str, "pT")
         intraday_file = os.path.join(pt_folder, "pT_intraday.inp")
 
         if self.pressure_type == "original":
