@@ -58,7 +58,7 @@ class Preparation():
         # now, the logfile can be created:
         self.logger = self.get_logger(logginglevel=logginglevel)
         self.logger.info(
-            "++++ Welcome to PROFFASTpylot ++++")
+            "++++ Welcome to PROFFASTpylot ++++\n")
         self.logger.debug("Start reading input file...")
 
         # set parameters from input file
@@ -390,9 +390,8 @@ class Preparation():
             if filesize < self.igram_filter_size:
                 igrams.remove(igram)
                 mlogger.warning(f"Interferogram {igram} has size "
-                                f"{filesize} MB.\nThis is smaller than the"
-                                f" threshold at {self.igram_filter_size}!"
-                                " Skip it!\n")
+                                f"{filesize} < {self.igram_filter_size} MB."
+                                " Skip it!")
             else:
                 mlogger.debug("... all good!")
         if igrams == []:

@@ -91,7 +91,7 @@ class Pylot(FileMover):
             # delete tccon input file:
             os.remove(self.tccon_file)
             self.logger.debug("... delete TCCON file")
-        self.logger.info("Finished preprocessing.")
+        self.logger.info("Finished preprocessing.\n")
 
     def run_pcxs(self, n_processes=1):
         """
@@ -115,7 +115,7 @@ class Pylot(FileMover):
             output = tmp_out
         self._write_logfile("pcsx", output)
         self._check_for_bad_days()
-        self.logger.info("Finished pcxs.")
+        self.logger.info("Finished pcxs.\n")
 
     def run_inv(self, n_processes=1):
         """Run inverse.
@@ -134,7 +134,7 @@ class Pylot(FileMover):
             output = tmp_out
         self._check_for_bad_days()
         self._write_logfile("inv", output)
-        self.logger.info("Finished invers.")
+        self.logger.info("Finished invers.\n")
 
     def run_preprocess_at(self, date, badDayQ, loggingq=None):
         """Run preprocess at date."""
