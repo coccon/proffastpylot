@@ -13,3 +13,4 @@ desktop.ini
 GeneralLogfile.log
 .vscode/launch.json
 prf_venv/
+.vscode/settings.json

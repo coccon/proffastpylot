@@ -13,7 +13,7 @@ The inputfile for the Sodankyla example is created.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
-Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
                         Karlsruhe Institut of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
@@ -53,7 +53,7 @@ class InputfileGenerator():
                                             "template_input.yml")
         # a dict where the config is safed:
         self.input_data = {}
-        
+
     def generate_sod_example(self):
         """
         This methods contains the hardcoded path to the example files
@@ -68,7 +68,7 @@ class InputfileGenerator():
                                 "input_sodankyla_example.yml")
         inputpath = os.path.normpath(os.path.join(self.scriptpath, "..",
                                      "example", "input_data"))
-  
+
         # the data which is used to fill the template
         self.input_data["instrument_number"] = "SN039"
         self.input_data["site_name"] = "Sodankyla"
@@ -84,8 +84,11 @@ class InputfileGenerator():
 
         self.input_data["delete_abscosbin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
+        self.input_data["igram_size_filter"] = 3.7355880737304688
         self.input_data["start_with_spectra"] = "False"
-        
+        self.input_data["tccon_mode"] = "False"
+        self.input_data["tccon_setting"] = "0"
+
         igram_path = os.path.join(inputpath, "interferograms_sodankyla",
                                   "SN039")
         self.input_data["interferogram_path"] = os.path.normpath(igram_path)
@@ -93,12 +96,12 @@ class InputfileGenerator():
         self.input_data["map_path"] = os.path.normpath(map_path)
 
         pressure_path = os.path.join(inputpath, "pressure_sodankyla")
-        self.input_data["pressure_path"] = os.path.normpath(pressure_path)        
-        
+        self.input_data["pressure_path"] = os.path.normpath(pressure_path)
+
         result_path = os.path.join(self.scriptpath, "..", "example",
                                    "results")
         self.input_data["result_path"] = os.path.normpath(result_path)
-        
+
         analysis_path = os.path.join(self.scriptpath, "..", "example",
                                      "analysis")
         self.input_data["analysis_path"] = os.path.normpath(analysis_path)
@@ -237,7 +240,7 @@ class InputfileGenerator():
                     temp = input("Could not parse input. Please give a "
                                  "Number:\n")
             self.input_data["alt"] = temp
-            
+
         # TODO: Find out in which format the UTC-offset is needed.
         temp = input(
             "\nIf your igrams have a UTC-offset plase give it "
@@ -275,6 +278,25 @@ class InputfileGenerator():
                 temp = input("Note was to long. Give a shorter one:\n")
 
         print("\n############ Behaviour settings ############\n")
+        temp = input(
+            "File size filter for interferograms:"
+            " All interferograms with a size less than the value entered here "
+            "are assumed to be corrupted and are NOT used in the processing "
+            "chain.\nThe default value is: 3.7355880737304688 MB\n"
+            "Enter a filesize in MegaBytes:"
+        )
+        while True:
+            if temp == "":
+                self.input_data["igram_size_filter"] = 3.7355880737304688
+                break
+            try:
+                temp = float(temp)
+                break
+            except (ValueError):
+                temp = input("Could not parse the input."
+                             "Please enter a floating point number:\n"
+                             )
+
         temp = input(
             "Process already available spectra:\n"
             "If the spectra of a measurement are already available this has "
@@ -331,7 +353,7 @@ class InputfileGenerator():
                 break
             else:
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
-        
+
         temp = input(
             "How to should PROFFASTpylot handle your pressure input? "
             "There is the possibility to create the 'pt_intraday.inp' "
@@ -344,7 +366,40 @@ class InputfileGenerator():
             self.input_data["pressure_type"] = "log"
         else:
             self.input_data["pressure_type"] = temp
-        
+
+        temp = input(
+            "Do you want to enable TCCON mode? "
+            "This setting is only needed if you want to process "
+            "interferograms which where recoreded with a TCCON-Spectrometer.\n"
+            "Default: 'No'. Yes/No.\n"
+        )
+        while True:
+            if temp == "Yes":
+                self.input_data["tccon_mode"] = "True"
+                break
+            elif temp == "No":
+                self.input_data["tccon_mode"] = "False"
+                self.input_data["tccon_setting"] = 0
+                break
+            else:
+                temp = input("Could not parse input. Enter 'Yes' or 'No'.\n")
+
+        if self.input_data["tccon_mode"] == "True":
+            temp = input(
+                "What kind of TCCON setup do you use? Enter 1 or 2:\n"
+                ": OPUS file containing one interferogram covering extended "
+                "InGaAs. Spectral range (standard TCCON setup)\n"
+                " 2: OPUS file containing two interferograms "
+                "(CO band in separate filter band, KA setup)\n"
+                "Enter '1/2':\n"
+            )
+            while True:
+                if temp == "1" or temp == "2":
+                    self.input_data["tccon_setting"] = temp
+                    break
+                else:
+                    temp = input("Could not parse input. Enter '1' or '2' \n")
+
         print("\n############ Path of config file ############\n")
         temp = input("Please give the path (not the filename!) where the new "
                      "config-file (the output file of this tool) is supposed"
@@ -367,9 +422,9 @@ class InputfileGenerator():
 
     def _generate_inputfile(self):
         """
-        Generate the inpufile by replacing the %xxx% sections with the 
+        Generate the inpufile by replacing the %xxx% sections with the
         corresponding value.
-        """ 
+        """
         templ_stream = open(self.inptfl_template, 'r')
         config_stream = open(self.inptfl, 'w')
         for line in templ_stream:

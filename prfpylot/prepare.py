@@ -1,11 +1,11 @@
 """Prepare is a module of PROFFASTpylot.
 
-Initialasation, handling of all parameters, generation of the 
+Initialasation, handling of all parameters, generation of the
 PROFFAST input files.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
-Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
                         Karlsruhe Institut of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
@@ -40,6 +40,7 @@ class Preparation():
 
     template_types = {
         "prep": "preprocess4",
+        "tccon": "tccon",
         "inv": "invers20",
         "pcxs": "pcxs20"
     }
@@ -65,7 +66,7 @@ class Preparation():
         self.site_name = args["site_name"]
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
-   
+
         # TODO: This is a temporary solution! Think about if this is needed
         #       for future versions.
         # inspect.getsourcefile needes __init__.py!
@@ -82,7 +83,7 @@ class Preparation():
                     "proffastpylot/prf or specify the path "
                     "where it is located.")
             sys.exit()
-        
+
         # coordinates
         if None not in args["coords"].values():
             self.coords = args["coords"]
@@ -126,7 +127,7 @@ class Preparation():
         if self.igram_path is None:
             self.logger.error("interferogram_path is not specified!")
             sys.exit()
-            
+
         # spectra path, i.e. output of preprocess:
         self.analysis_path = args["analysis_path"]
         if self.analysis_path is None:
@@ -149,11 +150,27 @@ class Preparation():
         else:
             self.logger.error("delete_abscosbin_files not specified!")
             sys.exit()
-        
+
         if args["delete_input_files"] is not None:
             self.bool_delete_input_files = args["delete_input_files"]
         else:
-            delete_input_files = False
+            self.bool_delete_input_files = False
+
+        # file size limit of igrams:
+        if args["igram_size_filter"] is not None:
+            self.igram_filter_size = args["igram_size_filter"]
+        else:
+            self.logger.error("igram_size_filter is not given!")
+            sys.exit()
+
+        # check if tccon mode is activated. Raise warning if it is activated
+        if args["tccon_mode"]:
+            self.tccon_mode = True
+            self.tccon_setting = args["tccon_setting"]
+            self._tccon_mode_warning()
+        else:
+            self.tccon_mode = False
+            self.tccon_setting = args["tccon_setting"]
 
         # list of dates
         self.dates = self.get_dates(
@@ -177,7 +194,7 @@ class Preparation():
         # log of the processes
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
-        
+
         self.logger.debug("... read in finished!")
 
     def get_logger(self, logginglevel="info"):
@@ -190,7 +207,7 @@ class Preparation():
         self.generalLogfile = os.path.join(cwd, "GeneralLogfile.log")
         logfile = os.path.join("GeneralLogfile.log")
         FHandler = logging.FileHandler(logfile, mode='w')
-        
+
         if logginglevel == "debug":
             StreamHandler.setLevel(logging.DEBUG)
             FHandler.setLevel(logging.DEBUG)
@@ -200,7 +217,7 @@ class Preparation():
         elif logginglevel == "warning":
             StreamHandler.setLevel(logging.WARNING)
             FHandler.setLevel(logging.WARNING)
-        
+
         logger.addHandler(StreamHandler)
         logger.addHandler(FHandler)
         StreamFormat = logging.Formatter(
@@ -234,9 +251,9 @@ class Preparation():
             sys.exit()
 
         date_str_list = [date.strftime("%y-%m-%d") for date in dates]
-        self.logger.debug(
-            f"The following dates were found at {self.igram_path}:\n"
-            f"{date_str_list}")
+        self.logger.info(
+            f"The following dates were found at {self.igram_path}: "
+            f"{', '.join(date_str_list)}")
 
         if start_date is not None:
             i = self._get_start_date_pos(start_date, dates)
@@ -291,7 +308,7 @@ class Preparation():
                 [self.template_types[template_type],
                     f"{self.site_name}_{date_str}.inp"]
             )
-        if template_type == "prep":
+        elif template_type == "prep":
             folder_path = os.path.join(self.proffast_path, "preprocess")
             date_str = dt.strftime(date, "%y%m%d")
             filename = "".join(
@@ -299,6 +316,10 @@ class Preparation():
                     f"{self.site_name}_{date_str}",
                     ".inp"]
                 )
+        elif template_type == "tccon":
+            folder_path = os.path.join(self.proffast_path, "preprocess")
+            filename = "".join([self.template_types[template_type], ".inp"])
+
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
@@ -318,38 +339,69 @@ class Preparation():
 
         return map_file
 
-    def generate_prf_input(self, template_type, date):
+    def generate_prf_input(self, template_type, date, mlogger=None):
         """Generate a template file.
 
         Calling the corresponding collect parameters function
         and replace template function.
 
         params:
-            template_type (str): Can be "prep", "pt", "inv" or "pcxc"
+            template_type (str): Can be "prep", "tccon", "pt", "inv" or "pcxc"
         """
-
-        date_str = dt.strftime(date, "%y%m%d")
+        if mlogger is None:
+            mlogger = self.logger
+        if date is not None:
+            date_str = dt.strftime(date, "%y%m%d")
+        foundData = True
         if template_type == "prep":
-            self.logger.debug(
+            mlogger.debug(
                 f"Generating preprocess inp file for {date_str}..")
-            parameters = self.get_prep_parameters(date)
+            parameters = self.get_prep_parameters(date, mlogger)
+            if parameters["igrams"] == "":
+                foundData = False
+        elif template_type == "tccon":
+            parameters = {"tccon_setting": self.tccon_setting}
         else:
-            self.logger.debug(
+            mlogger.debug(
                 f"Generating {self.template_types[template_type]}"
                 f" inp file for {date_str}..")
-            parameters = self.get_pcxs_and_inv_parameters(date)
+            parameters = self.get_pcxs_and_inv_parameters(
+                date, mlogger=mlogger)
+            if parameters["SPECTRA_LIST"] == "":
+                foundData = False
 
-        self.replace_params_in_template(parameters, template_type, date)
+        self.replace_params_in_template(parameters, template_type, date,
+                                        mlogger)
+        return foundData
 
-    def get_igrams(self, date):
+    def get_igrams(self, date, mlogger=None):
         """Search for interferograms disk and return a list of files."""
+        if mlogger is None:
+            mlogger = self.logger
         date_str = date.strftime("%y%m%d")
         igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
+        # check for filesize: if smaller than a certain limit the file is
+        # must be corrupt
+        temp_list = igrams[:]
+        for igram in temp_list:
+            filesize = os.path.getsize(igram) / (1024 * 1024)  # in MB
+            mlogger.debug(f"Check filesize of igram {igram}...")
+            # print(f"Filesize of {igram} is : {filesize}")
+            if filesize < self.igram_filter_size:
+                igrams.remove(igram)
+                mlogger.warning(f"Interferogram {igram} has size "
+                                f"{filesize} MB.\nThis is smaller than the"
+                                f" threshold at {self.igram_filter_size}!"
+                                " Skip it!\n")
+            else:
+                mlogger.debug("... all good!")
         if igrams == []:
-            self.logger.warning(f"Interferogram at day {date} not found.")
+            mlogger.debug(f"No suitable Interferogram at day {date_str} "
+                          "found in get_igrams().")
         return igrams
 
-    def replace_params_in_template(self, parameters, template_type, date):
+    def replace_params_in_template(self, parameters, template_type, date,
+                                   mlogger=None):
         """
         Generate a site specific input file by using a template.
         params:
@@ -359,6 +411,8 @@ class Preparation():
 
             template_type(str): Can be "prep", "pt", "inv" or "pcxc"
         """
+        if mlogger is None:
+            mlogger = self.logger
         templ_file = self.get_template_path(template_type)
         prf_input_file = self.get_prf_input_path(template_type, date)
         templ_stream = open(templ_file, 'r')
@@ -373,11 +427,15 @@ class Preparation():
             prf_input_stream.write(new_line)
         templ_stream.close()
         prf_input_stream.close()
+        if template_type == "tccon":
+            self.tccon_file = prf_input_file
 
-    def get_prep_parameters(self, date):
+    def get_prep_parameters(self, date, mlogger=None):
         '''
         Return Parameters to be replaced in the pereprocess input file.
         '''
+        if mlogger is None:
+            mlogger = self.logger
         # get ILS for Channel 1 and 2 for a specific date
         ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
         # if coordfile is used, check for the corred coords for each day.
@@ -389,7 +447,7 @@ class Preparation():
         alt = self.coords.get("alt", -1.)
 
         if lat == -1. or lon == -1. or alt == -1.:
-            self.logger.critical("Could not determine coodinates. Exit!")
+            mlogger.critical("Could not determine coodinates. Exit!")
             sys.exit()
 
         # TODO: Add to comment things like version of Profast, PrfPylot, ...
@@ -398,12 +456,17 @@ class Preparation():
             "PROFAST controlled by PROFFASTpylot.")
         if self.note is not None:
             comment = " ".join([comment, self.note])
-
-        igrams = "\n".join(self.get_igrams(date))
-        
+        # get all good igrams. If no good igrams is found the day is put in
+        # the badDayQueue
+        igrams = self.get_igrams(date, mlogger)
+        igrams = "\n".join(igrams)
+        # generate path to outputfolder for this date:
         datestring = date.strftime("%y%m%d")
+        # NOTE: the 'cal' is necessary since "invers" automatically adds
+        #       a "cal" string to the spectra path.
         outfolder = os.path.join(
             self.analysis_instrument_path, datestring, "cal")
+
         logfile = f"Internal_preprocess_log_{datestring}.log"
 
         parameters = {
@@ -422,20 +485,22 @@ class Preparation():
                      }
         return parameters
 
-    def get_pcxs_and_inv_parameters(self, date):
+    def get_pcxs_and_inv_parameters(self, date, mlogger=None):
         """Return Parameters to replace in the pcxs10.inp
         or invers10.inp files."""
-        self.logger.debug("Create pcxs and inv input parameters ...")
+        if mlogger is None:
+            mlogger = self.logger
+        mlogger.debug("Create pcxs and inv input parameters ...")
         if self.use_coordfile:
             self.get_coords_from_file(date)
         lat = self.coords.get("lat", -1.)
         lon = self.coords.get("lon", -1.)
         alt = self.coords.get("alt", -1.)
         if lat == -1. or lon == -1. or alt == -1.:
-            self.logger.critical("Could not determine coodinates. Exit!")
+            mlogger.critical("Could not determine coodinates. Exit!")
             sys.exit()
 
-        spectra_list = self._get_spectra_list(date)
+        spectra_list = self._get_spectra_list(date, mlogger)
         parameters = {
             "ALT": alt,
             "LAT": lat,
@@ -466,7 +531,7 @@ class Preparation():
         preformatted such that it can be inserted into the template file
         directly.
         """
-        # TODO: when getting the ILS check for the date. 
+        # TODO: when getting the ILS check for the date.
         ils_df = pd.read_csv(self.ils_file, skipinitialspace=True)
         ils_df["ValidSince"] = pd.to_datetime(ils_df["ValidSince"])
         ils_df = ils_df.set_index("Instrument")
@@ -488,9 +553,9 @@ class Preparation():
         elif isinstance(ils_df, pd.DataFrame):
             ils_df = ils_df.loc[ils_df["ValidSince"] <= date]
             row = ils_df.sort_values(by=["ValidSince"])
-            MEChan1 = row["Channel1ME"].iloc[-1]        
-            MEChan2 = row["Channel2ME"].iloc[-1]        
-            PEChan1 = row["Channel1PE"].iloc[-1]        
+            MEChan1 = row["Channel1ME"].iloc[-1]
+            MEChan2 = row["Channel2ME"].iloc[-1]
+            PEChan1 = row["Channel1PE"].iloc[-1]
             PEChan2 = row["Channel2PE"].iloc[-1]
         else:
             self.logger.critical("An unknown error occured while reading the "
@@ -552,7 +617,7 @@ class Preparation():
     def _find_closest(self, when, date, datelist):
         """Find the closest entry in a date list.
         Before or after a given date.
-        
+
         Params:
             when (str): 'before' or 'after'
             date: date to slice the list
@@ -587,7 +652,7 @@ class Preparation():
             return line.replace("\\", "/")
         return line
 
-    def _get_spectra_list(self, date):
+    def _get_spectra_list(self, date, mlogger):
         """Return list of spectra files generated by preprocess."""
         date_str = date.strftime("%y%m%d")
         spectra_search_str = os.path.join(
@@ -595,11 +660,9 @@ class Preparation():
         spectra_list = glob(spectra_search_str)
         spectra_list = [os.path.basename(spectra) for spectra in spectra_list]
         if len(spectra_list) == 0:
-            self.logger.critical(
-                f"No spectra were found at {spectra_search_str}")
-            sys.exit()
+            mlogger.debug(f"No spectra were found at {spectra_search_str}")
         return spectra_list
-        
+
     def _interpolate_map_files(self, date):
         """
         interpolates the new map files to genereate a map
@@ -661,7 +724,7 @@ class Preparation():
             # do a linear interpolation, calculate everything in seconds:
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
                 * (noon_utc - date_file1).total_seconds()
-            
+
         current_mapfile = \
             f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
         current_mapfile = os.path.join(self.map_path, current_mapfile)
@@ -682,3 +745,10 @@ class Preparation():
             file1 = file1.transpose()
             for line in file1:
                 f.write(frw.write(line) + "\n")
+
+    def _tccon_mode_warning(self):
+        """ Print warning if TCCON mode is activated """
+        self.logger.warning(
+            "TCCON Mode is activated!\nThis will not work with standard"
+            " EM27/SUN interferograms.\nOnly continue if this setting"
+            " was choosen by purpose. Otherwise break the execution!")
