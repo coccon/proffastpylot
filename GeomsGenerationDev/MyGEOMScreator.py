@@ -2,102 +2,108 @@ import h5py
 import yaml
 import sys
 import os
+import glob
 import inspect
-from prfpylot.prepare import Preparation
+import collections as coll
+import datetime as dt
+import numpy as np
+import pandas as pd
 
+from GeomsHelperClass import Geoms_Helper
 
+# TODO Benedikt:
+# - Add logger
+# - 
+#  
 
-class PROFFAST_GEOMS_creator(Preparation):
-    def __init__(self, input_file):
+class PROFFAST_GEOMS_creator(Geoms_Helper):
+    def __init__(self, GEOMS_input_file):
         """
         This init can proably completly be omitted as soon as it gets a part
         of the Proffastpylot. for now it is kept for developement.
         """
-        super(PROFFAST_GEOMS_creator, self).__init__(input_file)
-
-        # read input file. Contains additional information to create the geoms
-        # file
-        with open(input_file, "r") as f:
-            args = yaml.load(f, Loader=yaml.FullLoader)
-        self.input_file = input_file
-
-        self.pt_file_template = os.path.join(
-            self.analysis_instrument_path, "{}", "pT",'pT_fast_out.dat')
-        self.vmr_file_template = os.path.join(
-            self.analysis_instrument_path, "{}" 'pT','VMR_fast_out.dat')
+        # call the init method of the `Preparation` class. This provides
+        # some usefull data within this class.
+        super(PROFFAST_GEOMS_creator, self).__init__(GEOMS_input_file)
 
 
-        # Output files:
+    def generate_GEOMS_at(self, day):
+        """ create a GEOMS file for a specific day """
+        if not isinstance(day, dt.datetime):
+            self.logger.error
+        
+        # create filename:
         self.geoms_out = "_".join([self.site_name,self.instrument_number,
                                    'GEOMS_OUT.h5'])
+        datestring = day.strftime("%y%m%d")
+        geoms_file = "_".join(
+            [self.site_name, self.instrument_number,
+             datestring,'GEOMS_OUT.h5']
+                             )
+        geoms_file = os.path.join(self.geoms_out_path, geoms_file)
 
-        self.MyHDF5 = h5py.File(self.geoms_out, 'w')
-
-
+        # create Geoms file:
+        self.MyHDF5 = h5py.File(geoms_file, 'w')
+        # Do stuff...
+        self.write_metadata()
+        # close the file and write to disk.
+        self.MyHDF5.close()
 
     def write_metadata(self):
         """ Write metadata to the GEOMS file! """
-        # data = myClass.dataDict({},attrs={})
+        
+        # attribut list, which contains the variables given in the input files
+        attribute_list =\
+            ["DATA_SOURCE", "DS_AFFILIATION", "DS_ADDRESS", "DS_EMAIL",
+             "DS_NAME", "PI_NAME", "PI_EMAIL", "PI_AFFILIATION", "PI_ADDRESS",
+             "DO_NAME", "DO_AFFILIATION", "DO_ADDRESS", "DO_EMAIL", "FILE_DOI"]
+        for attr in attribute_list:
+            # H5Py needs to store the strings using this numpy method:
+            # see: https://docs.h5py.org/en/2.3/strings.html
+            # Furhtermore they have to be in edged brackets to provide an array
+            self.MyHDF5.attrs[attr] = [np.string_(self.input_args[attr])]
 
-        self.MyHDF5['Instrument_name'] = self.instrument_number
-       
+        
+        # The following attributes are copied from `CocconHDFtoGEOMS.py`
+        # and partly adapted as fas as the data was already available
+        # The rest is commented and have to be done later.
+        self.MyHDF5.attrs["DATA_TEMPLATE"] = \
+            [np.string_('GEOMS-TE-FTIR-COCCON-001.csv')]
 
-    def start(self):
-        pass
-        #for day in days:
-        #    self.write_day()
+        self.MyHDF5.attrs['DATA_DESCRIPTION'] = \
+            [np.string_(f"{self.instrument_number} measurements"
+                     f" from {self.site_name}")]
 
-    def write_day(self, date=None):
-        """ create a h5 file for a specific day """
-        self.write_metadata()
-        #self.MyHDF5.keys()
-        self.write_to_disk()
+        corr_fac = self._get_correction_factors()
+        self.MyHDF5.attrs['DATA_MODIFICATIONS'] = \
+            [np.string_("Calibration factors applied:"
+                     f" {corr_fac['XCO2_cal']} for XCO2"
+                     f" and {corr_fac['XCH4_cal']} for XCH4")]
 
-    def write_to_disk(self):
-        """ Close the file and write to disk """
-        self.MyHDF5.close()
+        self.MyHDF5.attrs['FILE_ACCESS'] = [np.string_('COCCON')]
 
-    def _get_correction_factors(self):
-        """Returns a dict containing the correction factors for the gases"""
-        # This dict is only a preliminary version. In the final version it is
-        # read in from a file
-        instcal = dict(
-            Karlsruhe = {'XCO2_cal': 1.0000, 'XCH4_cal': 1.0000}, # SN037 (ref)
-            Sodankyla = {'XCO2_cal': 0.9992, 'XCH4_cal': 0.9994},  # SN039
-            Toronto = {'XCO2_cal': 0.9993, 'XCH4_cal': 0.9991}  # SN075
-            )
-        try:
-            cor_fac = instcal[self.site_name]
-        except KeyError:
-            self.logger.error(f"Could not find site {self.site_name} in list!")
-            sys.exit(1)
+        self.MyHDF5.attrs['FILE_META_VERSION'] = [np.string_('04R052;CUSTOM')]
 
-    def _find_colsen_file(self, date):
-        """Find the correct folder where the *colsen.dat of date is located"""
-        # in this test stage it only returns a hardcoded folder.
-        # in future versions it looks for the correct result folder depending
-        # on the date (remember: the results are in a date range folder!)
-        path = "E:\\01_proffastpylot_dev\\example\\results\\Sodankyla_"+\
-               r"SN039_20170608_20170609\\"
-        filename = f"{self.site_name}{self.date.strftime('%y%m%d')}"+\
-                   "-colsens.dat"
-        return os.path.join(path, filename)
+        self.MyHDF5.attrs['FILE_PROJECT_ID'] = [np.string_('COCCON')]
 
-    def _find_invparms_file(self, date):
-        """Find the correct folder where the *invparm.dat of date is located"""
-        # in this test stage it only returns a hardcoded folder.
-        # in future versions it looks for the correct result folder depending
-        # on the date (remember: the results are in a date range folder!)
-        path = "E:\\01_proffastpylot_dev\\example\\results\\Sodankyla"+\
-               "_SN039_20170608_20170609\\"
-        filename = f"{self.site_name}{self.date.strftime('%y%m%d')}"+\
-                   "-invparms.dat"
-        return os.path.join(path, filename)
+        self.MyHDF5.attrs['FILE_GENERATION_DATE'] = \
+            [np.string_(dt.datetime.now().strftime('%Y%m%dT%H%M%SZ'))]
+
+        # self.MyHDF5.attrs['DATA_PROCESSOR'] = \
+        #     [np.string_(fid.attrs['DATA_PROCESSOR'])]
+
+        # self.MyHDF5.attrs['DATA_VARIABLES'] = \
+        #     [np.string_(';'.join(variableswritten)]
+
+        # self.MyHDF5.attrs['DATA_QUALITY'] = \
+        #     [np.string_(fid.attrs['DATA_QUALITY'])]
 
 
 if __name__ == "__main__":
-    input_file = "input_sodankyla_hdf5extensiontest.yml"
+    input_file = "input_sodankyla_GEOMS_Extention.yml"
 
     MyCreator = PROFFAST_GEOMS_creator(input_file)
 
-    MyCreator.write_day()
+    MyTestDay = dt.datetime.strptime("2017-06-08", "%Y-%m-%d")
+    MyCreator.generate_GEOMS_at(day=MyTestDay)
+

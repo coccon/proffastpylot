@@ -1,0 +1,5 @@
+Site,      Instrument, XCO2_cal, XCH4_cal,  Comment
+  
+Karlsruhe, SN037,      1.0000,   1.0000,    reference instrument
+Sodankyla, SN039,      0.9992,   0.9994,  
+Toronto,   SN075,      0.9993,   0.9991,  

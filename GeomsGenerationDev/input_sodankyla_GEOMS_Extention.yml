@@ -141,5 +141,49 @@ result_path: e:\01_proffastpylot_dev\example\results
 #HDF5 GEOMS Info#
 #################
 
-doi: https://doi.org/xx.xxxxx/xxxxxxxx
+# additional paths and files:
+# ----------------------------
+
+# path to Calibration_Parameters.csv list:
+calibration_params_list: E:\01_proffastpylot_dev\GeomsGenerationDev\Calibration_Parameters.csv
+
+# output of the GEOMS-files:
+geoms_out_path: E:\01_proffastpylot_dev\GeomsGenerationDev\GEOMS_out
+
+
+
+
+# Additional Infos needed for GEOMS:
+# ----------------------------------
+# I do not know which of these parameters are needed. For no I wrote out all
+# given in COCCONHDFtoGEOMS.py
+# ???????
+FILE_DOI: https://doi.org/xx.xxxxx/xxxxxxxx
+
+DATA_SOURCE: FRM4GHG032
+DS_AFFILIATION: Karlsruhe Institute of Technology - Institute of Meteorology and Climate Research - Atmospheric Trace Gases and Remote Sensing;KIT.IMK.ASF
+DS_ADDRESS: P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
+DS_EMAIL: FirstNameDS.LastNameDS@university.edu
+DS_NAME: LastNameDS;FirstNameDS
+
+# The PI_NAME needs to be given like `LastName;FirstName`
+PI_NAME: Dubravica;Darco
+PI_EMAIL: darco.dubravica@kit.edu
+# PI_AFFILIATION needs to be given like `Long name of Institute;Abbreviation`
+PI_AFFILIATION: Karlsruhe Institut of Technology;KIT
+PI_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
+
+# PO is what???
+DO_NAME: Dubravica;Darco
+DO_AFFILIATION: Karlsruhe Institute of Technology - Institute of Meteorology and Climate Research - Atmospheric Trace Gases and Remote Sensing;KIT.IMK.ASF
+DO_ADDRESS: P.O. Box 3640;D-76021 Karlsruhe;GERMANY
+DO_EMAIL:  FirstNameDO.LastNameDO@university.edu
+
+
+
+
+
+
+
+
 
