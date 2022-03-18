@@ -24,12 +24,11 @@ class Geoms_Helper(Preparation):
         
         # Path of output files:
         self.geoms_out_filename = "_".join(
-            [self.site_name,self.instrument_number, 'GEOMS_OUT.h5'])
+            [self.site_name, self.instrument_number, 'GEOMS_OUT.h5'])
         if self.input_args["geoms_out_path"] is not None:
             self.geoms_out_path = self.input_args["geoms_out_path"]
         else:
             self.geoms_out_path = os.getcwd()
-
 
     def _get_correction_factors(self):
         """Returns a dict containing the correction factors for the gases"""
@@ -47,14 +46,54 @@ class Geoms_Helper(Preparation):
         df = df.loc[df["Instrument"] == self.instrument_number]
         return df.iloc[0].to_dict()
 
-    def _find_colsens_invparms_file(self, date, which):
-        """ 
+    def _write_dataset(self, data, dataset_name, attributes):
+        """
+        Helper method to write a dataset to the file.
+        Params:
+            data (np.array): The data to be stored
+            dataset_name (string): The name of the dataset
+            attributes (dict): The attributes to be stored
+        """
+        dtst = self.MyHDF5.create_dataset(dataset_name, data=data)
+        for key, value in attributes.items():
+            dtst.attrs[key] = np.string_(value)
+        return dtst
+
+    def _find_csv_file(self, day):
+        """
+        Returns the csv file containing the correct data for the 
+        requested day
+        Params:
+            day (dt.datetime) The day the data is requested
+        """
+        target_folder = self._find_correct_folder(day)
+        print(target_folder)
+        csv_file = glob.glob(os.path.join(
+            target_folder, f"combined_invparms_{self.site_name}*.csv"))
+        if len(csv_file) > 1:
+            print("To many csv files in result folder. Exiting..")
+            sys.exit(1)
+        return csv_file[0]
+
+    def _find_colsens_invparms_file(self, day, which):
+        """
         Returns the path to the correct colsens/invparm file.
         If colsen or invparms depends on the input of the argument `which`
         """
         if which not in ["colsens", "invparms"]:
             print("Give 'colsens' or 'invparms' for 'which'!")
             return ""
+        target_folder = self._find_correct_folder(day)
+        filename = f"{self.site_name}{day.strftime('%y%m%d')}"+\
+                   f"-{which}.dat"
+        return os.path.join(target_folder, filename)
+
+    def _find_correct_folder(self, day):
+        """
+        Returns the path to the folder providing the data of the day
+        Params:
+            day (dt.datetime): the day the data is requested 
+        """
         # parse the result folders to find the correct time span
         searchstrg = f"{self.site_name}_{self.instrument_number}_*"
         folder_list = glob.glob(
@@ -67,27 +106,15 @@ class Geoms_Helper(Preparation):
             startdate = dt.datetime.strptime(folder.split("_")[-2], "%Y%m%d")
             enddate = dt.datetime.strptime(folder.split("_")[-1]+"T23:59",
                                            "%Y%m%dT%H:%M")
-            if date < startdate:
+            if day < startdate:
                 continue
-            if date > enddate:
+            if day > enddate:
                 continue
-            if date >= startdate and date <= enddate:
+            if day >= startdate and day <= enddate:
                 target_folder = folder
                 break
-        filename = f"{self.site_name}{date.strftime('%y%m%d')}"+\
-                   f"-{which}.dat"
-        return os.path.join(target_folder, filename)
-
-    def _find_invparms_file(self, date):
-        """Find the correct folder where the *invparm.dat of date is located"""
-        # in this test stage it only returns a hardcoded folder.
-        # in future versions it looks for the correct result folder depending
-        # on the date (remember: the results are in a date range folder!)
-        path = "E:\\01_proffastpylot_dev\\example\\results\\Sodankyla"+\
-               "_SN039_20170608_20170609\\"
-        filename = f"{self.site_name}{self.date.strftime('%y%m%d')}"+\
-                   "-invparms.dat"
-        return os.path.join(path, filename)
+        return target_folder
+        
 
     def _get_pt_vmr_file(self, day, which):
         """
@@ -103,3 +130,4 @@ class Geoms_Helper(Preparation):
             self.analysis_instrument_path, datestr,
             "pT",f"{which}_fast_out.dat")
         return file
+
