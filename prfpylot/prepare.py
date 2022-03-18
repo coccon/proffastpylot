@@ -530,7 +530,9 @@ class Preparation():
         preformatted such that it can be inserted into the template file
         directly.
         """
-        # TODO: when getting the ILS check for the date.
+        if self.tccon_mode:
+            return (0.983, 0., 0.983, 0.)
+
         ils_df = pd.read_csv(self.ils_file, skipinitialspace=True)
         ils_df["ValidSince"] = pd.to_datetime(ils_df["ValidSince"])
         ils_df = ils_df.set_index("Instrument")
