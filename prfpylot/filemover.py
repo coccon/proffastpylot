@@ -192,8 +192,10 @@ class FileMover(Preparation):
         inp_folder = os.path.join(self.result_folder, "input_files")
         if not os.path.exists(inp_folder):
             os.mkdir(inp_folder)
-
-        for type in ["prep", "pcxs", "inv"]:
+        kind_list = ["prep", "pcxs", "inv"]
+        if self.start_with_spectra:
+            kind_list = ["pcxs", "inv"]
+        for type in kind_list:
             for i, date in enumerate(self.dates):
                 inp_file = self.get_prf_input_path(type, date)
                 try:
