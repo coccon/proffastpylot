@@ -100,6 +100,12 @@ class Pylot(FileMover):
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
         # ensure that the badDayQ is empty:
+        if self.start_with_spectra:
+            # The Queue to save all days where all interferograms are bad
+            # must be created here, if not available by run_preprocess
+            m = multiprocessing.Manager()
+            self.badDayQ = m.Queue()
+
         while not self.badDayQ.empty():
             self.badDayQ.get()
 
