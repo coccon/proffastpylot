@@ -339,7 +339,7 @@ class Preparation():
 
         return map_file
 
-    def generate_prf_input(self, template_type, date, mlogger=None):
+    def generate_prf_input(self, template_type, date=None, mlogger=None):
         """Generate a template file.
 
         Calling the corresponding collect parameters function
