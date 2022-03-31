@@ -69,6 +69,14 @@ class Pylot(FileMover):
         if self.tccon_mode:
             self.logger.debug("...create tccon file...")
             self.generate_prf_input("tccon")
+        else:
+            # check if TCCON file is present by accident. If yes delete it
+            tccon_file = self.get_prf_input_path("tccon")
+            if os.path.exists(tccon_file):
+                os.remove(tccon_file)
+                self.logger.warning(
+                    "Found TCCON file, which was not expected."
+                    "Delete it for normal processing.")
 
         # a Queue to save all days where all interferograms are bad
         m = multiprocessing.Manager()
@@ -323,7 +331,7 @@ class Pylot(FileMover):
             lambda x: x.strftime("%Y-%m-%d %X"))
 
         format_list = [
-            "%s", "%s", "%11.4f", "%6.1f", "%5.2f", "%5.2f", "%7.5f", "%7.5f",
+            "%s", "%s", "%12.5f", "%6.1f", "%5.2f", "%5.2f", "%7.5f", "%7.5f",
             "%4.2f", "%5.2f", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e",
             "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e"
                       ]
