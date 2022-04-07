@@ -118,6 +118,10 @@ class Preparation():
             sys.exit()
 
         self.pressure_type = args["pressure_type"]
+        if self.pressure_type != "original":
+            # Read in Params from pressure file:
+            with open(self.pressure_type, "r") as f:
+                self.pressure_args = yaml.load(f, Loader=yaml.FullLoader)
 
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')

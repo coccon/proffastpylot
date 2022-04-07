@@ -23,8 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from prfpylot.filemover import FileMover
-from prfpylot.pressure import PressureParameters, \
-    read_pressure_from_file, generate_pt_intraday
+from prfpylot.pressure import \
+    generate_pt_intraday, prepare_pressure_df
 import pandas as pd
 from subprocess import Popen, PIPE
 import os
@@ -38,6 +38,7 @@ import numpy as np
 import logging
 from logging.handlers import QueueHandler
 from functools import partial
+import yaml
 
 
 class Pylot(FileMover):
@@ -138,13 +139,22 @@ class Pylot(FileMover):
         """
         self.logger.info(f"Running invers with {n_processes} task(s) ...")
         output = []
+
+        # read in the pressure for all days in self.dates.
+        # returns the dataframe containing the ready to use data for proffast
+        pressure_DataFrame = prepare_pressure_df(
+            self.pressure_path, self.pressure_args, self.dates)
+
         if n_processes <= 1:
             for date in self.dates:
-                tmp_out = self.run_inv_at(date)
+                tmp_out = self.run_inv_at(
+                    date, pressure_df=pressure_DataFrame)
                 output.append(tmp_out)
         else:
+            kwargs = {"pressure_df": pressure_DataFrame}
             tmp_out = self._run_parallel(self.run_inv_at,
-                                         n_processes)
+                                         n_processes,
+                                         kwargs=kwargs)
             output = tmp_out
         self._check_for_bad_days()
         self._write_logfile("inv", output)
@@ -197,7 +207,18 @@ class Pylot(FileMover):
             mlogger.addHandler(q_handler)
         else:
             mlogger = self.logger
-        self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
+        mlogger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
+
+        # Check if the abscos.bin files are already available, if yes skip the
+        # day
+        wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
+        srchstrg = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+        if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
+            message = (
+                f"*.abscos.bin file for day {date} exists already."
+                " Skip calculation..")
+            mlogger.info(message)
+            return [message, "No Error", "No call String"]
 
         foundSpectra = self.generate_prf_input(
             "pcxs", date, mlogger=mlogger)
@@ -240,7 +261,7 @@ class Pylot(FileMover):
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
-    def run_inv_at(self, date, loggingq=None, badDayQ=None):
+    def run_inv_at(self, date, loggingq=None, badDayQ=None, pressure_df=None):
         # for multiprocessing create a new logger:
         if loggingq is not None:
             mlogger = logging.getLogger("mLogger")
@@ -263,7 +284,7 @@ class Pylot(FileMover):
                       f"No call string for date {date}.\n"]
             return output
 
-        self.prepare_pressure_at(date, mlogger)
+        self.prepare_pressure_at(date, mlogger, pressure_df)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("inv", date))
         executable = self._get_executable("inv")
@@ -273,7 +294,7 @@ class Pylot(FileMover):
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
-    def prepare_pressure_at(self, date, mlogger=None):
+    def prepare_pressure_at(self, date, mlogger=None, pressure_df=None):
         """Perpare the pressure input data for a date.
 
         Depending on the options the pt_intraday file is either generated
@@ -294,13 +315,12 @@ class Pylot(FileMover):
                 self.intraday_path, filename)
             shutil.copy(src_intraday_file, intraday_file)
             return
+        # =====================================================================
+        # =====================================================================
+        p_list = pressure_df[date]
 
-        params = PressureParameters.dataframe_parameters[self.pressure_type]
-        filename = self._get_pressure_file_at(date)
-        pt_input_file = os.path.join(self.pressure_path, filename)
-        p_list = read_pressure_from_file(
-            file=pt_input_file,
-            **params)
+        # =====================================================================
+        # =====================================================================
 
         template_path = os.path.join(
             self.prfpylot_path, "templates", "template_pt_intraday.inp"
@@ -390,14 +410,17 @@ class Pylot(FileMover):
                 f"PROFFAST error message: {err}")
         return (out, err)
 
-    def _run_parallel(self, method, n_processes):
+    def _run_parallel(self, method, n_processes, kwargs={}):
         """Run method in parallel using python multiprocessing."""
         pool = multiprocessing.Pool(processes=n_processes)
 
         # create a queue for  multiprocessing logging:
         m = multiprocessing.Manager()
         logq = m.Queue(-1)
-        subs_method = partial(method, badDayQ=self.badDayQ, loggingq=logq)
+        subs_method = partial(
+            method,
+            badDayQ=self.badDayQ, loggingq=logq,
+            **kwargs)
         output = pool.map(subs_method, self.dates)
         while not logq.empty():
             record = logq.get()
@@ -509,7 +532,8 @@ class Pylot(FileMover):
     def _get_pressure_file_at(self, date):
         """Return path to pressure file of given date."""
         p_params = PressureParameters()
-        filename = p_params.get_filename(self.pressure_type, date)
+        file_params = self.pressure_args["filename_parameters"]
+        filename = p_params.get_filename(file_params, date)
         search_string = os.path.join(self.pressure_path, filename)
 
         pressure_file = glob(search_string)

@@ -90,7 +90,7 @@ delete_input_files: %delete_input_files%
 #    log: 
 #        the 'MIRA-datalogger' format as used by KIT
 # (It is possible to define own pressure types)
-pressure_type: log
+pressure_type: %pressure_type%
 
 # Activate TCCON Mode (True/False)
 # Use preprocess to evaluate low resolution spectra recorded with a 125HR

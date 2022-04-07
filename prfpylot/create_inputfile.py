@@ -84,8 +84,10 @@ class InputfileGenerator():
 
         self.input_data["delete_abscosbin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
-        self.input_data["igram_size_filter"] = 3.7355880737304688
+        self.input_data["igram_size_filter"] = 3.7
         self.input_data["start_with_spectra"] = "False"
+        self.input_data["pressure_type"] = os.path.join(
+            self.scriptpath, "log_type_pressure.yml")
         self.input_data["tccon_mode"] = "False"
         self.input_data["tccon_setting"] = "0"
 
