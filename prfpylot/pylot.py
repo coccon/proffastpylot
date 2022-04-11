@@ -23,8 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from prfpylot.filemover import FileMover
-from prfpylot.pressure import \
-    generate_pt_intraday, prepare_pressure_df
+from prfpylot.pressure import PressureHandler
 import pandas as pd
 from subprocess import Popen, PIPE
 import os
@@ -46,6 +45,8 @@ class Pylot(FileMover):
     def __init__(self, input_file, logginglevel="info"):
         super(Pylot, self).__init__(input_file, logginglevel=logginglevel)
         self.logger.debug('Initialized the FileMover')
+        self.MyPressureHandler = PressureHandler(
+            self.pressure_path, self.pressure_args, self.dates)
 
     def run(self, n_processes=1):
         """Execute all processes of profast.
@@ -141,8 +142,7 @@ class Pylot(FileMover):
 
         # read in the pressure for all days in self.dates.
         # returns the dataframe containing the ready to use data for proffast
-        pressure_DataFrame = prepare_pressure_df(
-            self.pressure_path, self.pressure_args, self.dates)
+        pressure_DataFrame = self.MyPressureHandler.prepare_pressure_df()
 
         if n_processes <= 1:
             for date in self.dates:
@@ -150,7 +150,7 @@ class Pylot(FileMover):
                     date, pressure_dict=pressure_DataFrame)
                 output.append(tmp_out)
         else:
-            kwargs = {"pressure_df": pressure_DataFrame}
+            kwargs = {"pressure_dict": pressure_DataFrame}
             tmp_out = self._run_parallel(self.run_inv_at,
                                          n_processes,
                                          kwargs=kwargs)
@@ -326,7 +326,8 @@ class Pylot(FileMover):
         template_path = os.path.join(
             self.prfpylot_path, "templates", "template_pt_intraday.inp"
             )
-        pt_intraday = generate_pt_intraday(p_list, template_path)
+        pt_intraday = self.MyPressureHandler.generate_pt_intraday(
+            p_list, template_path)
 
         with open(intraday_file, "w") as f:
             f.write(pt_intraday)
@@ -530,10 +531,11 @@ class Pylot(FileMover):
             executable += ".exe"
         return executable
 
+    ''' t
     def _get_pressure_file_at(self, date):
         """Return path to pressure file of given date."""
         file_params = self.pressure_args["filename_parameters"]
-        filename = p_params.get_filename(file_params, date)
+        filename = self.MyPressureHandler._get_filename(file_params, date)
         search_string = os.path.join(self.pressure_path, filename)
 
         pressure_file = glob(search_string)
@@ -547,6 +549,7 @@ class Pylot(FileMover):
             raise RuntimeError("Unambigous pressure files!")
         pressure_file = pressure_file[0]
         return pressure_file
+    '''
 
     def _check_for_bad_days(self):
         """If any badDays (i.e. no good igrams/spectra) occured delete the
