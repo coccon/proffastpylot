@@ -5,7 +5,7 @@ data formats.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
-Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
                         Karlsruhe Institut of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
@@ -59,7 +59,7 @@ def read_subdaily_files(pressurePath, pArgs, dayList):
         dataloggerFileList = glob.glob(
             os.path.join(pressurePath, filename))
         dataloggerFileList.sort()
-        # get all files of one day and concat them: 
+        # get all files of one day and concat them:
         for file in dataloggerFileList:
             temp = pd.read_csv(
                 file,
@@ -210,7 +210,7 @@ def _get_filename(date, params):
 
 def _create_p_lines(p_list):
     """Create a string with times and pressure in the format of the intraday file.
-    
+
     Params:
         p_list: list of tuple with time and pressure.
     """
