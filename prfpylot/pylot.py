@@ -46,7 +46,7 @@ class Pylot(FileMover):
         super(Pylot, self).__init__(input_file, logginglevel=logginglevel)
         self.logger.debug('Initialized the FileMover')
         self.MyPressureHandler = PressureHandler(
-            self.pressure_path, self.pressure_args, self.dates)
+            self.pressure_path, self.pressure_args, self.dates, self.logger)
 
     def run(self, n_processes=1):
         """Execute all processes of profast.
@@ -316,12 +316,7 @@ class Pylot(FileMover):
                 self.intraday_path, filename)
             shutil.copy(src_intraday_file, intraday_file)
             return
-        # =====================================================================
-        # =====================================================================
         p_list = pressure_dict[date]
-
-        # =====================================================================
-        # =====================================================================
 
         template_path = os.path.join(
             self.prfpylot_path, "templates", "template_pt_intraday.inp"

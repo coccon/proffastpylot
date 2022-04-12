@@ -30,10 +30,15 @@ import numpy as np
 
 class PressureHandler():
     """ A class to handle various pressure files. """
-    def __init__(self, pressure_path, pArgs, dayList):
+    def __init__(self, pressure_path, pArgs, dayList, logger):
         self.pressure_path = pressure_path
         self.pArgs = pArgs
         self.dayList = dayList
+        self.parsed_dtcol = "parsed_datetime"
+        self.logger = logger
+        # For developement keep the old version using a list.
+        self.old_version = False
+        self.p_dict = {}
 
     def prepare_pressure_df(self):
         """Read the pressure of a day, from files with a certain frequency
@@ -99,17 +104,29 @@ class PressureHandler():
                 **(self.pArgs["dataframe_parameters"]["csv_kwargs"]))
             df = pd.concat([df, temp])
 
-        pdtc = "parsed_datecol"
         df = self._parse_datetime_col(df)
         p_dict = {}
+
         # get the pressure values for each day:
         for day in self.dayList:
             day_strt = day.replace(hour=0, minute=0, second=0)
             day_stp = day.replace(hour=23, minute=59, second=59)
 
             # get a daily subset of the df:
-            dailyDf = df.loc[(df[pdtc] > day_strt) & (df[pdtc] < day_stp)]
-            p_dict[day] = self._to_pressure_list(dailyDf)
+            dailyDf = df.loc[(df[self.parsed_dtcol] > day_strt)
+                             & (df[self.parsed_dtcol] < day_stp)]
+
+            temp = self._to_pressure_df(dailyDf)
+            self.p_dict[day] = temp
+            # internally a df is stored. However for backwards compatibility
+            # a list of tuples is returned:
+            temp = temp[[
+                self.parsed_dtcol,
+                self.pArgs["dataframe_parameters"]["pressure_key"]]].\
+                apply(tuple, axis=1)
+            list = temp.tolist()
+
+            p_dict[day] = list
         return p_dict
 
     def generate_pt_intraday(self, p_list, template_path):
@@ -127,6 +144,41 @@ class PressureHandler():
         pt_intraday = "".join(intraday_lines)
         return pt_intraday
 
+    def get_pressure_at(self, timestamp):
+        """ Return the pressure at timestamp """
+        pkey = self.pArgs["dataframe_parameters"]["pressure_key"]
+
+        try:
+            df = self.p_dict[timestamp.replace(hour=0, minute=0, second=0)]
+        except KeyError:
+            self.logger.error(f"Could not find date {timestamp.date()} in "
+                              "pressure data")
+            quit()
+        # df.set_index(column=self.parsed_dtcol)
+        # print(df.index.get_loc(timestamp, method="nearest"))
+        
+        # get the two closest entries:
+        # calculate differences to current value:
+        diff = (df[self.parsed_dtcol] - timestamp).dt.total_seconds()
+        diff = abs(diff).sort_values()
+        print(diff)
+        inds = diff.index[:2].to_list()
+        inds.sort()
+        print(inds)
+        i1 = inds[0]
+        i2 = inds[1]
+        print(df.loc[inds])
+        # interpolate:
+        m = (df.loc[i2][pkey] - df.loc[i1][pkey])\
+            / abs(
+                    (df.loc[i2][self.parsed_dtcol]
+                     - df.loc[i1][self.parsed_dtcol]).total_seconds()
+                 )
+        p = m * (timestamp - df.loc[i1][self.parsed_dtcol]).total_seconds()\
+            + df.loc[i1][pkey]
+
+        return p
+
     def _parse_datetime_col(self, df, date=None):
         """
         parse the dataframe for a suitable datetime.
@@ -140,8 +192,6 @@ class PressureHandler():
         datetime_key = df_args["datetime_key"]
         datetime_fmt = df_args["datetime_fmt"]
 
-        pdtc = "parsed_datecol"
-
         if time_key != "" and datetime_key != "":
             raise RuntimeError(
                 "time_key and datetime_key can not be given at the same time")
@@ -152,28 +202,27 @@ class PressureHandler():
                 # no date key avaliable as well. Do only take the time from
                 # file.
                 # day is taken from call day
-                df[pdtc] = pd.to_datetime(
+                df[self.parsed_dtcol] = pd.to_datetime(
                     df[time_key], format=time_fmt)
 
-                df[pdtc] = df[pdtc].apply(
+                df[self.parsed_dtcol] = df[self.parsed_dtcol].apply(
                     lambda x: x.replace(
                         day=date.day, month=date.month, year=date.year))
             else:
                 # combine two columns to datetime
-                df[pdtc] = pd.to_datetime(
+                df[self.parsed_dtcol] = pd.to_datetime(
                     df[date_key] + df[time_key],
                     format=date_fmt+time_fmt)
         else:
             # seems that a datetime column is available:
-            df[pdtc] = pd.to_datetime(df[datetime_key], format=datetime_fmt)
+            df[self.parsed_dtcol] = pd.to_datetime(
+                df[datetime_key], format=datetime_fmt)
         return df
 
-    def _to_pressure_list(self, df):
+    def _to_pressure_df(self, df):
         """
-        Gets an raw df and returns a list of tuples with
-        (datetime, pressure)
+        Gets an raw df and returns a new df with datetime and pressure column
         """
-        pdtc = "parsed_datecol"
         df_args = self.pArgs["dataframe_parameters"]
         pressure_key = df_args["pressure_key"]
         # copy the dataframe to avoid strange results:
@@ -193,12 +242,7 @@ class PressureHandler():
         df[pressure_key] = np.where(
             df[pressure_key] < minVal, replace_val, df[pressure_key])
         df.dropna(inplace=True)
-
-        # generate a list of tuples
-        temp = df[[pdtc, pressure_key]].apply(tuple, axis=1)
-        list = temp.tolist()
-
-        return list
+        return df
 
     def _get_filename(self, date):
         """Return merged filename of pressure_type."""
