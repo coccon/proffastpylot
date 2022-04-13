@@ -87,7 +87,7 @@ class InputfileGenerator():
         self.input_data["igram_size_filter"] = 3.7
         self.input_data["start_with_spectra"] = "False"
         self.input_data["pressure_type"] = os.path.join(
-            self.scriptpath, "log_type_pressure.yml")
+            inputpath, "..", "log_type_pressure.yml")
         self.input_data["tccon_mode"] = "False"
         self.input_data["tccon_setting"] = "0"
 

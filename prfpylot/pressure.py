@@ -61,7 +61,7 @@ class PressureHandler():
     def read_subdaily_files(self):
         """Reads the subdaily files into a single df
         """
-        pressure_dict = {}
+        p_dict = {}
         for day in self.dayList:
             daily_df = pd.DataFrame()
             filename = self._get_filename(day)
@@ -75,8 +75,17 @@ class PressureHandler():
                     **(self.pArgs["dataframe_parameters"]["csv_kwargs"]))
                 daily_df = pd.concat([temp, daily_df])
             daily_df = self._parse_datetime_col(daily_df, day)
-            pressure_dict[day] = self._to_pressure_list(daily_df)
-        return pressure_dict
+            temp = self._to_pressure_df(daily_df)
+            self.p_dict[day] = temp
+            # internally a df is stored. However for backwards compatibility
+            # a list of tuples is returned:
+            temp = temp[[
+                self.parsed_dtcol,
+                self.pArgs["dataframe_parameters"]["pressure_key"]]].\
+                apply(tuple, axis=1)
+            list = temp.tolist()
+            p_dict[day] = list
+        return p_dict
 
     def read_yearly_files(self):
         """read yearly files and return a dict containing the pressure
@@ -145,7 +154,10 @@ class PressureHandler():
         return pt_intraday
 
     def get_pressure_at(self, timestamp):
-        """ Return the pressure at timestamp """
+        """ Return the pressure at timestamp
+        params:
+            timestamp (datetime)
+        """
         pkey = self.pArgs["dataframe_parameters"]["pressure_key"]
 
         try:
@@ -161,13 +173,10 @@ class PressureHandler():
         # calculate differences to current value:
         diff = (df[self.parsed_dtcol] - timestamp).dt.total_seconds()
         diff = abs(diff).sort_values()
-        print(diff)
         inds = diff.index[:2].to_list()
         inds.sort()
-        print(inds)
         i1 = inds[0]
         i2 = inds[1]
-        print(df.loc[inds])
         # interpolate:
         m = (df.loc[i2][pkey] - df.loc[i1][pkey])\
             / abs(
