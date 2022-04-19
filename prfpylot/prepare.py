@@ -503,7 +503,7 @@ class Preparation():
             mlogger.critical("Could not determine coodinates. Exit!")
             sys.exit()
 
-        spectra_list = self._get_spectra_list(date, mlogger)
+        spectra_list = self.get_spectra_intraday_input(date)
         parameters = {
             "ALT": alt,
             "LAT": lat,
@@ -527,6 +527,30 @@ class Preparation():
             parameters["WET_VMR"] = False
         return parameters
 
+    def get_spectra_intraday_input(self, date):
+        """Return a list of stings containing spectra and corresponding information.
+
+        YYMMDD_HHMMSSSN.BIN, pressure, T_PBL
+
+        This function replaces the pt_intraday.inp file.
+        Note that T_PBL is currently set to 0.0 .
+
+        params:
+            (date): dt.Datetime
+        """
+        spectra_list = self._get_spectra_list(date)
+
+        spectra_intraday_input = []
+        for s in spectra_list:
+            # get UTC timestamp of spectrum
+            timestamp = None
+            # get pressure from mapfile
+            p = PressureHandler.get_pressure_at(timestamp)
+
+            spectra_intraday_input.append(f"{s}, {p}, 0.0")
+
+        return spectra_intraday_input
+
     def get_ils_from_file(self, date):
         """
         This methods reads the ILS from the Instrument_list.
@@ -546,7 +570,8 @@ class Preparation():
         except KeyError:
             self.logger.critical(
                 f"{self.instrument_number} is not in ILS-file.\n"
-                "Please ensure you downloaded the newest version from GitLab\n"
+                "Please ensure you are using the newest version of "
+                "PROFFASTpylot.\n"
                 )
             sys.exit()
         if isinstance(ils_df, pd.Series):
@@ -563,8 +588,9 @@ class Preparation():
             PEChan1 = row["Channel1PE"].iloc[-1]
             PEChan2 = row["Channel2PE"].iloc[-1]
         else:
-            self.logger.critical("An unknown error occured while reading the "
-                                 "ILS-list. Please contact the support!")
+            self.logger.critical(
+                "An unknown error occured while reading the "
+                "ILS-list.")
             sys.exit()
 
         return (MEChan1, PEChan1, MEChan2, PEChan2)
@@ -664,8 +690,6 @@ class Preparation():
             self.analysis_instrument_path, date_str, "cal", "*SN.BIN")
         spectra_list = glob(spectra_search_str)
         spectra_list = [os.path.basename(spectra) for spectra in spectra_list]
-        if len(spectra_list) == 0:
-            mlogger.debug(f"No spectra were found at {spectra_search_str}")
         return spectra_list
 
     def _interpolate_map_files(self, date):
