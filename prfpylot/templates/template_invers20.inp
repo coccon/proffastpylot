@@ -116,8 +116,8 @@ $
 20
 0
 
-names of spectra
+list for all spectra: name of spectra, pressure, T_PBL
 (only list SN spectra here, the code will check whether a corresponding SM is available)
 $
-%SPECTRA_LIST%
+%SPECTRA_PT_INPUT%
 ***

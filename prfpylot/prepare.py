@@ -362,25 +362,37 @@ class Preparation():
         if date is not None:
             date_str = dt.strftime(date, "%y%m%d")
         foundData = True
+
         if template_type == "prep":
             mlogger.debug(
                 f"Generating preprocess inp file for {date_str}..")
             parameters = self.get_prep_parameters(date, mlogger)
             if parameters["igrams"] == "":
                 foundData = False
+
         elif template_type == "tccon":
             parameters = {"tccon_setting": self.tccon_setting}
-        else:
+
+        elif template_type == "pcxs":
+            parameters = self.get_pcxs_parameters(date, mlogger)
             mlogger.debug(
                 f"Generating {self.template_types[template_type]}"
                 f" inp file for {date_str}..")
-            parameters = self.get_pcxs_and_inv_parameters(
+
+        elif template_type == "inv":
+            mlogger.debug(
+                f"Generating {self.template_types[template_type]}"
+                f" inp file for {date_str}..")
+            parameters = self.get_inv_parameters(
                 date, mlogger=mlogger)
-            if parameters["SPECTRA_LIST"] == "":
+            if parameters["SPECTRA_PT_INPUT"] == "":
                 foundData = False
 
-        self.replace_params_in_template(parameters, template_type, date,
-                                        mlogger)
+        else:
+            raise ValueError(f"Unknown template_type {template_type}")
+
+        self.replace_params_in_template(
+            parameters, template_type, date, mlogger)
         return foundData
 
     def get_igrams(self, date, mlogger=None):
@@ -493,14 +505,16 @@ class Preparation():
                      }
         return parameters
 
-    def get_pcxs_and_inv_parameters(self, date, mlogger=None):
-        """Return Parameters to replace in the pcxs10.inp
-        or invers10.inp files."""
+    def get_pcxs_parameters(self, date, mlogger=None):
+        """Return parameters to replace in the pcxs20.inp file."""
         if mlogger is None:
             mlogger = self.logger
-        mlogger.debug("Create pcxs and inv input parameters ...")
+        mlogger.debug("Create inv input parameters ...")
+
+        # coordinates of the corresponding date
         if self.use_coordfile:
             self.get_coords_from_file(date)
+
         lat = self.coords.get("lat", -1.)
         lon = self.coords.get("lon", -1.)
         alt = self.coords.get("alt", -1.)
@@ -508,22 +522,18 @@ class Preparation():
             mlogger.critical("Could not determine coodinates. Exit!")
             sys.exit()
 
-        spectra_list = self.get_spectra_intraday_input(date)
         parameters = {
             "ALT": alt,
             "LAT": lat,
             "LON": lon,
-            "INSTRUMENT": self.instrument_number,
-            "SITE": self.site_name,
-            "DATE": date.strftime("%y%m%d"),
-            "DATE_LONG": date.strftime("%Y%m%d"),
-            "SITE_ABBREV": self.site_abbrev,
             "DATAPATH": self.analysis_instrument_path,
+            "DATE": date.strftime("%y%m%d"),
+            "SITE": self.site_name,
             "MAPPATH": self.map_path,
-            "SPECTRA_LIST": "\n".join(spectra_list)
+            "SITE_ABBREV": self.site_abbrev,
+            "DATE_LONG": date.strftime("%Y%m%d"),
         }
         # in case of pcxs20 the parameter %WET_VMR% is needed in addition:
-
         if self.ggg2020mapfiles:
             # in case of GGG2014 map files it is dry air (False)
             # in case of GGG2020 map files it is wet air. (True)
@@ -532,29 +542,47 @@ class Preparation():
             parameters["WET_VMR"] = False
         return parameters
 
-    def get_spectra_intraday_input(self, date):
+    def get_inv_parameters(self, date, mlogger=None):
+        """Return Parameters to replace in the invers10.inp file."""
+
+        spectra_pT_input = self.get_spectra_pT_input(date)
+        parameters = {
+            "DATAPATH": self.analysis_instrument_path,
+            "DATE": date.strftime("%y%m%d"),
+            "SITE": self.site_name,
+            "SPECTRA_PT_INPUT": "\n".join(spectra_pT_input)
+        }
+        return parameters
+
+    def get_spectra_pT_input(self, date):
         """Return a list of stings containing spectra and corresponding information.
 
         YYMMDD_HHMMSSSN.BIN, pressure, T_PBL
 
-        This function replaces the pt_intraday.inp file.
-        Note that T_PBL is currently set to 0.0 .
+        This function replaces the pt_intraday.inp file!
+        Note that T_PBL is currently set to 0.0.
 
         params:
             (date): dt.Datetime
         """
         spectra_list = self._get_spectra_list(date)
+        self.logger.debug(f"First found spectra at {date}: {spectra_list[0]}")
 
-        spectra_intraday_input = []
+        spectra_pT_input = []
         for s in spectra_list:
+
             # get UTC timestamp of spectrum
-            timestamp = None
+            timestamp = dt.strptime(s, "%y%m%d_%H%M%SSN.BIN")
+            if self.utc_offset != 0.0:
+                raise NotImplementedError(
+                    "Handling of Pressure is not implemented for measurements "
+                    "in local time, yet!")
             # get pressure from mapfile
-            p = PressureHandler.get_pressure_at(timestamp)
+            p = self.pressure_handler.get_pressure_at(timestamp)
 
-            spectra_intraday_input.append(f"{s}, {p}, 0.0")
+            spectra_pT_input.append(f"{s}, {p}, 0.0")
 
-        return spectra_intraday_input
+        return spectra_pT_input
 
     def get_ils_from_file(self, date):
         """
@@ -688,7 +716,7 @@ class Preparation():
             return line.replace("\\", "/")
         return line
 
-    def _get_spectra_list(self, date, mlogger):
+    def _get_spectra_list(self, date):
         """Return list of spectra files generated by preprocess."""
         date_str = date.strftime("%y%m%d")
         spectra_search_str = os.path.join(

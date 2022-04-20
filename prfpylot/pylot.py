@@ -46,6 +46,9 @@ class Pylot(FileMover):
             input_file, pressure_type_file, logginglevel=logginglevel)
         self.logger.debug('Initialized the FileMover')
 
+        # a queue to save all days where all interferograms are bad
+        self.bad_day_queue = multiprocessing.Manager().Queue()
+
     def run(self, n_processes=1):
         """Execute all processes of profast.
 
@@ -77,14 +80,10 @@ class Pylot(FileMover):
                     "Found TCCON file, which was not expected."
                     "Delete it for normal processing.")
 
-        # a Queue to save all days where all interferograms are bad
-        m = multiprocessing.Manager()
-        self.badDayQ = m.Queue()
-
         output = []
         if n_processes <= 1:
             for date in self.dates:
-                tmp_out = self.run_preprocess_at(date, self.badDayQ)
+                tmp_out = self.run_preprocess_at(date, self.bad_day_queue)
                 output.append(tmp_out)
         else:
             self.logger.debug("...start parallel processing...")
@@ -106,20 +105,16 @@ class Pylot(FileMover):
         called directly. Otherwise it is called via run_parallel
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
-        # ensure that the badDayQ is empty:
-        if self.start_with_spectra:
-            # The Queue to save all days where all interferograms are bad
-            # must be created here, if not available by run_preprocess
-            m = multiprocessing.Manager()
-            self.badDayQ = m.Queue()
 
-        while not self.badDayQ.empty():
-            self.badDayQ.get()
+        # ensure that the bad_day_queue is empty:
+        while not self.bad_day_queue.empty():
+            self.bad_day_queue.get()
 
         output = []
         if n_processes <= 1:
             for date in self.dates:
-                tmp_out = self.run_pcxs_at(date, badDayQ=self.badDayQ)
+                tmp_out = self.run_pcxs_at(
+                    date, bad_day_queue=self.bad_day_queue)
                 output.append(tmp_out)
 
         else:
@@ -157,7 +152,7 @@ class Pylot(FileMover):
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
 
-    def run_preprocess_at(self, date, badDayQ, loggingq=None):
+    def run_preprocess_at(self, date, bad_day_queue, loggingq=None):
         """Run preprocess at date."""
         # for multiprocessing create a new logger:
         if loggingq is not None:
@@ -175,7 +170,7 @@ class Pylot(FileMover):
         if not foundIgrams:
             mlogger.warning(f"Do not execute preprocess at date {date} since"
                             " no suitable interferograms where found!")
-            badDayQ.put(date)
+            bad_day_queue.put(date)
             output = [f"Do not execute preprocess at date {date}.",
                       "No suitable iterferograms found",
                       f"No call string for date {date}.\n"]
@@ -193,7 +188,7 @@ class Pylot(FileMover):
         outlist = out, err, " ".join([executable, inputfile])
         return outlist
 
-    def run_pcxs_at(self, date, loggingq=None, badDayQ=None):
+    def run_pcxs_at(self, date, loggingq=None, bad_day_queue=None):
         """ Run pcxs at date."""
         # for multiprocessing create a new logger:
         if loggingq is not None:
@@ -222,7 +217,7 @@ class Pylot(FileMover):
         if not foundSpectra:
             mlogger.warning(f"Do not execute pcxs at date {date} since"
                             " no suitable spectra where found!")
-            badDayQ.put(date)
+            bad_day_queue.put(date)
             output = [f"Do not execute pcxs at date {date}.",
                       "No suitable spectra found",
                       f"No call string for date {date}.\n"]
@@ -259,7 +254,7 @@ class Pylot(FileMover):
         return outlist
 
     def run_inv_at(
-            self, date, loggingq=None, badDayQ=None,
+            self, date, loggingq=None, bad_day_queue=None,
             pressure_dict=None):
         # for multiprocessing create a new logger:
         if loggingq is not None:
@@ -277,13 +272,12 @@ class Pylot(FileMover):
         if not foundSpectra:
             mlogger.warning(f"Do not execute inv at date {date} since"
                             " no spectra where found!")
-            badDayQ.put(date)
+            bad_day_queue.put(date)
             output = [f"Do not execute inv at date {date}.",
                       "No suitable spectra found",
                       f"No call string for date {date}.\n"]
             return output
 
-        self.prepare_pressure_at(date, mlogger, pressure_dict)
         prf_input_path = os.path.basename(
             self.get_prf_input_path("inv", date))
         executable = self._get_executable("inv")
@@ -292,38 +286,6 @@ class Pylot(FileMover):
                     **{'cwd': self.proffast_path})
         outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
-
-    def prepare_pressure_at(self, date, mlogger=None, pressure_dict=None):
-        """Perpare the pressure input data for a date.
-
-        Depending on the options the pt_intraday file is either generated
-        or copied to its destination for each day.
-        """
-        # extra logger for case of multiprocessing:
-        if mlogger is None:
-            mlogger = self.logger
-        mlogger.debug("Call 'prepare_pressure_at'")
-        date_str = date.strftime("%y%m%d")
-        pt_folder = os.path.join(self.analysis_instrument_path, date_str, "pT")
-        intraday_file = os.path.join(pt_folder, "pT_intraday.inp")
-
-        if self.pressure_type == "original":
-            filename = "{}_{}.inp".format(
-                self.site_abbrev, date.strftime("%y-%m-%d"))
-            src_intraday_file = os.path.join(
-                self.intraday_path, filename)
-            shutil.copy(src_intraday_file, intraday_file)
-            return
-        p_list = pressure_dict[date]
-
-        template_path = os.path.join(
-            self.prfpylot_path, "templates", "template_pt_intraday.inp"
-            )
-        pt_intraday = self.pressure_handler.generate_pt_intraday(
-            p_list, template_path)
-
-        with open(intraday_file, "w") as f:
-            f.write(pt_intraday)
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
@@ -414,7 +376,7 @@ class Pylot(FileMover):
         logq = m.Queue(-1)
         subs_method = partial(
             method,
-            badDayQ=self.badDayQ, loggingq=logq,
+            bad_day_queue=self.bad_day_queue, loggingq=logq,
             **kwargs)
         output = pool.map(subs_method, self.dates)
         while not logq.empty():
@@ -452,7 +414,7 @@ class Pylot(FileMover):
         invparms_filelist = glob(search_str)
 
         df_list = [
-            pd.read_csv(file, delim_whitespace=True)
+            pd.read_csv(file, delimiter=",", skipinitialspace=True)
             for file in invparms_filelist]
         df = pd.concat(df_list)
 
@@ -490,7 +452,7 @@ class Pylot(FileMover):
 
         sel_cols = [
             "UTC", "LocalTime",
-            "JulianDate", "HHMMSS_ID",
+            "JulianDate", "UTtimeh",
             "gndP", "gndT",
             "latdeg", "londeg",
             "appSZA", "azimuth",
@@ -548,8 +510,8 @@ class Pylot(FileMover):
         """If any badDays (i.e. no good igrams/spectra) occured delete the
         dates from the datelist
         """
-        while not self.badDayQ.empty():
-            badDay = self.badDayQ.get()
+        while not self.bad_day_queue.empty():
+            badDay = self.bad_day_queue.get()
             self.dates.remove(badDay)
             self.logger.debug(f"Delete day {badDay.strftime('%Y-%m-%d')}"
                               " from processing list.")

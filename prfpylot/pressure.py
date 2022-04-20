@@ -39,6 +39,7 @@ class PressureHandler():
         "data_parameters",
         "frequency"
     ]
+    parsed_dtcol = "parsed_datetime"
 
     def __init__(self, pressure_type_file, pressure_path, dates, logger):
         self.dates = dates
@@ -56,11 +57,6 @@ class PressureHandler():
                     f"{pressure_type_file}!")
                 sys.exit()
 
-        self.parsed_dtcol = "parsed_datetime"
-        # self.pArgs = pArgs
-        # self.dayList = dayList
-        # self.logger = logger
-
         # For developement keep the old version using a list.
         self.old_version = False
         self.p_dict = {}
@@ -68,6 +64,7 @@ class PressureHandler():
     def prepare_pressure_df(self):
         """Read the pressure of a day, from files with a various frequencies.
         """
+        self.logger.debug("Execute prepare_pressure_df()...")
         frequency = self.frequency
 
         # Create a list containing all pressure files:
@@ -279,7 +276,7 @@ class PressureHandler():
             df[pressure_key] > maxVal, replace_val, df[pressure_key])
         df[pressure_key] = np.where(
             df[pressure_key] < minVal, replace_val, df[pressure_key])
-        df.dropna(inplace=True)
+        df = df.dropna(subset=[pressure_key])
         return df
 
     def _get_filename(self, date):
