@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import prfpylot
+from prfpylot.pressure import PressureHandler
 import os
 import sys
 import yaml
@@ -49,7 +50,7 @@ class Preparation():
     # used
     ggg2020mapfiles = False
 
-    def __init__(self, input_file, logginglevel="info"):
+    def __init__(self, input_file, pressure_type_file, logginglevel="info"):
         # read input file
         with open(input_file, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
@@ -117,11 +118,11 @@ class Preparation():
             self.logger.error("pressure_path is not specified!")
             sys.exit()
 
-        self.pressure_type = args["pressure_type"]
-        if self.pressure_type != "original":
-            # Read in Params from pressure file:
-            with open(self.pressure_type, "r") as f:
-                self.pressure_args = yaml.load(f, Loader=yaml.FullLoader)
+        # self.pressure_type = args["pressure_type"]
+        # if self.pressure_type != "original":
+        #     # Read in Params from pressure file:
+        #     with open(self.pressure_type, "r") as f:
+        #         self.pressure_args = yaml.load(f, Loader=yaml.FullLoader)
 
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')
@@ -198,6 +199,10 @@ class Preparation():
         # log of the processes
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
+
+        # initialise pressure handler
+        self.pressure_handler = PressureHandler(
+            pressure_type_file, self.pressure_path, self.dates, self.logger)
 
         self.logger.debug("... read in finished!")
 

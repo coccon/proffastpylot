@@ -30,8 +30,9 @@ from prfpylot.prepare import Preparation
 class FileMover(Preparation):
     """Copy, Move and remove temporary proffast Files."""
 
-    def __init__(self, input_file, logginglevel="info"):
-        super(FileMover, self).__init__(input_file, logginglevel=logginglevel)
+    def __init__(self, input_file, pressure_type_file, logginglevel="info"):
+        super(FileMover, self).__init__(
+            input_file, pressure_type_file,  logginglevel=logginglevel)
         # create all folders
         self.init_folders()
 

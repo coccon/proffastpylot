@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from prfpylot.filemover import FileMover
-from prfpylot.pressure import PressureHandler
 import pandas as pd
 from subprocess import Popen, PIPE
 import os
@@ -40,13 +39,12 @@ from functools import partial
 
 
 class Pylot(FileMover):
-    """Start all Profast processes."""
+    """Start all PROFFAST processes."""
 
-    def __init__(self, input_file, logginglevel="info"):
-        super(Pylot, self).__init__(input_file, logginglevel=logginglevel)
+    def __init__(self, input_file, pressure_type_file, logginglevel="info"):
+        super(Pylot, self).__init__(
+            input_file, pressure_type_file, logginglevel=logginglevel)
         self.logger.debug('Initialized the FileMover')
-        self.MyPressureHandler = PressureHandler(
-            self.pressure_path, self.pressure_args, self.dates, self.logger)
 
     def run(self, n_processes=1):
         """Execute all processes of profast.
@@ -142,7 +140,7 @@ class Pylot(FileMover):
 
         # read in the pressure for all days in self.dates.
         # returns the dataframe containing the ready to use data for proffast
-        pressure_DataFrame = self.MyPressureHandler.prepare_pressure_df()
+        pressure_DataFrame = self.pressure_handler.prepare_pressure_df()
 
         if n_processes <= 1:
             for date in self.dates:
@@ -321,7 +319,7 @@ class Pylot(FileMover):
         template_path = os.path.join(
             self.prfpylot_path, "templates", "template_pt_intraday.inp"
             )
-        pt_intraday = self.MyPressureHandler.generate_pt_intraday(
+        pt_intraday = self.pressure_handler.generate_pt_intraday(
             p_list, template_path)
 
         with open(intraday_file, "w") as f:

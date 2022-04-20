@@ -25,25 +25,50 @@ import pandas as pd
 import datetime as dt
 import glob
 import os
+import sys
 import numpy as np
+import yaml
 
 
 class PressureHandler():
-    """ A class to handle various pressure files. """
-    def __init__(self, pressure_path, pArgs, dayList, logger):
-        self.pressure_path = pressure_path
-        self.pArgs = pArgs
-        self.dayList = dayList
-        self.parsed_dtcol = "parsed_datetime"
+    """Read, interpolate and return pressure data from various formats."""
+
+    mandatory_options = [
+        "dataframe_parameters",
+        "filename_parameters",
+        "data_parameters",
+        "frequency"
+    ]
+
+    def __init__(self, pressure_type_file, pressure_path, dates, logger):
+        self.dates = dates
         self.logger = logger
+        self.pressure_path = pressure_path
+
+        with open(pressure_type_file, "r") as f:
+            args = yaml.load(f, Loader=yaml.FullLoader)
+        for option, value in args.items():
+            self.__dict__[option] = value
+        for option in self.mandatory_options:
+            if self.__dict__.get(option) is None:
+                self.logger.error(
+                    f"{option} not given in the pressure type file "
+                    f"{pressure_type_file}!")
+                sys.exit()
+
+        self.parsed_dtcol = "parsed_datetime"
+        # self.pArgs = pArgs
+        # self.dayList = dayList
+        # self.logger = logger
+
         # For developement keep the old version using a list.
         self.old_version = False
         self.p_dict = {}
 
     def prepare_pressure_df(self):
-        """Read the pressure of a day, from files with a certain frequency
+        """Read the pressure of a day, from files with a various frequencies.
         """
-        frequency = self.pArgs["frequency"]
+        frequency = self.frequency
 
         # Create a list containing all pressure files:
         if frequency == "subdaily":
@@ -51,18 +76,22 @@ class PressureHandler():
         elif frequency == "daily":
             p_dict = self.read_subdaily_files()
         elif frequency == "weekly":
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"{frequency} frequency not implemented yet.")
         elif frequency == "monthly":
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"{frequency} frequency not implemented yet.")
         elif frequency == "yearly":
             p_dict = self.read_yearly_files()
+        else:
+            raise ValueError(f"Unknown frequency {frequency}.")
         return p_dict
 
     def read_subdaily_files(self):
         """Reads the subdaily files into a single df
         """
         p_dict = {}
-        for day in self.dayList:
+        for day in self.dates:
             daily_df = pd.DataFrame()
             filename = self._get_filename(day)
             dataloggerFileList = glob.glob(
@@ -72,7 +101,7 @@ class PressureHandler():
             for file in dataloggerFileList:
                 temp = pd.read_csv(
                     file,
-                    **(self.pArgs["dataframe_parameters"]["csv_kwargs"]))
+                    **(self.dataframe_parameters["csv_kwargs"]))
                 daily_df = pd.concat([temp, daily_df])
             daily_df = self._parse_datetime_col(daily_df, day)
             temp = self._to_pressure_df(daily_df)
@@ -81,7 +110,7 @@ class PressureHandler():
             # a list of tuples is returned:
             temp = temp[[
                 self.parsed_dtcol,
-                self.pArgs["dataframe_parameters"]["pressure_key"]]].\
+                self.dataframe_parameters["pressure_key"]]].\
                 apply(tuple, axis=1)
             list = temp.tolist()
             p_dict[day] = list
@@ -89,10 +118,10 @@ class PressureHandler():
 
     def read_yearly_files(self):
         """read yearly files and return a dict containing the pressure
-        for each day in dayList
+        for each day in dates
         """
-        first_year = self.dayList[0].year
-        last_year = self.dayList[-1].year
+        first_year = self.dates[0].year
+        last_year = self.dates[-1].year
         if first_year == last_year:
             years = [first_year]
         else:
@@ -110,14 +139,14 @@ class PressureHandler():
                 raise RuntimeError("Could not find a pressure file")
             temp = pd.read_csv(
                 fileList[0],
-                **(self.pArgs["dataframe_parameters"]["csv_kwargs"]))
+                **(self.dataframe_parameters["csv_kwargs"]))
             df = pd.concat([df, temp])
 
         df = self._parse_datetime_col(df)
         p_dict = {}
 
         # get the pressure values for each day:
-        for day in self.dayList:
+        for day in self.dates:
             day_strt = day.replace(hour=0, minute=0, second=0)
             day_stp = day.replace(hour=23, minute=59, second=59)
 
@@ -131,7 +160,7 @@ class PressureHandler():
             # a list of tuples is returned:
             temp = temp[[
                 self.parsed_dtcol,
-                self.pArgs["dataframe_parameters"]["pressure_key"]]].\
+                self.dataframe_parameters["pressure_key"]]].\
                 apply(tuple, axis=1)
             list = temp.tolist()
 
@@ -158,7 +187,7 @@ class PressureHandler():
         params:
             timestamp (datetime)
         """
-        pkey = self.pArgs["dataframe_parameters"]["pressure_key"]
+        pkey = self.dataframe_parameters["pressure_key"]
 
         try:
             df = self.p_dict[timestamp.replace(hour=0, minute=0, second=0)]
@@ -193,7 +222,7 @@ class PressureHandler():
         parse the dataframe for a suitable datetime.
         Add the column 'parsed_datecol' to the dataframe
         """
-        df_args = self.pArgs["dataframe_parameters"]
+        df_args = self.dataframe_parameters
         time_key = df_args["time_key"]
         time_fmt = df_args["time_fmt"]
         date_key = df_args["date_key"]
@@ -232,20 +261,20 @@ class PressureHandler():
         """
         Gets an raw df and returns a new df with datetime and pressure column
         """
-        df_args = self.pArgs["dataframe_parameters"]
+        df_args = self.dataframe_parameters
         pressure_key = df_args["pressure_key"]
         # copy the dataframe to avoid strange results:
         df = pd.DataFrame(df)
 
         # Filter values which are too large or too small.
         # Replace or remove them.
-        maxVal = float(self.pArgs["data_parameters"]["max_pressure"])
-        minVal = float(self.pArgs["data_parameters"]["min_pressure"])
+        maxVal = float(self.data_parameters["max_pressure"])
+        minVal = float(self.data_parameters["min_pressure"])
         replace_val = 0
-        if self.pArgs["data_parameters"]["default_value"] == "skip":
+        if self.data_parameters["default_value"] == "skip":
             replace_val = np.nan
         else:
-            replace_val = float(self.pArgs["data_parameters"]["default_value"])
+            replace_val = float(self.data_parameters["default_value"])
         df[pressure_key] = np.where(
             df[pressure_key] > maxVal, replace_val, df[pressure_key])
         df[pressure_key] = np.where(
@@ -255,7 +284,7 @@ class PressureHandler():
 
     def _get_filename(self, date):
         """Return merged filename of pressure_type."""
-        params = self.pArgs["filename_parameters"]
+        params = self.filename_parameters
         filename = "".join(
                 [params["basename"],
                     date.strftime(params["time_format"]),
