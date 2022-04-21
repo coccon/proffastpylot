@@ -104,7 +104,7 @@ class Preparation():
         if args["utc_offset"] is None:
             self.utc_offset = 0.0
         else:
-            self.utc_offset = args["utc_gap"]
+            self.utc_offset = args["utc_offset"]
 
         # additional paths
         self.map_path = args["map_path"]
