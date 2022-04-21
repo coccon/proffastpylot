@@ -27,6 +27,7 @@ import os
 import sys
 import yaml
 from datetime import datetime as dt
+from datetime import timedelta
 import pandas as pd
 from glob import glob
 import logging
@@ -570,13 +571,14 @@ class Preparation():
 
         spectra_pT_input = []
         for s in spectra_list:
-
-            # get UTC timestamp of spectrum
+            # get timestamp of spectrum, can be UTC or local time depending on
+            # self.utc_offset
             timestamp = dt.strptime(s, "%y%m%d_%H%M%SSN.BIN")
-            if self.utc_offset != 0.0:
-                raise NotImplementedError(
-                    "Handling of Pressure is not implemented for measurements "
-                    "in local time, yet!")
+            # apply a possible offset of the pressure data and the igram data:
+            time_offset_p_igram = \
+                self.pressure_handler.utc_offset - self.utc_offset
+            if int(time_offset_p_igram) != 0.:
+                timestamp += timedelta(hours=time_offset_p_igram)
             # get pressure from mapfile
             p = self.pressure_handler.get_pressure_at(timestamp)
 

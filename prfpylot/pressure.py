@@ -37,7 +37,8 @@ class PressureHandler():
         "dataframe_parameters",
         "filename_parameters",
         "data_parameters",
-        "frequency"
+        "frequency",
+        "utc_offset"
     ]
     parsed_dtcol = "parsed_datetime"
 
@@ -64,8 +65,8 @@ class PressureHandler():
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
                 self.logger.error(
-                    f"{option} not given in the pressure type file "
-                    f"{pressure_type_file}!")
+                    f"Mandatory option {option} not given in the pressure type"
+                    f" file {pressure_type_file}!")
                 sys.exit()
 
         # For developement keep the old version using a list.
