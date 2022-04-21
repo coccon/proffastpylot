@@ -114,6 +114,12 @@ class InputfileGenerator():
         self._generate_inputfile()
         return self.inptfl
 
+    def get_log_type_pressure_path(self):
+        pressurepath = os.path.normpath(
+            os.path.join(
+                self.scriptpath, "..", "example", "log_type_pressure.yml"))
+        return pressurepath
+
     def interactive_inputfile_generation(self):
         """
         Generate the input file interactivly with a command line dialogue.

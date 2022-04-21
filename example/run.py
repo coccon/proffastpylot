@@ -11,7 +11,8 @@ if __name__ == "__main__":
     # create the input file for the example data
     MyInputfileGenerator = InputfileGenerator()
     input_file = MyInputfileGenerator.generate_sod_example()
+    pressure_type = MyInputfileGenerator.get_log_type_pressure_path()
 
     # create prfPylot and run PROFFAST using the prfPylot
-    MyPylot = Pylot(input_file, logginglevel="info")
+    MyPylot = Pylot(input_file, pressure_type, logginglevel="info")
     MyPylot.run(n_processes=2)
