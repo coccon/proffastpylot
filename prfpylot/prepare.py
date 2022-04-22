@@ -51,6 +51,11 @@ class Preparation():
     # used
     ggg2020mapfiles = False
 
+    # temporary variable to enable UTC dateline checking. This is intended to
+    # be replaced by an automatic timezone detection method.
+    utc_dateline_check = True
+    _localtime = 0
+
     def __init__(self, input_file, pressure_type_file, logginglevel="info"):
         # read input file
         with open(input_file, "r") as f:
@@ -358,6 +363,9 @@ class Preparation():
         params:
             template_type (str): Can be "prep", "tccon", "pt", "inv" or "pcxc"
         """
+        # the name of the input file to be generated
+        prf_input_file = self.get_prf_input_path(template_type, date)
+
         if mlogger is None:
             mlogger = self.logger
         if date is not None:
@@ -370,6 +378,11 @@ class Preparation():
             parameters = self.get_prep_parameters(date, mlogger)
             if parameters["igrams"] == "":
                 foundData = False
+            # TODO: Do not do this! This is only preliminary. Change when
+            #       preprocess call chain is improoved.
+            self.replace_params_in_template(
+                parameters, template_type, prf_input_file)
+            return foundData
 
         elif template_type == "tccon":
             parameters = {"tccon_setting": self.tccon_setting}
@@ -384,17 +397,22 @@ class Preparation():
             mlogger.debug(
                 f"Generating {self.template_types[template_type]}"
                 f" inp file for {date_str}..")
-            parameters = self.get_inv_parameters(
-                date, mlogger=mlogger)
-            if parameters["SPECTRA_PT_INPUT"] == "":
-                foundData = False
-
+            parameters = self.get_inv_parameters(date)
+            prf_input_files = []
+            for i, parameter_i in enumerate(parameters):
+                # TODO: check if this is neccessary 
+                # if parameter_i["SPECTRA_PT_INPUT"] == "":
+                #     foundData = False
+                prf_input_files.append(prf_input_file[:-4] + f"_{i}.inp")
+                self.replace_params_in_template(
+                    parameter_i, template_type, prf_input_files[-1])
+            return [os.path.basename(x) for x in prf_input_files]
         else:
             raise ValueError(f"Unknown template_type {template_type}")
 
         self.replace_params_in_template(
-            parameters, template_type, date, mlogger)
-        return foundData
+            parameters, template_type, prf_input_file)
+        return prf_input_file
 
     def get_igrams(self, date, mlogger=None):
         """Search for interferograms disk and return a list of files."""
@@ -421,21 +439,46 @@ class Preparation():
                           "found in get_igrams().")
         return igrams
 
-    def replace_params_in_template(self, parameters, template_type, date,
-                                   mlogger=None):
+    def get_localdate_spectra(self):
+        """Return dict linking all spectra to local dates.
+        returns:
+            {local_date: ["YYMMDD_HHMMSSSN.BIN", ...]}
         """
-        Generate a site specific input file by using a template.
+        all_spectra = []
+        for date in self.dates:
+            searchpath = os.path.join(
+                self.analysis_instrument_path,
+                date.strftime("%y%m%d"),
+                "cal",
+                "*SN.BIN")
+            print("serachpath: ", searchpath)
+            all_spectra.extend(glob(searchpath))
+        all_spectra.sort()
+        print("all_spectra:", all_spectra)
+        localdate_spectra = {}
+        for spectrum in all_spectra:
+            spectrum = os.path.basename(spectrum)
+            utc_time = dt.strptime(spectrum, "%y%m%d_%H%M%SSN.BIN")
+            local_time = utc_time + timedelta(hours=self._localtime)
+            local_date = local_time.date()
+            if local_date in localdate_spectra.keys():
+                localdate_spectra[local_date].append(spectrum)
+            else:
+                localdate_spectra[local_date] = [spectrum]
+        return localdate_spectra
+
+    def replace_params_in_template(
+            self, parameters, template_type, prf_input_file):
+        """Generate a site specific input file by using a template.
         params:
             parameters(dict): containing keys which match the variable
                               names in the template file. They are replaced by
                               the entries.
 
             template_type(str): Can be "prep", "pt", "inv" or "pcxc"
+            prf_input_file(str): the filename of the input file
         """
-        if mlogger is None:
-            mlogger = self.logger
         templ_file = self.get_template_path(template_type)
-        prf_input_file = self.get_prf_input_path(template_type, date)
         templ_stream = open(templ_file, 'r')
         prf_input_stream = open(prf_input_file, 'w')
         for line in templ_stream:
@@ -474,7 +517,7 @@ class Preparation():
         # TODO: Add to comment things like version of Profast, PrfPylot, ...
         comment = (
             "This spectrum is generated using preprocess4, a part of "
-            "PROFAST controlled by PROFFASTpylot.")
+            "PROFFAST controlled by PROFFASTpylot.")
         if self.note is not None:
             comment = " ".join([comment, self.note])
         # get all good igrams. If no good igrams is found the day is put in
@@ -543,20 +586,28 @@ class Preparation():
             parameters["WET_VMR"] = False
         return parameters
 
-    def get_inv_parameters(self, date, mlogger=None):
-        """Return Parameters to replace in the invers10.inp file."""
-
+    def get_inv_parameters(self, date):
+        """Return Parameters to replace in the invers10.inp file.
+        Returns:
+            parameters(list): contains one or two dict depending on measurement
+                              time. See get_spectra_pT_input docstring.
+        """
         spectra_pT_input = self.get_spectra_pT_input(date)
-        parameters = {
-            "DATAPATH": self.analysis_instrument_path,
-            "DATE": date.strftime("%y%m%d"),
-            "SITE": self.site_name,
-            "SPECTRA_PT_INPUT": "\n".join(spectra_pT_input)
-        }
+        parameters = []
+        for sub_pT_input in spectra_pT_input:
+            temp_parameters = {
+                "DATAPATH": self.analysis_instrument_path,
+                "DATE": date.strftime("%y%m%d"),
+                "SITE": self.site_name,
+                "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
+            }
+            parameters.append(temp_parameters)
         return parameters
 
     def get_spectra_pT_input(self, date):
-        """Return a list of stings containing spectra and corresponding information.
+        """Return a list of list of strings containing spectra and pT infos.
+        If two UTC-Dates are found inside of one local day, spectra_pT_input
+        contains two lists.
 
         YYMMDD_HHMMSSSN.BIN, pressure, T_PBL
 
@@ -564,25 +615,44 @@ class Preparation():
         Note that T_PBL is currently set to 0.0.
 
         params:
-            (date): dt.Datetime
+            (date): dt.Datetime, measurement time in local time or UTC time
         """
-        spectra_list = self._get_spectra_list(date)
-        self.logger.debug(f"First found spectra at {date}: {spectra_list[0]}")
+        spectra_list = self.localdate_spectra[date]
+        spectra_list.sort()
+
+        # in case of two UTC days in a local day list, split them up:
+        spectra1 = []
+        spectra2 = []
+        first_date = dt.strptime(spectra_list[0][:6], "%y%m%d")
+        spectra1.append(spectra_list[0])
+        for spectrum in spectra_list[1:]:
+            current_date = dt.strptime(spectrum[:6], "%y%m%d")
+            if current_date != first_date:
+                spectra2.append(spectrum)
+            else:
+                spectra1.append(spectrum)
+        if len(spectra2) == 0:
+            assert spectra_list == spectra1
+            spectra_list = [spectra1]
+        else:
+            spectra_list = [spectra1, spectra2]
 
         spectra_pT_input = []
-        for s in spectra_list:
-            # get timestamp of spectrum, can be UTC or local time depending on
-            # self.utc_offset
-            timestamp = dt.strptime(s, "%y%m%d_%H%M%SSN.BIN")
-            # apply a possible offset of the pressure data and the igram data:
-            time_offset_p_igram = \
-                self.pressure_handler.utc_offset - self.utc_offset
-            if int(time_offset_p_igram) != 0.:
+        for sublist in spectra_list:
+            temp_pT_input = []
+            for s in sublist:
+                # get timestamp of spectrum, can be UTC or local time depending on
+                # self.utc_offset
+                timestamp = dt.strptime(s, "%y%m%d_%H%M%SSN.BIN")
+                # apply a possible offset of the pressure data and the igram data:
+                time_offset_p_igram = \
+                    self.pressure_handler.utc_offset - self.utc_offset
                 timestamp += timedelta(hours=time_offset_p_igram)
-            # get pressure from mapfile
-            p = self.pressure_handler.get_pressure_at(timestamp)
+                # get pressure from mapfile
+                p = self.pressure_handler.get_pressure_at(timestamp)
 
-            spectra_pT_input.append(f"{s}, {p}, 0.0")
+                temp_pT_input.append(f"{s}, {p}, 0.0")
+            spectra_pT_input.append(temp_pT_input)
 
         return spectra_pT_input
 
@@ -663,8 +733,9 @@ class Preparation():
                 "interferogram on disk. Terminating program.")
             quit()
         else:
-            i = self._find_closest("after", start_date, dates)
-        return i
+            for i, date in enumerate(dates):
+                if date >= start_date:
+                    return i
 
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
@@ -677,8 +748,11 @@ class Preparation():
                 "interferogram on disk. Terminating program.")
             quit()
         else:
-            i = self._find_closest("before", end_date, dates)
-        return i
+            for i, date in enumerate(dates):
+                if date == end_date:
+                    return i+1
+                if date > end_date:
+                    return i
 
     def _find_closest(self, when, date, datelist):
         """Find the closest entry in a date list.
@@ -727,12 +801,34 @@ class Preparation():
         spectra_list = [os.path.basename(spectra) for spectra in spectra_list]
         return spectra_list
 
+    def prepare_map_file(self, date):
+        """Generate map file if GGG2020 map file"""
+        # search for GGG2020 map files:
+        srchstrg = f"{self.site_abbrev}_*_*Z.map"
+        mapfiles = glob(os.path.join(self.map_path, srchstrg))
+        if len(mapfiles) != 0:
+            self.logger.debug("Detected GGG2020 map files!")
+            # GGG2020map files found!
+            self.ggg2020mapfiles = True
+            self._interpolate_map_files(date)
+        else:
+            srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            mapfiles = glob(os.path.join(self.map_path, srchstrg))
+            if len(mapfiles) == 1:
+                self.logger.debug("Detected GGG2014 map file!")
+                self.ggg2020mapfiles = False
+            else:
+                self.logger.critical(
+                    "No suitable map file found at "
+                    f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
+                sys.exit()
+
     def _interpolate_map_files(self, date):
         """
         interpolates the new map files to genereate a map
         file at 12:00 local time
         """
-        # print("Interpolate map files to local noon for date ", date)
+        # TODO: delete this part and replace with _localtime ?
         # First find out, at which timezone the current files are recorded:
         if self.use_coordfile:
             self.get_coords_from_file(self.dates[0])

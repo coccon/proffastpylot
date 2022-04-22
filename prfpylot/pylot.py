@@ -31,7 +31,6 @@ from glob import glob
 import multiprocessing
 from timezonefinder import TimezoneFinder
 import pytz
-import shutil
 import numpy as np
 import logging
 from logging.handlers import QueueHandler
@@ -100,29 +99,60 @@ class Pylot(FileMover):
         self.logger.info("Finished preprocessing.\n")
 
     def run_pcxs(self, n_processes=1):
-        """
-        Main method to run pxcs. If n_processes > 1, run_pcxs_at is
+        """Run pxcs.
+        If n_processes > 1, run_pcxs_at is
         called directly. Otherwise it is called via run_parallel
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
 
-        # ensure that the bad_day_queue is empty:
-        while not self.bad_day_queue.empty():
-            self.bad_day_queue.get()
+        self.localdate_spectra = self.get_localdate_spectra()
+        wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
+        inputfile_list = []
+        for date, spectra in self.localdate_spectra.items():
+            # Check if absos file is there, skip
+            srchstrg = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+            if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
+                message = (
+                    f"*.abscos.bin file for day {date} exists already."
+                    " Skip calculation..")
+                self.logger.info(message)
+                # TODO: rewrite this message or the handle of it
+                # return [message, "No Error", "No call String"]
+                continue
+            # Generate input files:
+            foundSpectra = self.generate_prf_input("pcxs", date)
+            # TODO: rewrite self.generate_prf_input such that it returns the
+            #       path to the input file
+            if not foundSpectra:
+                # TODO: Write an error or check the handling of this case
+                continue
+            # TODO: Check if os.path.basename can be applied
+            #       in get_prf_input_path
+            inputfile_list.append(
+                os.path.basename(
+                    self.get_prf_input_path("pcxs", date)
+                    )
+                )
+
+            # Generate/find map files
+            self.prepare_map_file(date)
 
         output = []
+        pcxs_exe = self._get_executable("pcxs")
         if n_processes <= 1:
-            for date in self.dates:
+            for inputfile in inputfile_list:
                 tmp_out = self.run_pcxs_at(
-                    date, bad_day_queue=self.bad_day_queue)
+                    inputfile, pcxs_exe)
                 output.append(tmp_out)
-
         else:
-            tmp_out = self._run_parallel(self.run_pcxs_at,
-                                         n_processes)
-            output = tmp_out
+            # TODO: check if it is better to have this in an extra method
+            subs_method = partial(
+                self.pcxs_at,
+                executable=pcxs_exe)
+            pool = multiprocessing.Pool(processes=n_processes)
+            output = pool.map(subs_method, inputfile_list)
         self._write_logfile("pcsx", output)
-        self._check_for_bad_days()
+        # self._check_for_bad_days()
         self.logger.info("Finished pcxs.\n")
 
     def run_inv(self, n_processes=1):
@@ -131,24 +161,34 @@ class Pylot(FileMover):
         Otherwise it is called via run_parallel.
         """
         self.logger.info(f"Running invers with {n_processes} task(s) ...")
+        if not hasattr(self, "localdate_spectra"):
+            self.localdate_spectra = self.get_localdate_spectra()
         output = []
 
         # read in the pressure for all days in self.dates.
         # returns the dataframe containing the ready to use data for proffast
-        pressure_DataFrame = self.pressure_handler.prepare_pressure_df()
+        self.pressure_handler.prepare_pressure_df()
 
+        all_inputfiles = []
+        for date, spectra in self.localdate_spectra.items():
+            input_files = self.generate_prf_input("inv", date)
+            all_inputfiles.extend(input_files)
+        print("\n\n\n", all_inputfiles)
+
+        output = []
+        inv_exe = self._get_executable("inv")
         if n_processes <= 1:
-            for date in self.dates:
-                tmp_out = self.run_inv_at(
-                    date, pressure_dict=pressure_DataFrame)
+            for inputfile in all_inputfiles:
+                tmp_out = self.run_pcxs_at(inputfile, inv_exe)
                 output.append(tmp_out)
         else:
-            kwargs = {"pressure_dict": pressure_DataFrame}
-            tmp_out = self._run_parallel(self.run_inv_at,
-                                         n_processes,
-                                         kwargs=kwargs)
-            output = tmp_out
-        self._check_for_bad_days()
+            subs_method = partial(
+                self.pcxs_at,  # TODO: change this, if it works!
+                executable=inv_exe)
+            pool = multiprocessing.Pool(processes=n_processes)
+            output = pool.map(subs_method, all_inputfiles)
+
+        # self._check_for_bad_days()
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
 
@@ -188,8 +228,17 @@ class Pylot(FileMover):
         outlist = out, err, " ".join([executable, inputfile])
         return outlist
 
-    def run_pcxs_at(self, date, loggingq=None, bad_day_queue=None):
-        """ Run pcxs at date."""
+    def run_pcxs_at(self, prf_inputfile, executable):
+        """Run pcxs with the given inputfile"""
+        print(f"Executable: {executable}, prf_inputfile: {prf_inputfile}")
+        out, err = self._call_external_program(
+            [executable, prf_inputfile], **{'cwd': self.proffast_path})
+
+        outlist = out, err, " ".join([executable, prf_inputfile])
+        return outlist
+
+    def old_run_pcxs_at(self, date, loggingq=None, bad_day_queue=None):
+        """Run pcxs at date."""
         # for multiprocessing create a new logger:
         if loggingq is not None:
             mlogger = logging.getLogger("mLogger")
@@ -200,7 +249,7 @@ class Pylot(FileMover):
         else:
             mlogger = self.logger
         mlogger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
-
+        # ========================== checked above ===========================
         # Check if the abscos.bin files are already available, if yes skip the
         # day
         wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")

@@ -37,8 +37,7 @@ class PressureHandler():
         "dataframe_parameters",
         "filename_parameters",
         "data_parameters",
-        "frequency",
-        "utc_offset"
+        "frequency"
     ]
     parsed_dtcol = "parsed_datetime"
 
@@ -62,6 +61,10 @@ class PressureHandler():
             args = yaml.load(f, Loader=yaml.FullLoader)
         for option, value in args.items():
             self.__dict__[option] = value
+
+        if self.utc_offset is None:
+            self.utc_offset = 0
+
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
                 self.logger.error(
