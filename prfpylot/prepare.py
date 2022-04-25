@@ -51,11 +51,6 @@ class Preparation():
     # used
     ggg2020mapfiles = False
 
-    # temporary variable to enable UTC dateline checking. This is intended to
-    # be replaced by an automatic timezone detection method.
-    utc_dateline_check = True
-    _localtime = 0
-
     def __init__(self, input_file, pressure_type_file, logginglevel="info"):
         # read input file
         with open(input_file, "r") as f:
@@ -74,8 +69,6 @@ class Preparation():
         self.site_abbrev = args["site_abbrev"]
         self.note = args["note"]
 
-        # TODO: This is a temporary solution! Think about if this is needed
-        #       for future versions.
         # inspect.getsourcefile needes __init__.py!
         self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
         # path to the PROFFAST executables
@@ -118,7 +111,6 @@ class Preparation():
             self.logger.error("map_path is not specified!")
             sys.exit()
 
-        # TODO: Change to pressure_path
         self.pressure_path = args["pressure_path"]
         if self.pressure_path is None:
             self.logger.error("pressure_path is not specified!")
@@ -205,6 +197,9 @@ class Preparation():
         # log of the processes
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
+
+        # calculate the _localtime_offset
+        self._localtime_offset = self._get_localtime_offset()
 
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
@@ -459,7 +454,7 @@ class Preparation():
         for spectrum in all_spectra:
             spectrum = os.path.basename(spectrum)
             utc_time = dt.strptime(spectrum, "%y%m%d_%H%M%SSN.BIN")
-            local_time = utc_time + timedelta(hours=self._localtime)
+            local_time = utc_time + timedelta(hours=self._localtime_offset)
             local_date = local_time.date()
             if local_date in localdate_spectra.keys():
                 localdate_spectra[local_date].append(spectrum)
@@ -514,7 +509,6 @@ class Preparation():
             mlogger.critical("Could not determine coodinates. Exit!")
             sys.exit()
 
-        # TODO: Add to comment things like version of Profast, PrfPylot, ...
         comment = (
             "This spectrum is generated using preprocess4, a part of "
             "PROFFAST controlled by PROFFASTpylot.")
@@ -595,9 +589,11 @@ class Preparation():
         spectra_pT_input = self.get_spectra_pT_input(date)
         parameters = []
         for sub_pT_input in spectra_pT_input:
+            measurement_date = sub_pT_input[0][0:6]
             temp_parameters = {
                 "DATAPATH": self.analysis_instrument_path,
-                "DATE": date.strftime("%y%m%d"),
+                "MEASUREMENT_DATE": measurement_date,
+                "LOCAL_DATE": date.strftime("%y%m%d"),
                 "SITE": self.site_name,
                 "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
             }
@@ -842,9 +838,6 @@ class Preparation():
         utc_tz = pytz.utc
         # create a timestamp of local noon:
         noon_local = date.replace(hour=12, minute=0, second=0)
-        # only for developement: add 1 h 30 min
-        # TODO: Delete after developement!
-        # noon_local = noon_local + timedelta(hours=1, minutes=30)
 
         # convert this to a localized timestamp using localize of pytz.
         # this is neccesary since there is a bug in using the tzinfo of the
@@ -912,3 +905,22 @@ class Preparation():
             "TCCON Mode is activated!\nThis will not work with standard"
             " EM27/SUN interferograms.\nOnly continue if this setting"
             " was choosen by purpose. Otherwise break the execution!")
+    
+    def _get_localtime_offset(self):
+        """Return offset between measurement time.
+        utc_offset + localtime_offset = total offset beteen Localtime and UTC.
+        """
+        if self.use_coordfile:
+            self.get_coords_from_file(self.dates[0])
+        tf = TimezoneFinder()
+        local_tz_name = tf.timezone_at(
+            lat=self.coords["lat"],
+            lng=self.coords["lon"])
+        local_tz = pytz.timezone(local_tz_name)
+        # Allways use winter time
+        date_winter = dt.strptime("2000-01-01", "%Y-%m-%d")
+        local_timedelta = local_tz.utcoffset(date_winter)
+        _local_time_offset = int(local_timedelta.total_seconds() / 3600)
+        return _local_time_offset
+
+

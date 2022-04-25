@@ -7,10 +7,10 @@ absco file
 pT detail dec (True/False)
 quiet run option (True/False)
 $
-%DATAPATH%\%DATE%
+%DATAPATH%\%MEASUREMENT_DATE%
 %SITE%
-%DATE%
-%SITE%%DATE%-abscos.bin
+%MEASUREMENT_DATE%
+%SITE%%LOCAL_DATE%-abscos.bin
 .true.
 .true.
 

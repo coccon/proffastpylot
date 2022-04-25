@@ -147,7 +147,7 @@ class Pylot(FileMover):
         else:
             # TODO: check if it is better to have this in an extra method
             subs_method = partial(
-                self.pcxs_at,
+                self.run_pcxs_at,
                 executable=pcxs_exe)
             pool = multiprocessing.Pool(processes=n_processes)
             output = pool.map(subs_method, inputfile_list)
@@ -183,7 +183,7 @@ class Pylot(FileMover):
                 output.append(tmp_out)
         else:
             subs_method = partial(
-                self.pcxs_at,  # TODO: change this, if it works!
+                self.run_pcxs_at,  # TODO: change this, if it works!
                 executable=inv_exe)
             pool = multiprocessing.Pool(processes=n_processes)
             output = pool.map(subs_method, all_inputfiles)

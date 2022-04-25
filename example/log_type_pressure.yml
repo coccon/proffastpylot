@@ -33,6 +33,10 @@ data_parameters:
   min_pressure: "500"
   default_value: "skip"
 
+# UTC Offset of data:
+# Have to be given even if data is processed in localtime!
+utc_offset: 0.0
+
 # Frequency of pressure files. Options are 
 # - subdaily: Several files per day
 # - daily: One single file per day
