@@ -87,6 +87,9 @@ class Pylot(FileMover):
             if inputfile is not None:
                 all_inputfiles.append(inputfile)
             else:
+                self.logger.warning(
+                    f"No suitable iterferogram was found for day {date}!"
+                    "Skip processing of this day.")
                 self.dates.remove(date)
 
         prep_exe = self._get_executable("prep")
