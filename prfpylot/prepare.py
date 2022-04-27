@@ -351,7 +351,7 @@ class Preparation():
 
         return map_file
 
-    def generate_prf_input(self, template_type, date=None, mlogger=None):
+    def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
 
         Calling the corresponding collect parameters function
@@ -363,30 +363,28 @@ class Preparation():
         # the name of the input file to be generated
         prf_input_file = self.get_prf_input_path(template_type, date)
 
-        if mlogger is None:
-            mlogger = self.logger
         if date is not None:
             date_str = dt.strftime(date, "%y%m%d")
 
         foundData = True
         if template_type == "prep":
-            mlogger.debug(
+            self.logger.debug(
                 f"Generating preprocess inp file for {date_str}..")
-            parameters = self.get_prep_parameters(date, mlogger)
+            parameters = self.get_prep_parameters(date)
             if parameters["igrams"] == "":
                 foundData = False
- 
+
         elif template_type == "tccon":
             parameters = {"tccon_setting": self.tccon_setting}
 
         elif template_type == "pcxs":
-            parameters = self.get_pcxs_parameters(date, mlogger)
-            mlogger.debug(
+            parameters = self.get_pcxs_parameters(date)
+            self.logger.debug(
                 f"Generating {self.template_types[template_type]}"
                 f" inp file for {date_str}..")
 
         elif template_type == "inv":
-            mlogger.debug(
+            self.logger.debug(
                 f"Generating {self.template_types[template_type]}"
                 f" inp file for {date_str}..")
             parameters = self.get_inv_parameters(date)
@@ -413,10 +411,8 @@ class Preparation():
         else:
             return None
 
-    def get_igrams(self, date, mlogger=None):
+    def get_igrams(self, date):
         """Search for interferograms disk and return a list of files."""
-        if mlogger is None:
-            mlogger = self.logger
         date_str = date.strftime("%y%m%d")
         igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
         # check for filesize: if smaller than a certain limit the file is
@@ -491,12 +487,11 @@ class Preparation():
         if template_type == "tccon":
             self.tccon_file = prf_input_file
 
-    def get_prep_parameters(self, date, mlogger=None):
+    def get_prep_parameters(self, date):
         '''
         Return Parameters to be replaced in the pereprocess input file.
         '''
-        if mlogger is None:
-            mlogger = self.logger
+
         # get ILS for Channel 1 and 2 for a specific date
         ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
         # if coordfile is used, check for the correct coords for each day.
@@ -508,7 +503,7 @@ class Preparation():
         alt = self.coords.get("alt", -1.)
 
         if lat == -1. or lon == -1. or alt == -1.:
-            mlogger.critical("Could not determine coodinates. Exit!")
+            self.logger.critical("Could not determine coodinates. Exit!")
             sys.exit()
 
         comment = (
@@ -518,7 +513,7 @@ class Preparation():
             comment = " ".join([comment, self.note])
         # get all good igrams. If no good igrams is found the day is put in
         # the badDayQueue
-        igrams = self.get_igrams(date, mlogger)
+        igrams = self.get_igrams(date)
         igrams = "\n".join(igrams)
         # generate path to outputfolder for this date:
         datestring = date.strftime("%y%m%d")
@@ -545,12 +540,10 @@ class Preparation():
                      }
         return parameters
 
-    def get_pcxs_parameters(self, date, mlogger=None):
+    def get_pcxs_parameters(self, date):
         """Return parameters to replace in the pcxs20.inp file."""
-        if mlogger is None:
-            mlogger = self.logger
-        mlogger.debug("Create inv input parameters ...")
 
+        self.logger.debug("Create inv input parameters ...")
         # coordinates of the corresponding date
         if self.use_coordfile:
             self.get_coords_from_file(date)
@@ -559,7 +552,7 @@ class Preparation():
         lon = self.coords.get("lon", -1.)
         alt = self.coords.get("alt", -1.)
         if lat == -1. or lon == -1. or alt == -1.:
-            mlogger.critical("Could not determine coodinates. Exit!")
+            self.logger.critical("Could not determine coodinates. Exit!")
             sys.exit()
 
         parameters = {

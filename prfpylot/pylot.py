@@ -164,13 +164,14 @@ class Pylot(FileMover):
         if n_processes <= 1:
             for inputfile in inputfile_list:
                 tmp_out = self.run_prf_with_inputfile(
-                    inputfile, pcxs_exe)
+                    inputfile, pcxs_exe, popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
             # TODO: check if it is better to have this in an extra method
             subs_method = partial(
                 self.run_prf_with_inputfile,
-                executable=pcxs_exe)
+                executable=pcxs_exe,
+                popen_kwargs={"csv": exec_path})
             pool = multiprocessing.Pool(processes=n_processes)
             output = pool.map(subs_method, inputfile_list)
         self._write_logfile("pcsx", output)
@@ -221,10 +222,11 @@ class Pylot(FileMover):
     def run_prf_with_inputfile(self, prf_inputfile, executable, popen_kwargs={}):
         """Run pcxs with the given inputfile"""
         prf_inputfile = os.path.basename(prf_inputfile)
-        out, err = self._call_external_program(
+
+        out, err, return_val = self._call_external_program(
             [executable, prf_inputfile], **popen_kwargs)
 
-        outlist = out, err, " ".join([executable, prf_inputfile])
+        outlist = out, err, return_val, " ".join([executable, prf_inputfile])
         return outlist
 
     def combine_results(self):
@@ -286,26 +288,18 @@ class Pylot(FileMover):
         self._move_prf_config_file()
         self.logger.info("Done.")
 
-    def _call_external_program(self, command_list, mlogger=None, **kwargs):
+    def _call_external_program(self, command_list, **kwargs):
         """
         This method calls a external program and returns the output and the
         error
         """
         joined_commands = " ".join(command_list)
-        if mlogger is None:
-            mlogger = self.logger
-        mlogger.debug("Command List: " + joined_commands)
         p = Popen(command_list, stdout=PIPE, stderr=PIPE, **kwargs)
         out, err = p.communicate()
         return_value = p.wait()
         out = out.decode("utf-8")
         err = err.decode("utf-8")
-
-        if return_value != 0:
-            mlogger.error(
-                f"Error while processesing {joined_commands}!\n"
-                f"PROFFAST error message: {err}")
-        return (out, err)
+        return (out, err, return_value)
 
     def _write_logfile(self, program_name, output):
         """
@@ -317,12 +311,16 @@ class Pylot(FileMover):
 
         logfile = open(file, "w")
         for i, entry in enumerate(output):
-            out, err, call_strg = entry
+            out, err, return_code, call_strg = entry
             logfile.write(f"\n================= Task {i} ================\n")
             logfile.write(call_strg)
+            logfile.write(f"\nReturn code: {return_code}\n")
             logfile.write("\nOutput:\n")
             logfile.write(out)
             logfile.write("\n\nErrors:\n")
+            # Write error to logging, too
+            if err != "":
+                self.logger.error(f"Error when running {call_strg}:\n{err}")
             logfile.write(err)
             logfile.write("============================================\n")
             logfile.write("============================================\n\n\n")
