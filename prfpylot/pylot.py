@@ -78,19 +78,38 @@ class Pylot(FileMover):
                 self.logger.warning(
                     "Found TCCON file, which was not expected."
                     "Delete it for normal processing.")
+        # Create inputfiles. If None is returned no date was found for this
+        # specific day
+        all_inputfiles = []
+        temp = self.dates[:]
+        for date in temp:
+            inputfile = self.generate_prf_input("prep", date)
+            if inputfile is not None:
+                all_inputfiles.append(inputfile)
+            else:
+                self.dates.remove(date)
+
+        prep_exe = self._get_executable("prep")
+        # store the path to change the cwd for the popen commmand
+        exec_path = os.path.dirname(prep_exe)
 
         output = []
         if n_processes <= 1:
-            for date in self.dates:
-                tmp_out = self.run_preprocess_at(date, self.bad_day_queue)
+            for inputfile in all_inputfiles:
+                tmp_out = self.run_pcxs_at(
+                    inputfile, prep_exe,
+                    popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
             self.logger.debug("...start parallel processing...")
-            tmp_out = self._run_parallel(self.run_preprocess_at, n_processes)
-            output = tmp_out
+            subs_method = partial(
+                self.run_pcxs_at,  # TODO: Rename!
+                executable=prep_exe,
+                popen_kwargs={"cwd": exec_path}
+            )
+            pool = multiprocessing.Pool(processes=n_processes)
+            output = pool.map(subs_method, all_inputfiles)
         self._write_logfile("preprocess", output)
-
-        self._check_for_bad_days()
 
         if self.tccon_mode:
             # delete tccon input file:
@@ -139,6 +158,9 @@ class Pylot(FileMover):
 
         output = []
         pcxs_exe = self._get_executable("pcxs")
+        # store the path to change the cwd for the popen commmand
+        exec_path = os.path.dirname(pcxs_exe)
+
         if n_processes <= 1:
             for inputfile in inputfile_list:
                 tmp_out = self.run_pcxs_at(
@@ -173,18 +195,22 @@ class Pylot(FileMover):
         for date, spectra in self.localdate_spectra.items():
             input_files = self.generate_prf_input("inv", date)
             all_inputfiles.extend(input_files)
-        print("\n\n\n", all_inputfiles)
 
         output = []
         inv_exe = self._get_executable("inv")
+        # store the path to change the cwd for the popen commmand
+        exec_path = os.path.dirname(inv_exe)
+
         if n_processes <= 1:
             for inputfile in all_inputfiles:
-                tmp_out = self.run_pcxs_at(inputfile, inv_exe)
+                tmp_out = self.run_pcxs_at(
+                    inputfile, inv_exe, popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
             subs_method = partial(
                 self.run_pcxs_at,  # TODO: change this, if it works!
-                executable=inv_exe)
+                executable=inv_exe,
+                popen_kwargs={"cwd": exec_path})
             pool = multiprocessing.Pool(processes=n_processes)
             output = pool.map(subs_method, all_inputfiles)
 
@@ -228,11 +254,11 @@ class Pylot(FileMover):
         outlist = out, err, " ".join([executable, inputfile])
         return outlist
 
-    def run_pcxs_at(self, prf_inputfile, executable):
+    def run_pcxs_at(self, prf_inputfile, executable, popen_kwargs={}):
         """Run pcxs with the given inputfile"""
-        print(f"Executable: {executable}, prf_inputfile: {prf_inputfile}")
+        prf_inputfile = os.path.basename(prf_inputfile)
         out, err = self._call_external_program(
-            [executable, prf_inputfile], **{'cwd': self.proffast_path})
+            [executable, prf_inputfile], **popen_kwargs)
 
         outlist = out, err, " ".join([executable, prf_inputfile])
         return outlist
