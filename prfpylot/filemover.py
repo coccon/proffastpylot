@@ -176,16 +176,14 @@ class FileMover(Preparation):
 
     def delete_input_files(self):
         """Delete the input files for preprocess, pcxs and inv"""
-        for i, date in enumerate(self.dates):
-            for type in ["prep", "pcxs", "inv"]:
-                inp_file = self.get_prf_input_path(type, date)
-                try:
-                    os.remove(inp_file)
-                except FileNotFoundError:
-                    self.logger.error(
-                        "File not Found: "
-                        f"Could not remove {type} input file"
-                        f" {inp_file}")
+        for inp_file in self.global_inputfile_list:
+            try:
+                os.remove(inp_file)
+            except FileNotFoundError:
+                self.logger.error(
+                    "File not Found: "
+                    f"Could not remove {type} input file"
+                    f" {inp_file}")
 
     def move_input_files(self):
         """Move the input files for prep., pcxs and inv to result folder"""
@@ -193,21 +191,16 @@ class FileMover(Preparation):
         inp_folder = os.path.join(self.result_folder, "input_files")
         if not os.path.exists(inp_folder):
             os.mkdir(inp_folder)
-        kind_list = ["prep", "pcxs", "inv"]
-        if self.start_with_spectra:
-            kind_list = ["pcxs", "inv"]
-        for type in kind_list:
-            for i, date in enumerate(self.dates):
-                inp_file = self.get_prf_input_path(type, date)
-                try:
-                    shutil.move(
-                        inp_file,
-                        os.path.join(inp_folder, os.path.basename(inp_file)))
-                except FileNotFoundError:
-                    self.logger.error(
-                        "File not found: "
-                        f"Could not move {type} input file"
-                        f" {inp_file}")
+        for inp_file in self.global_inputfile_list:
+            try:
+                shutil.move(
+                    inp_file,
+                    os.path.join(inp_folder, os.path.basename(inp_file)))
+            except FileNotFoundError:
+                self.logger.error(
+                    "File not found: "
+                    f"Could not move {type} input file"
+                    f" {inp_file}")
 
     def _create_logfile_dir(self):
         """Create logfile dir if is does not exist."""

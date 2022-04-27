@@ -47,6 +47,8 @@ class Preparation():
         "pcxs": "pcxs20"
     }
 
+    global_inputfile_list = []
+
     # in 'pylot.run_pcxs_at' it is tested if ggg2014 or ggg2020 map files are
     # used
     ggg2020mapfiles = False
@@ -396,14 +398,17 @@ class Preparation():
                 prf_input_files.append(prf_input_file[:-4] + f"_{i}.inp")
                 self.replace_params_in_template(
                     parameter_i, template_type, prf_input_files[-1])
+            # safe inputfiles in global list to move/delete them later
+            self.global_inputfile_list.extend(prf_input_files)
             # return several input files hence to it already here:
-            return [os.path.basename(x) for x in prf_input_files]
+            return prf_input_files
         else:
             raise ValueError(f"Unknown template_type {template_type}")
 
         self.replace_params_in_template(
             parameters, template_type, prf_input_file)
         if foundData:
+            self.global_inputfile_list.append(prf_input_file)
             return prf_input_file
         else:
             return None

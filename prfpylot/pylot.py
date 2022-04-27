@@ -96,14 +96,14 @@ class Pylot(FileMover):
         output = []
         if n_processes <= 1:
             for inputfile in all_inputfiles:
-                tmp_out = self.run_pcxs_at(
+                tmp_out = self.run_prf_with_inputfile(
                     inputfile, prep_exe,
                     popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
             self.logger.debug("...start parallel processing...")
             subs_method = partial(
-                self.run_pcxs_at,  # TODO: Rename!
+                self.run_prf_with_inputfile,  # TODO: Rename!
                 executable=prep_exe,
                 popen_kwargs={"cwd": exec_path}
             )
@@ -163,13 +163,13 @@ class Pylot(FileMover):
 
         if n_processes <= 1:
             for inputfile in inputfile_list:
-                tmp_out = self.run_pcxs_at(
+                tmp_out = self.run_prf_with_inputfile(
                     inputfile, pcxs_exe)
                 output.append(tmp_out)
         else:
             # TODO: check if it is better to have this in an extra method
             subs_method = partial(
-                self.run_pcxs_at,
+                self.run_prf_with_inputfile,
                 executable=pcxs_exe)
             pool = multiprocessing.Pool(processes=n_processes)
             output = pool.map(subs_method, inputfile_list)
@@ -203,12 +203,12 @@ class Pylot(FileMover):
 
         if n_processes <= 1:
             for inputfile in all_inputfiles:
-                tmp_out = self.run_pcxs_at(
+                tmp_out = self.run_prf_with_inputfile(
                     inputfile, inv_exe, popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
             subs_method = partial(
-                self.run_pcxs_at,  # TODO: change this, if it works!
+                self.run_prf_with_inputfile,  # TODO: change this, if it works!
                 executable=inv_exe,
                 popen_kwargs={"cwd": exec_path})
             pool = multiprocessing.Pool(processes=n_processes)
@@ -218,148 +218,13 @@ class Pylot(FileMover):
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
 
-    def run_preprocess_at(self, date, bad_day_queue, loggingq=None):
-        """Run preprocess at date."""
-        # for multiprocessing create a new logger:
-        if loggingq is not None:
-            mlogger = logging.getLogger("mLogger")
-            mlogger.setLevel(logging.DEBUG)
-            q_handler = QueueHandler(loggingq)
-            q_handler.setLevel(level=logging.DEBUG)
-            mlogger.addHandler(q_handler)
-        else:
-            mlogger = self.logger
-
-        mlogger.info("Running preprocess at "
-                     f"{date.strftime('%Y-%m-%d')} ...")
-        foundIgrams = self.generate_prf_input("prep", date, mlogger)
-        if not foundIgrams:
-            mlogger.warning(f"Do not execute preprocess at date {date} since"
-                            " no suitable interferograms where found!")
-            bad_day_queue.put(date)
-            output = [f"Do not execute preprocess at date {date}.",
-                      "No suitable iterferograms found",
-                      f"No call string for date {date}.\n"]
-            return output
-
-        inputfile = os.path.basename(
-            self.get_prf_input_path("prep", date))
-
-        executable = self._get_executable("prep")
-        exec_path = os.path.dirname(executable)
-
-        outlist = ["only test mode here"]
-        out, err = self._call_external_program(
-            [executable, inputfile], mlogger, **{'cwd': exec_path})
-        outlist = out, err, " ".join([executable, inputfile])
-        return outlist
-
-    def run_pcxs_at(self, prf_inputfile, executable, popen_kwargs={}):
+    def run_prf_with_inputfile(self, prf_inputfile, executable, popen_kwargs={}):
         """Run pcxs with the given inputfile"""
         prf_inputfile = os.path.basename(prf_inputfile)
         out, err = self._call_external_program(
             [executable, prf_inputfile], **popen_kwargs)
 
         outlist = out, err, " ".join([executable, prf_inputfile])
-        return outlist
-
-    def old_run_pcxs_at(self, date, loggingq=None, bad_day_queue=None):
-        """Run pcxs at date."""
-        # for multiprocessing create a new logger:
-        if loggingq is not None:
-            mlogger = logging.getLogger("mLogger")
-            mlogger.setLevel(logging.DEBUG)
-            q_handler = QueueHandler(loggingq)
-            q_handler.setLevel(level=logging.DEBUG)
-            mlogger.addHandler(q_handler)
-        else:
-            mlogger = self.logger
-        mlogger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
-        # ========================== checked above ===========================
-        # Check if the abscos.bin files are already available, if yes skip the
-        # day
-        wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
-        srchstrg = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
-        if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
-            message = (
-                f"*.abscos.bin file for day {date} exists already."
-                " Skip calculation..")
-            mlogger.info(message)
-            return [message, "No Error", "No call String"]
-
-        foundSpectra = self.generate_prf_input(
-            "pcxs", date, mlogger=mlogger)
-        if not foundSpectra:
-            mlogger.warning(f"Do not execute pcxs at date {date} since"
-                            " no suitable spectra where found!")
-            bad_day_queue.put(date)
-            output = [f"Do not execute pcxs at date {date}.",
-                      "No suitable spectra found",
-                      f"No call string for date {date}.\n"]
-            return output
-
-        # search for GGG2020 map files:
-        srchstrg = f"{self.site_abbrev}_*_*Z.map"
-        mapfiles = glob(os.path.join(self.map_path, srchstrg))
-        if len(mapfiles) != 0:
-            self.logger.debug("Detected GGG2020 map files!")
-            # GGG2020map files found!
-            self.ggg2020mapfiles = True
-            self._interpolate_map_files(date)
-        else:
-            srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
-            mapfiles = glob(os.path.join(self.map_path, srchstrg))
-            if len(mapfiles) == 1:
-                self.logger.debug("Detected GGG2014 map file!")
-                self.ggg2020mapfiles = False
-            else:
-                self.logger.critical(
-                    "No suitable map file found at "
-                    f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
-                sys.exit()
-
-        prf_input_path = os.path.basename(
-            self.get_prf_input_path("pcxs", date))
-
-        executable = self._get_executable("pcxs")
-        out, err = self._call_external_program(
-            [executable, prf_input_path], **{'cwd': self.proffast_path})
-
-        outlist = out, err, " ".join([executable, prf_input_path])
-        return outlist
-
-    def run_inv_at(
-            self, date, loggingq=None, bad_day_queue=None,
-            pressure_dict=None):
-        # for multiprocessing create a new logger:
-        if loggingq is not None:
-            mlogger = logging.getLogger("mLogger")
-            mlogger.setLevel(logging.DEBUG)
-            q_handler = QueueHandler(loggingq)
-            q_handler.setLevel(level=logging.DEBUG)
-            mlogger.addHandler(q_handler)
-        else:
-            mlogger = self.logger
-        self.logger.debug(f"Run inv at date {date.isoformat()}")
-
-        foundSpectra = self.generate_prf_input(
-            "inv", date, mlogger=mlogger)
-        if not foundSpectra:
-            mlogger.warning(f"Do not execute inv at date {date} since"
-                            " no spectra where found!")
-            bad_day_queue.put(date)
-            output = [f"Do not execute inv at date {date}.",
-                      "No suitable spectra found",
-                      f"No call string for date {date}.\n"]
-            return output
-
-        prf_input_path = os.path.basename(
-            self.get_prf_input_path("inv", date))
-        executable = self._get_executable("inv")
-        out, err = self._call_external_program(
-                    [executable, prf_input_path],
-                    **{'cwd': self.proffast_path})
-        outlist = out, err, " ".join([executable, prf_input_path])
         return outlist
 
     def combine_results(self):
@@ -441,24 +306,6 @@ class Pylot(FileMover):
                 f"Error while processesing {joined_commands}!\n"
                 f"PROFFAST error message: {err}")
         return (out, err)
-
-    def _run_parallel(self, method, n_processes, kwargs={}):
-        """Run method in parallel using python multiprocessing."""
-        pool = multiprocessing.Pool(processes=n_processes)
-
-        # create a queue for  multiprocessing logging:
-        m = multiprocessing.Manager()
-        logq = m.Queue(-1)
-        subs_method = partial(
-            method,
-            bad_day_queue=self.bad_day_queue, loggingq=logq,
-            **kwargs)
-        output = pool.map(subs_method, self.dates)
-        while not logq.empty():
-            record = logq.get()
-            self.logger.log(record.levelno, record.msg)
-
-        return output
 
     def _write_logfile(self, program_name, output):
         """
