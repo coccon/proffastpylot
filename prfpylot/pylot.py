@@ -106,7 +106,7 @@ class Pylot(FileMover):
         else:
             self.logger.debug("...start parallel processing...")
             subs_method = partial(
-                self.run_prf_with_inputfile,  # TODO: Rename!
+                self.run_prf_with_inputfile,
                 executable=prep_exe,
                 popen_kwargs={"cwd": exec_path}
             )
@@ -126,6 +126,7 @@ class Pylot(FileMover):
         called directly. Otherwise it is called via run_parallel
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
+        output = []
 
         self.localdate_spectra = self.get_localdate_spectra()
         wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
@@ -138,28 +139,16 @@ class Pylot(FileMover):
                     f"*.abscos.bin file for day {date} exists already."
                     " Skip calculation..")
                 self.logger.info(message)
-                # TODO: rewrite this message or the handle of it
-                # return [message, "No Error", "No call String"]
+                output.append(
+                    [message, "No return code", "No Error", "No call String"])
                 continue
             # Generate input files:
-            foundSpectra = self.generate_prf_input("pcxs", date)
-            # TODO: rewrite self.generate_prf_input such that it returns the
-            #       path to the input file
-            if not foundSpectra:
-                # TODO: Write an error or check the handling of this case
-                continue
-            # TODO: Check if os.path.basename can be applied
-            #       in get_prf_input_path
-            inputfile_list.append(
-                os.path.basename(
-                    self.get_prf_input_path("pcxs", date)
-                    )
-                )
+            inputfile = self.generate_prf_input("pcxs", date)
+            inputfile_list.append(inputfile)
 
             # Generate/find map files
             self.prepare_map_file(date)
 
-        output = []
         pcxs_exe = self._get_executable("pcxs")
         # store the path to change the cwd for the popen commmand
         exec_path = os.path.dirname(pcxs_exe)
@@ -170,13 +159,13 @@ class Pylot(FileMover):
                     inputfile, pcxs_exe, popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
-            # TODO: check if it is better to have this in an extra method
             subs_method = partial(
                 self.run_prf_with_inputfile,
                 executable=pcxs_exe,
                 popen_kwargs={"csv": exec_path})
             pool = multiprocessing.Pool(processes=n_processes)
-            output = pool.map(subs_method, inputfile_list)
+            temp = pool.map(subs_method, inputfile_list)
+            output.extend(temp)
         self._write_logfile("pcsx", output)
         # self._check_for_bad_days()
         self.logger.info("Finished pcxs.\n")
@@ -212,7 +201,7 @@ class Pylot(FileMover):
                 output.append(tmp_out)
         else:
             subs_method = partial(
-                self.run_prf_with_inputfile,  # TODO: change this, if it works!
+                self.run_prf_with_inputfile,
                 executable=inv_exe,
                 popen_kwargs={"cwd": exec_path})
             pool = multiprocessing.Pool(processes=n_processes)
@@ -229,7 +218,9 @@ class Pylot(FileMover):
         out, err, return_val = self._call_external_program(
             [executable, prf_inputfile], **popen_kwargs)
 
-        outlist = out, err, return_val, " ".join([executable, prf_inputfile])
+        outlist = \
+            out, err, str(return_val),\
+            " ".join([executable, prf_inputfile])
         return outlist
 
     def combine_results(self):
