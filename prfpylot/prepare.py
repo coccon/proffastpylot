@@ -806,77 +806,70 @@ class Preparation():
                 sys.exit()
 
     def _interpolate_map_files(self, date):
+        """Interpolate GGG2020 map files.
+        Genereate a map file at 12:00 local time.
+
+        params:
+            date (dt.datetime): datetime in local time (is called with 
+                elements of the localdate_spectra)
         """
-        interpolates the new map files to genereate a map
-        file at 12:00 local time
-        """
-        # TODO: delete this part and replace with _localtime ?
-        # First find out, at which timezone the current files are recorded:
-        if self.use_coordfile:
-            self.get_coords_from_file(self.dates[0])
-        tf = TimezoneFinder()
-        # get timezone as a string:
-        local_tz_name = tf.timezone_at(
-            lat=self.coords["lat"],
-            lng=self.coords["lon"])
-        # convert string to pytz object:
-        local_tz = pytz.timezone(local_tz_name)
-        utc_tz = pytz.utc
-        # create a timestamp of local noon:
+        # create a timestamp of local noon
         noon_local = date.replace(hour=12, minute=0, second=0)
 
-        # convert this to a localized timestamp using localize of pytz.
-        # this is neccesary since there is a bug in using the tzinfo of the
-        # datetime module:
-        tz_diff = utc_tz.localize(noon_local).astimezone(local_tz) \
-            - local_tz.localize(noon_local)
-        noon_utc = noon_local - tz_diff
+        total_localtime_utc_offset = dt.timedelta(
+            self.utc_offset + self._localtime_offset)
+        noon_utc = noon_local - total_localtime_utc_offset
 
-        # next get a list of all *.map files of the needed date:
-        # TODO: Here we could check fo the correct lat and long as well!
-        srchstrg = f"{self.site_abbrev}_*_"\
-                   + f"{noon_utc.strftime('%Y%m%d')}*Z.map"
+        # List of all *.map files of the needed date
+        srchstrg = (
+            f"{self.site_abbrev}_*_"
+            f"{noon_utc.strftime('%Y%m%d')}*Z.map")
         mapfiles = glob(os.path.join(self.map_path, srchstrg))
-        # find the right map files: bevore and after the hour of noon_utc:
-        ind = 0
+
+        # find the right map files: bevore and after the hour of noon_utc
+        i_noon = 0  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
         for i, file in enumerate(mapfiles):
             hour_file = int(file[-7:-5])
             if hour_file > noon_hour:
-                ind = i
+                i_noon = i
                 break
-        file1 = pd.read_csv(mapfiles[ind-1],
-                            skipinitialspace=True, header=11)
+
+        file1 = pd.read_csv(
+            mapfiles[i_noon-1],
+            skipinitialspace=True,
+            header=11)
         file1 = file1.to_numpy().transpose()
-        file2 = pd.read_csv(mapfiles[ind],
-                            skipinitialspace=True, header=11)
+        file2 = pd.read_csv(
+            mapfiles[i_noon],
+            skipinitialspace=True,
+            header=11)
         file2 = file2.to_numpy().transpose()
-        # interpolate between the files:
-        # since the difference between two file is allways 3 hours this can be
-        # hardcoded:
+
+        # interpolate between the files
+        # difference between two file is allways 3 hours
         tdiff = 3 * 60 * 60   # seconds
-        # furthermore we need the date of file 1 for the requested time diff.
+        # date of file 1 for the requested time diff
         date_file1 = dt.strptime(
-                    (os.path.basename(mapfiles[ind-1])[12:22]), "%Y%m%d%H"
-                                )
+                    os.path.basename(mapfiles[i_noon-1])[12:22], "%Y%m%d%H")
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
                 * (noon_utc - date_file1).total_seconds()
 
-        current_mapfile = \
+        output_mapfile = \
             f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
-        current_mapfile = os.path.join(self.map_path, current_mapfile)
+        output_mapfile = os.path.join(self.map_path, output_mapfile)
 
-        # Now after interpolation is done, read in Header:
+        # write header
         with open(mapfiles[0], "r") as f:
             header = f.readlines()[:12]
-        # write header
-        with open(current_mapfile, "w") as f:
+        with open(output_mapfile, "w") as f:
             for line in header:
                 f.write(line)
+
         # write the rest of the file
-        with open(current_mapfile, "a") as f:
+        with open(output_mapfile, "a") as f:
             frw = fortranformat.FortranRecordWriter(
                 "(2(f8.3,','),4(e10.3,','),1x,(f7.3,','),1x,(f7.3,','),"
                 "(e10.3,','),1x,(f6.1,','),(f8.3,','),1x,(f6.4,','),1x,"
@@ -886,7 +879,7 @@ class Preparation():
                 f.write(frw.write(line) + "\n")
 
     def _tccon_mode_warning(self):
-        """ Print warning if TCCON mode is activated """
+        """Print warning if TCCON mode is activated """
         self.logger.warning(
             "TCCON Mode is activated!\nThis will not work with standard"
             " EM27/SUN interferograms.\nOnly continue if this setting"
