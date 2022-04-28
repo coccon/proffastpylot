@@ -48,7 +48,6 @@ class Preparation():
     }
 
     mandatory_options = [
-        "input_file",
         "instrument_number",
         "site_name",
         "site_abbrev",
@@ -92,7 +91,7 @@ class Preparation():
                     f" file {input_file}!")
                 sys.exit()
 
-        for option, value in self.defaults:
+        for option, value in self.defaults.items():
             if args.get(option) is None:
                 self.__dict__[option] = value
                 self.logger.debug(
@@ -248,7 +247,7 @@ class Preparation():
                 self.logger.critical(coord_error)
                 sys.exit()
             coords = self.get_coords_from_file(self.dates[0])
-        if None in coords:
+        if None in coords.values():
             self.logger.critical(coord_error)
             sys.exit()
 
@@ -671,17 +670,24 @@ class Preparation():
         except KeyError:
             self.logger.critical(f"{self.site_name} is not in coord.csv!")
             sys.exit()
+
+        coords = {
+            "lat": None,
+            "lon": None,
+            "alt": None
+        }
         if isinstance(coord_df, pd.Series):
             # this is the case, if only one entry per site is available
-            self.coords["lon"] = coord_df["Longitude"]
-            self.coords["lat"] = coord_df["Latitude"]
-            self.coords["alt"] = coord_df["Altitude_kmasl"]
+            coords["lon"] = coord_df["Longitude"]
+            coords["lat"] = coord_df["Latitude"]
+            coords["alt"] = coord_df["Altitude_kmasl"]
         elif isinstance(coord_df, pd.DataFrame):
             coord_df = coord_df.loc[coord_df["Starttime"] <= date]
             row = coord_df.sort_values(by=["Starttime"])
-            self.coords["lon"] = row["Longitude"].iloc[-1]
-            self.coords["lat"] = row["Latitude"].iloc[-1]
-            self.coords["alt"] = row["Altitude_kmasl"].iloc[-1]
+            coords["lon"] = row["Longitude"].iloc[-1]
+            coords["lat"] = row["Latitude"].iloc[-1]
+            coords["alt"] = row["Altitude_kmasl"].iloc[-1]
+        return coords
 
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""
