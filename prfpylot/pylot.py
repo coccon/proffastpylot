@@ -162,7 +162,8 @@ class Pylot(FileMover):
             subs_method = partial(
                 self.run_prf_with_inputfile,
                 executable=pcxs_exe,
-                popen_kwargs={"csv": exec_path})
+                popen_kwargs={"cwd": exec_path}
+                )
             pool = multiprocessing.Pool(processes=n_processes)
             temp = pool.map(subs_method, inputfile_list)
             output.extend(temp)
@@ -260,7 +261,7 @@ class Pylot(FileMover):
         self.logger.info("Removing temporary files ...")
 
         # handling abscosbin
-        if self.delete_abscosbin:
+        if self.delete_abscosbin_files:
             self.logger.debug("Deleting abscos.bin files ...")
             self.delete_abscos_files()
         else:
@@ -271,7 +272,7 @@ class Pylot(FileMover):
             self.check_abscosbin_summed_size()
 
         # handling input files
-        if self.bool_delete_input_files:
+        if self.delete_input_files:
             self.logger.debug("Deleting input files ...")
             self.delete_input_files()
         else:
