@@ -121,6 +121,13 @@ class Preparation():
                 end_date=args["end_date"]
             )
 
+        # make relative paths absolute
+        paths = [
+            "map_path", "pressure_path", "pressure_type_file",
+            "interferogram_path", "analysis_path", "result_path"]
+        for path in paths:
+            self.__dict__[path] = os.path.abspath(self.__dict__[path])
+
         # coordinates
         self.coords = self.get_coords(args)
 
