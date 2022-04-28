@@ -891,10 +891,13 @@ class Preparation():
             "TCCON Mode is activated!\nThis will not work with standard"
             " EM27/SUN interferograms.\nOnly continue if this setting"
             " was choosen by purpose. Otherwise break the execution!")
-    
+
     def _get_localtime_offset(self):
-        """Return offset between measurement time.
+        """Return offset between measurement time and local time.
+
         utc_offset + localtime_offset = total offset beteen Localtime and UTC.
+        and thus
+        localtime_offset = total_localtime_utc_offset - utc_offset
         """
         if self.use_coordfile:
             self.get_coords_from_file(self.dates[0])
@@ -905,8 +908,7 @@ class Preparation():
         local_tz = pytz.timezone(local_tz_name)
         # Allways use winter time
         date_winter = dt.strptime("2000-01-01", "%Y-%m-%d")
-        local_timedelta = local_tz.utcoffset(date_winter)
-        _local_time_offset = int(local_timedelta.total_seconds() / 3600)
-        return _local_time_offset
-
-
+        localtime_utc_timedelta = local_tz.utcoffset(date_winter)
+        localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
+        localtime_offset = localtime_utc_offset - self.utc_offset
+        return localtime_offset
