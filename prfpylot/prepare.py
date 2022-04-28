@@ -411,18 +411,20 @@ class Preparation():
 
         # skip all interferograms smaller than given limit
         temp_list = igrams[:]
+        skipped_interferograms = False
         for igram in temp_list:
             filesize = os.path.getsize(igram) / (1024 * 1024)  # in MB
-            self.logger.debug(f"Check filesize of igram {igram}...")
             if filesize < self.min_interferogram_size:
                 igrams.remove(igram)
                 self.logger.warning(
                     f"Interferogram {igram} has size "
                     f"{filesize} < {self.min_interferogram_size} MB "
                     "and will be skipped.")
-            else:
-                self.logger.debug(
-                    "No interferogram were skipped because of its filesize.")
+                skipped_interferograms = True
+        if skipped_interferograms is False:
+            self.logger.debug(
+                "No interferogram was skipped because of its filesize "
+                f"at {date.date()}.")
 
         if igrams == []:
             self.logger.debug(f"No suitable Interferogram at day {date_str} "
@@ -525,7 +527,7 @@ class Preparation():
     def get_pcxs_parameters(self, date):
         """Return parameters to replace in the pcxs20.inp file."""
 
-        self.logger.debug("Create inv input parameters ...")
+        self.logger.debug("Create pcxs input parameters ...")
 
         lat = self.coords["lat"]
         lon = self.coords["lon"]
