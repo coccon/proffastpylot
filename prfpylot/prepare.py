@@ -116,20 +116,14 @@ class Preparation():
                     "where it is located.")
             sys.exit()
 
+        # list of dates
+        self.dates = self.get_dates(
+                start_date=args["start_date"],
+                end_date=args["end_date"]
+            )
+
         # coordinates
-        if None not in args["coords"].values():
-            self.coords = args["coords"]
-            self.coord_file = None  # to avoid overriding given coords
-            self.use_coordfile = False
-        else:
-            if args["coord_file"] is not None:
-                self.coords = {}
-                self.coord_file = args["coord_file"]
-                self.use_coordfile = True
-                # self.coords = {}
-            else:
-                self.logger.error("coord_file is not specified!")
-                sys.exit()
+        self.coords = self.get_coords(args)
 
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')
@@ -145,12 +139,6 @@ class Preparation():
             if args.get("tccon_setting") is None:
                 self.logger.critical("Give TCCON setting in TCCON mode!")
                 sys.exit()
-
-        # list of dates
-        self.dates = self.get_dates(
-                start_date=args["start_date"],
-                end_date=args["end_date"]
-            )
 
         dt_format = "%Y%m%d"
         result_foldername = "{}_{}_{}_{}".format(
@@ -243,6 +231,36 @@ class Preparation():
             dates = dates[:i]
 
         return dates
+
+    def get_coords(self, args):
+        """Return dict of coords.
+
+        Params:
+            args: all arguments that have been read from the input file.
+        """
+        coord_error = (
+            "Give the coordinates in the input file or specify a "
+            "coordinate file!"
+            )
+        coords = args["coords"]
+        if None in args["coords"].values():
+            if args.get("coord_file") is None:
+                self.logger.critical(coord_error)
+                sys.exit()
+            coords = self.get_coords_from_file(self.dates[0])
+        if None in coords:
+            self.logger.critical(coord_error)
+            sys.exit()
+
+        last_coords = self.get_coords_from_file(self.dates[-1])
+        if last_coords != coords:
+            self.logger.critical(
+                f"Coordinates at the start date {coords} does not match "
+                f"the coordinates at the end date {last_coords}!"
+                "PROFFASTpylot can not preprocess data from different sites "
+                "in one run! Please adapt the start and end date.")
+            sys.exit()
+        return coords
 
     def _create_datelist(self, path):
         """Create datelist of given path.
@@ -380,23 +398,25 @@ class Preparation():
             return None
 
     def get_igrams(self, date):
-        """Search for interferograms disk and return a list of files."""
+        """Search for interferograms on disk and return a list of files."""
         date_str = date.strftime("%y%m%d")
         igrams = glob(os.path.join(self.interferogram_path, date_str, "*.*"))
-        # check for filesize: if smaller than a certain limit the file is
-        # must be corrupt
+
+        # skip all interferograms smaller than given limit
         temp_list = igrams[:]
         for igram in temp_list:
             filesize = os.path.getsize(igram) / (1024 * 1024)  # in MB
             self.logger.debug(f"Check filesize of igram {igram}...")
-            # print(f"Filesize of {igram} is : {filesize}")
             if filesize < self.min_interferogram_size:
                 igrams.remove(igram)
                 self.logger.warning(
                     f"Interferogram {igram} has size "
-                    f"{filesize} < {self.min_interferogram_size} MB. Skip it!")
+                    f"{filesize} < {self.min_interferogram_size} MB "
+                    "and will be skipped.")
             else:
-                self.logger.debug("... all good!")
+                self.logger.debug(
+                    "No interferogram were skipped because of its filesize.")
+
         if igrams == []:
             self.logger.debug(f"No suitable Interferogram at day {date_str} "
                               "found in get_igrams().")
@@ -456,31 +476,18 @@ class Preparation():
             self.tccon_file = prf_input_file
 
     def get_prep_parameters(self, date):
-        '''
-        Return Parameters to be replaced in the pereprocess input file.
-        '''
-
-        # get ILS for Channel 1 and 2 for a specific date
+        """Return Parameters to be replaced in the pereprocess input file."""
         ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
-        # if coordfile is used, check for the correct coords for each day.
-        # otherwise use the same for all days
-        if self.use_coordfile:
-            self.get_coords_from_file(date)
-        lat = self.coords.get("lat", -1.)
-        lon = self.coords.get("lon", -1.)
-        alt = self.coords.get("alt", -1.)
-
-        if lat == -1. or lon == -1. or alt == -1.:
-            self.logger.critical("Could not determine coodinates. Exit!")
-            sys.exit()
-
+        lat = self.coords["lat"]
+        lon = self.coords["lon"]
+        alt = self.coords["alt"]
         comment = (
             "This spectrum is generated using preprocess4, a part of "
             "PROFFAST controlled by PROFFASTpylot.")
         if self.note is not None:
             comment = " ".join([comment, self.note])
-        # get all good igrams. If no good igrams is found the day is put in
-        # the badDayQueue
+
+        # get all good igrams
         igrams = self.get_igrams(date)
         igrams = "\n".join(igrams)
         # generate path to outputfolder for this date:
@@ -512,16 +519,10 @@ class Preparation():
         """Return parameters to replace in the pcxs20.inp file."""
 
         self.logger.debug("Create inv input parameters ...")
-        # coordinates of the corresponding date
-        if self.use_coordfile:
-            self.get_coords_from_file(date)
 
-        lat = self.coords.get("lat", -1.)
-        lon = self.coords.get("lon", -1.)
-        alt = self.coords.get("alt", -1.)
-        if lat == -1. or lon == -1. or alt == -1.:
-            self.logger.critical("Could not determine coodinates. Exit!")
-            sys.exit()
+        lat = self.coords["lat"]
+        lon = self.coords["lon"]
+        alt = self.coords["alt"]
 
         parameters = {
             "ALT": alt,
@@ -534,10 +535,11 @@ class Preparation():
             "SITE_ABBREV": self.site_abbrev,
             "DATE_LONG": date.strftime("%Y%m%d"),
         }
-        # in case of pcxs20 the parameter %WET_VMR% is needed in addition:
+
+        # set %WET_VMR% parameter
+        #   GGG2014 map files: dry air (False)
+        #   GGG2020 map files: wet air (True)
         if self.ggg2020mapfiles:
-            # in case of GGG2014 map files it is dry air (False)
-            # in case of GGG2020 map files it is wet air. (True)
             parameters["WET_VMR"] = True
         else:
             parameters["WET_VMR"] = False
@@ -904,8 +906,6 @@ class Preparation():
         and thus
         localtime_offset = total_localtime_utc_offset - utc_offset
         """
-        if self.use_coordfile:
-            self.get_coords_from_file(self.dates[0])
         tf = TimezoneFinder()
         local_tz_name = tf.timezone_at(
             lat=self.coords["lat"],

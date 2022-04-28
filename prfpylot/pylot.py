@@ -339,11 +339,7 @@ class Pylot(FileMover):
         df["JulianDate"] = df["JulianDate"]
         df["UTC"] = pd.to_datetime(
             df["JulianDate"].values, origin="julian", unit="D", utc=True)
-        # This needs to be executed, since the calls bevore took place in a
-        # multiprocessing process, which is encapsulated and does not write to
-        # the current instance of the class.
-        if self.use_coordfile:
-            self.get_coords_from_file(self.dates[0])
+
         tf = TimezoneFinder()
         local_tz_name = tf.timezone_at(
             lat=self.coords["lat"],
