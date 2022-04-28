@@ -769,10 +769,11 @@ class Preparation():
                 elements of the localdate_spectra)
         """
         # create a timestamp of local noon
-        noon_local = date.replace(hour=12, minute=0, second=0)
+        noon_local = dt(
+            year=date.year, month=date.month, day=date.day, hour=12)
 
-        total_localtime_utc_offset = dt.timedelta(
-            self.utc_offset + self._localtime_offset)
+        total_localtime_utc_offset = timedelta(
+            hours=(self.utc_offset + self._localtime_offset))
         noon_utc = noon_local - total_localtime_utc_offset
 
         # List of all *.map files of the needed date
@@ -782,12 +783,13 @@ class Preparation():
         mapfiles = glob(os.path.join(self.map_path, search_str))
         # add files of the following day
         # in case of interpolation between 21:00 and 00:00
-        next_day = noon_utc + dt.timedelta(hours=24)
+        next_day = noon_utc + timedelta(hours=24)
         search_str = (
             f"{self.site_abbrev}_*_"
             f"{next_day.strftime('%Y%m%d')}*Z.map")
         mapfiles.extend(
              glob(os.path.join(self.map_path, search_str)))
+        mapfiles.sort()
 
         # find the right map files: bevore and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
