@@ -40,9 +40,9 @@ from functools import partial
 class Pylot(FileMover):
     """Start all PROFFAST processes."""
 
-    def __init__(self, input_file, pressure_type_file, logginglevel="info"):
+    def __init__(self, input_file, logginglevel="info"):
         super(Pylot, self).__init__(
-            input_file, pressure_type_file, logginglevel=logginglevel)
+            input_file, logginglevel=logginglevel)
         self.logger.debug('Initialized the FileMover')
 
         # a queue to save all days where all interferograms are bad

@@ -86,7 +86,7 @@ class InputfileGenerator():
         self.input_data["delete_input_files"] = "False"
         self.input_data["igram_size_filter"] = 3.7
         self.input_data["start_with_spectra"] = "False"
-        self.input_data["pressure_type"] = os.path.join(
+        self.input_data["pressure_type_file"] = os.path.join(
             inputpath, "..", "log_type_pressure.yml")
         self.input_data["tccon_mode"] = "False"
         self.input_data["tccon_setting"] = "0"
@@ -363,17 +363,9 @@ class InputfileGenerator():
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
         temp = input(
-            "How to should PROFFASTpylot handle your pressure input? "
-            "There is the possibility to create the 'pt_intraday.inp' "
-            "directly. To choose this option enter 'original'. "
-            "The other implemented option is to use the datalogger format as "
-            "used in KA. For this type 'log'. "
-            "Default is 'log':\n "
+            "Please enter the path to the pressure type file.\n "
         )
-        if temp == "":
-            self.input_data["pressure_type"] = "log"
-        else:
-            self.input_data["pressure_type"] = temp
+        self.input_data["pressure_type_file"] = temp
 
         temp = input(
             "Do you want to enable TCCON mode? "

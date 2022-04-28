@@ -81,17 +81,6 @@ delete_abscosbin_files: %delete_abscosbin_files%
 # If False: Files will be moved to results folder
 delete_input_files: %delete_input_files%
 
-
-# The pressure_type defines the format of the pressure file
-# Options:
-#    original: 
-#        create the pt_intraday.inp file by yourself,
-#        naming of the files should be <site_abbrev>_<yy-mm-dd>.inp
-#    log: 
-#        the 'MIRA-datalogger' format as used by KIT
-# (It is possible to define own pressure types)
-pressure_type: %pressure_type%
-
 # Activate TCCON Mode (True/False)
 # Use preprocess to evaluate low resolution spectra recorded with a 125HR
 # instrument.
@@ -118,6 +107,10 @@ interferogram_path: %interferogram_path%
 map_path: %map_path%
 pressure_path: %pressure_path%
 
+
+# Filename, or path to the pressure type file
+# With help of the pressure file, differen pressure formats can be used
+pressure_type_file: %pressure_type_file%
 
 
 # output data
