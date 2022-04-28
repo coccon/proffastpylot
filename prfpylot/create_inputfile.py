@@ -54,18 +54,14 @@ class InputfileGenerator():
         # a dict where the config is safed:
         self.input_data = {}
 
-    def generate_sod_example(self):
-        """
-        This methods contains the hardcoded path to the example files
-        """
-        # the path where the final inputfile is writte to
-        # Old version, does not work if installed without --editable
-        # self.inptfl_path = os.path.join(self.scriptpath, "..", "example")
-        # New version, more robust
+    def generate_sod_example(
+            self, input_filename="input_sodankyla_example.yml"):
+        """Generate the example input file."""
+
         self.inptfl_path = os.getcwd()
         self.inptfl = os.path.join(
                                 self.inptfl_path,
-                                "input_sodankyla_example.yml")
+                                input_filename)
         inputpath = os.path.normpath(os.path.join(self.scriptpath, "..",
                                      "example", "input_data"))
 
