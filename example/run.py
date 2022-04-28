@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # create the input file for the example data
     MyInputfileGenerator = InputfileGenerator()
     input_file = "input_sodankyla_example.yml"
-    MyInputfileGenerator.generate_sod_example("input_sodankyla_example.yml")
+    MyInputfileGenerator.generate_sod_example(input_file)
 
     # create prfPylot and run PROFFAST using the prfPylot
     MyPylot = Pylot(input_file, logginglevel="info")

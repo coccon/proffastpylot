@@ -601,10 +601,10 @@ class Preparation():
         for sublist in spectra_list:
             temp_pT_input = []
             for s in sublist:
-                # get timestamp of spectrum, can be UTC or local time depending on
-                # self.utc_offset
+                # get timestamp of spectrum
+                # can be UTC or local time depending on measurement time
                 timestamp = dt.strptime(s, "%y%m%d_%H%M%SSN.BIN")
-                # apply a possible offset of the pressure data and the igram data:
+                # apply a possible offset of the pressure data
                 time_offset_p_igram = \
                     self.pressure_handler.utc_offset - self.utc_offset
                 timestamp += timedelta(hours=time_offset_p_igram)
@@ -719,38 +719,6 @@ class Preparation():
                 if date == end_date:
                     return i+1
                 if date > end_date:
-                    return i
-
-    def _find_closest(self, when, date, datelist):
-        """Find the closest entry in a date list.
-        Before or after a given date.
-
-        Params:
-            when (str): 'before' or 'after'
-            date: date to slice the list
-            datelist (list): list of all dates
-        """
-        self.logger.debug(
-            "Finding the closest date in datelist "
-            f"{when} {date.strftime('%y-%m-%d')}")
-
-        if when == "after":  # in case of finding the start date
-            assert date <= datelist[-1]
-            if datelist[0] >= date:
-                return 0
-        if when == "before":  # in case of finding the end date
-            assert date >= datelist[0]
-            if datelist[-1] <= date:
-                return len(datelist)
-
-        for i, date_i in enumerate(datelist):
-            if date_i == date:
-                return i
-            if date_i > date:
-                assert datelist[i-1] < date
-                if when == "before":
-                    return i-1
-                if when == "after":
                     return i
 
     def _replace_backslash(self, line):

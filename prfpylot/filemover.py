@@ -62,7 +62,7 @@ class FileMover(Preparation):
                 f"The analysis folder {self.analysis_instrument_path} "
                 "exists already! "
                 "The content may be overwritten.")
-        
+
         # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
         for date in self.dates:
             datestring = date.strftime("%y%m%d")

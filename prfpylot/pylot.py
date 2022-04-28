@@ -32,8 +32,6 @@ import multiprocessing
 from timezonefinder import TimezoneFinder
 import pytz
 import numpy as np
-import logging
-from logging.handlers import QueueHandler
 from functools import partial
 
 
@@ -168,7 +166,6 @@ class Pylot(FileMover):
             temp = pool.map(subs_method, inputfile_list)
             output.extend(temp)
         self._write_logfile("pcsx", output)
-        # self._check_for_bad_days()
         self.logger.info("Finished pcxs.\n")
 
     def run_inv(self, n_processes=1):
@@ -181,8 +178,8 @@ class Pylot(FileMover):
             self.localdate_spectra = self.get_localdate_spectra()
         output = []
 
-        # read in the pressure for all days in self.dates.
-        # returns the dataframe containing the ready to use data for proffast
+        # the interpolated pressure is stored and can be 
+        # accesed from self.pressure_handler
         self.pressure_handler.prepare_pressure_df()
 
         all_inputfiles = []
@@ -208,12 +205,12 @@ class Pylot(FileMover):
             pool = multiprocessing.Pool(processes=n_processes)
             output = pool.map(subs_method, all_inputfiles)
 
-        # self._check_for_bad_days()
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
 
-    def run_prf_with_inputfile(self, prf_inputfile, executable, popen_kwargs={}):
-        """Run pcxs with the given inputfile"""
+    def run_prf_with_inputfile(
+            self, prf_inputfile, executable, popen_kwargs={}):
+        """Run PROFFAST with the given inputfile"""
         prf_inputfile = os.path.basename(prf_inputfile)
 
         out, err, return_val = self._call_external_program(
@@ -284,11 +281,7 @@ class Pylot(FileMover):
         self.logger.info("Done.")
 
     def _call_external_program(self, command_list, **kwargs):
-        """
-        This method calls a external program and returns the output and the
-        error
-        """
-        joined_commands = " ".join(command_list)
+        """Call a external program. Return output and error."""
         p = Popen(command_list, stdout=PIPE, stderr=PIPE, **kwargs)
         out, err = p.communicate()
         return_value = p.wait()
@@ -297,9 +290,7 @@ class Pylot(FileMover):
         return (out, err, return_value)
 
     def _write_logfile(self, program_name, output):
-        """
-        Write the output of preprocess, pcxs and inv to a logfile.
-        """
+        """Write the output of preprocess, pcxs and inv to a logfile."""
         self.logger.debug(f"... Write logfile of {program_name} ...")
 
         file = os.path.join(self.logfile_path, f"{program_name}_output.log")
@@ -396,33 +387,3 @@ class Pylot(FileMover):
         if sys.platform == "win32":
             executable += ".exe"
         return executable
-
-    ''' t
-    def _get_pressure_file_at(self, date):
-        """Return path to pressure file of given date."""
-        file_params = self.pressure_args["filename_parameters"]
-        filename = self.MyPressureHandler._get_filename(file_params, date)
-        search_string = os.path.join(self.pressure_path, filename)
-
-        pressure_file = glob(search_string)
-        if len(pressure_file) == 0:
-            self.logger.critical(
-                f"Could not find pressure file {search_string}")
-            raise RuntimeError("Could not find pressure file!")
-        elif len(pressure_file) > 1:
-            self.logger.critical(
-                f"To many pressure files found matching {search_string}!")
-            raise RuntimeError("Unambigous pressure files!")
-        pressure_file = pressure_file[0]
-        return pressure_file
-    '''
-
-    def _check_for_bad_days(self):
-        """If any badDays (i.e. no good igrams/spectra) occured delete the
-        dates from the datelist
-        """
-        while not self.bad_day_queue.empty():
-            badDay = self.bad_day_queue.get()
-            self.dates.remove(badDay)
-            self.logger.debug(f"Delete day {badDay.strftime('%Y-%m-%d')}"
-                              " from processing list.")

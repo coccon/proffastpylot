@@ -72,9 +72,6 @@ class PressureHandler():
                     f" file {pressure_type_file}!")
                 sys.exit()
 
-        # For developement keep the old version using a list.
-        self.old_version = False
-        self.p_dict = {}
         self.p_df = pd.DataFrame()
 
     def prepare_pressure_df(self):
