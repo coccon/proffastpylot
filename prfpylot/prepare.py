@@ -254,18 +254,19 @@ class Preparation():
                 self.logger.critical(coord_error)
                 sys.exit()
             coords = self.get_coords_from_file(self.dates[0])
+            # check for consisten coordinates in measurement period
+            last_coords = self.get_coords_from_file(self.dates[-1])
+            if last_coords != coords:
+                self.logger.critical(
+                    f"Coordinates at the start date {coords} does not match "
+                    f"the coordinates at the end date {last_coords}!"
+                    "PROFFASTpylot can not preprocess data from different "
+                    "sites in one run! Please adapt the start and end date.")
+                sys.exit()
         if None in coords.values():
             self.logger.critical(coord_error)
             sys.exit()
 
-        last_coords = self.get_coords_from_file(self.dates[-1])
-        if last_coords != coords:
-            self.logger.critical(
-                f"Coordinates at the start date {coords} does not match "
-                f"the coordinates at the end date {last_coords}!"
-                "PROFFASTpylot can not preprocess data from different sites "
-                "in one run! Please adapt the start and end date.")
-            sys.exit()
         return coords
 
     def _create_datelist(self, path):
