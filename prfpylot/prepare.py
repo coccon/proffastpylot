@@ -47,35 +47,65 @@ class Preparation():
         "pcxs": "pcxs20"
     }
 
-    global_inputfile_list = []
+    mandatory_options = [
+        "input_file",
+        "instrument_number",
+        "site_name",
+        "site_abbrev",
+        "map_path",
+        "pressure_path",
+        "pressure_type_file",
+        "interferogram_path",
+        "analysis_path",
+        "start_with_spectra",
+        "result_path",
+    ]
 
-    # in 'pylot.run_pcxs_at' it is tested if ggg2014 or ggg2020 map files are
-    # used
-    ggg2020mapfiles = False
+    defaults = {
+        "note": "",
+        "utc_offset": 0.0,
+        "start_with_spectra": False,
+        "delete_abscosbin_files": False,
+        "delete_input_files": False,
+        "min_interferogram_size": 3.7,
+        "tccon_mode": False,
+        "ggg2020mapfiles": False  # do not give in input file!
+    }
 
     def __init__(self, input_file, logginglevel="info"):
-        # read input file
-        with open(input_file, "r") as f:
-            args = yaml.load(f, Loader=yaml.FullLoader)
-        self.input_file = input_file
-
-        # now, the logfile can be created:
         self.logger = self.get_logger(logginglevel=logginglevel)
         self.logger.info(
             "++++ Welcome to PROFFASTpylot ++++\n")
         self.logger.debug("Start reading input file...")
 
-        # set parameters from input file
-        self.instrument_number = args["instrument_number"]
-        self.site_name = args["site_name"]
-        self.site_abbrev = args["site_abbrev"]
-        self.note = args["note"]
+        # read input file
+        with open(input_file, "r") as f:
+            args = yaml.load(f, Loader=yaml.FullLoader)
+
+        for option, value in args.items():
+            self.__dict__[option] = value
+
+        for option in self.mandatory_options:
+            if self.__dict__.get(option) is None:
+                self.logger.critical(
+                    f"Mandatory option {option} not given in the inpuf file"
+                    f" file {input_file}!")
+                sys.exit()
+
+        for option, value in self.defaults:
+            if args.get(option) is None:
+                self.__dict__[option] = value
+                self.logger.debug(
+                    f"{option} was set to default value: {value}."
+                    )
+
+        self.input_file = input_file
 
         # inspect.getsourcefile needes __init__.py!
         self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
+
         # path to the PROFFAST executables
-        self.proffast_path = args["proffast_path"]
-        if self.proffast_path is None:
+        if args.get("proffast_path") is None:
             head, _ = os.path.split(self.prfpylot_path)
             self.proffast_path = os.path.join(head, "prf")
         if not os.path.exists(self.proffast_path):
@@ -101,78 +131,20 @@ class Preparation():
                 self.logger.error("coord_file is not specified!")
                 sys.exit()
 
-        # utc time shift of the recorded data
-        if args["utc_offset"] is None:
-            self.utc_offset = 0.0
-        else:
-            self.utc_offset = args["utc_offset"]
-
-        # additional paths
-        self.map_path = args["map_path"]
-        if self.map_path is None:
-            self.logger.error("map_path is not specified!")
-            sys.exit()
-
-        self.pressure_path = args["pressure_path"]
-        if self.pressure_path is None:
-            self.logger.error("pressure_path is not specified!")
-            sys.exit()
-
-        self.pressure_type_file = args["pressure_type_file"]
-        # mandatory
-
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')
 
-        # igram path:
-        self.igram_path = args["interferogram_path"]
-        if self.igram_path is None:
-            self.logger.error("interferogram_path is not specified!")
-            sys.exit()
-
-        # spectra path, i.e. output of preprocess:
-        self.analysis_path = args["analysis_path"]
-        if self.analysis_path is None:
-            self.logger.error("analysis_path is not specified!")
-            sys.exit()
         self.analysis_instrument_path = os.path.join(
                     self.analysis_path,
                     f"{self.site_name}_{self.instrument_number}")
 
-        # record some notes about the behaviour of the pylot:
-
-        if args["start_with_spectra"] is not None:
-            self.start_with_spectra = args["start_with_spectra"]
-        else:
-            self.logger.error("start_with_spectra not specified!")
-            sys.exit()
-
-        if args["delete_abscosbin_files"] is not None:
-            self.delete_abscosbin = args["delete_abscosbin_files"]
-        else:
-            self.logger.error("delete_abscosbin_files not specified!")
-            sys.exit()
-
-        if args["delete_input_files"] is not None:
-            self.bool_delete_input_files = args["delete_input_files"]
-        else:
-            self.bool_delete_input_files = False
-
-        # file size limit of igrams:
-        if args["igram_size_filter"] is not None:
-            self.igram_filter_size = args["igram_size_filter"]
-        else:
-            self.logger.error("igram_size_filter is not given!")
-            sys.exit()
-
         # check if tccon mode is activated. Raise warning if it is activated
-        if args["tccon_mode"]:
+        if self.tccon_mode is True:
             self.tccon_mode = True
-            self.tccon_setting = args["tccon_setting"]
             self._tccon_mode_warning()
-        else:
-            self.tccon_mode = False
-            self.tccon_setting = args["tccon_setting"]
+            if args.get("tccon_setting") is None:
+                self.logger.critical("Give TCCON setting in TCCON mode!")
+                sys.exit()
 
         # list of dates
         self.dates = self.get_dates(
@@ -180,17 +152,12 @@ class Preparation():
                 end_date=args["end_date"]
             )
 
-        # only the base where the result folder is to be safed
-        # is given. The final folder is created every runtime.
-        self.result_path = args["result_path"]
-        if self.result_path is None:
-            self.logger.error("result_path is not specified!")
-            sys.exit()
-        dtfs = "%Y%m%d"  # dtformatstring
-        result_foldername = "{}_{}_{}_{}".format(self.site_name,
-                                                 self.instrument_number,
-                                                 self.dates[0].strftime(dtfs),
-                                                 self.dates[-1].strftime(dtfs))
+        dt_format = "%Y%m%d"
+        result_foldername = "{}_{}_{}_{}".format(
+            self.site_name,
+            self.instrument_number,
+            self.dates[0].strftime(dt_format),
+            self.dates[-1].strftime(dt_format))
         self.result_folder = os.path.join(self.result_path, result_foldername)
 
         # log of the processes
@@ -205,7 +172,10 @@ class Preparation():
             self.pressure_type_file, self.pressure_path,
             self.dates, self.logger)
 
-        self.logger.debug("... read in finished!")
+        # collect all generated input files to move in FileMover
+        self.global_inputfile_list = []
+
+        self.logger.debug("Finished reading of input file.")
 
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
@@ -248,7 +218,7 @@ class Preparation():
         if not self.start_with_spectra:
             self.logger.debug(
                 "Searching for all interferogram folders ...")
-            datapath = os.path.join(self.igram_path, "*")
+            datapath = os.path.join(self.interferogram_path, "*")
         else:
             self.logger.debug(
                 "Searching for all spectra folders ...")
@@ -257,12 +227,12 @@ class Preparation():
         dates = self._create_datelist(datapath)
         if len(dates) == 0:
             self.logger.critical(
-                f"No interferograms were found at {self.igram_path}!")
+                f"No interferograms were found at {self.interferogram_path}!")
             sys.exit()
 
         date_str_list = [date.strftime("%y-%m-%d") for date in dates]
         self.logger.info(
-            f"The following dates were found at {self.igram_path}: "
+            f"The following dates were found at {self.interferogram_path}: "
             f"{', '.join(date_str_list)}")
 
         if start_date is not None:
@@ -412,7 +382,7 @@ class Preparation():
     def get_igrams(self, date):
         """Search for interferograms disk and return a list of files."""
         date_str = date.strftime("%y%m%d")
-        igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
+        igrams = glob(os.path.join(self.interferogram_path, date_str, "*.*"))
         # check for filesize: if smaller than a certain limit the file is
         # must be corrupt
         temp_list = igrams[:]
@@ -420,11 +390,11 @@ class Preparation():
             filesize = os.path.getsize(igram) / (1024 * 1024)  # in MB
             self.logger.debug(f"Check filesize of igram {igram}...")
             # print(f"Filesize of {igram} is : {filesize}")
-            if filesize < self.igram_filter_size:
+            if filesize < self.min_interferogram_size:
                 igrams.remove(igram)
                 self.logger.warning(
                     f"Interferogram {igram} has size "
-                    f"{filesize} < {self.igram_filter_size} MB. Skip it!")
+                    f"{filesize} < {self.min_interferogram_size} MB. Skip it!")
             else:
                 self.logger.debug("... all good!")
         if igrams == []:

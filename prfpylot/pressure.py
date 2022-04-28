@@ -67,7 +67,7 @@ class PressureHandler():
 
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
-                self.logger.error(
+                self.logger.critical(
                     f"Mandatory option {option} not given in the pressure type"
                     f" file {pressure_type_file}!")
                 sys.exit()

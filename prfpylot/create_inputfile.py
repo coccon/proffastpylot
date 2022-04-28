@@ -80,7 +80,7 @@ class InputfileGenerator():
 
         self.input_data["delete_abscosbin_files"] = "True"
         self.input_data["delete_input_files"] = "False"
-        self.input_data["igram_size_filter"] = 3.7
+        self.input_data["min_interferogram_size"] = 3.7
         self.input_data["start_with_spectra"] = "False"
         self.input_data["pressure_type_file"] = os.path.join(
             inputpath, "..", "log_type_pressure.yml")
@@ -291,7 +291,7 @@ class InputfileGenerator():
         )
         while True:
             if temp == "":
-                self.input_data["igram_size_filter"] = 3.7355880737304688
+                self.input_data["min_interferogram_size"] = 3.7355880737304688
                 break
             try:
                 temp = float(temp)

@@ -48,7 +48,7 @@ utc_offset: %utc_offset%
 
 # File size filter for igrams: all igrams with a filesize less than the value
 # specified here are assumed to be corrupt. Filesize in MegaBytes
-igram_size_filter: %igram_size_filter%
+min_interferogram_size: %min_interferogram_size%
 
 
 # Start the processing chain with already available spectra.
