@@ -806,6 +806,7 @@ class Preparation():
     def _interpolate_map_files(self, date):
         """Interpolate GGG2020 map files.
         Genereate a map file at 12:00 local time.
+        This method is only called for mapfiles of type GGG2020.
 
         params:
             date (dt.datetime): datetime in local time (is called with 
@@ -819,19 +820,34 @@ class Preparation():
         noon_utc = noon_local - total_localtime_utc_offset
 
         # List of all *.map files of the needed date
-        srchstrg = (
+        search_str = (
             f"{self.site_abbrev}_*_"
             f"{noon_utc.strftime('%Y%m%d')}*Z.map")
-        mapfiles = glob(os.path.join(self.map_path, srchstrg))
+        mapfiles = glob(os.path.join(self.map_path, search_str))
+        # add files of the following day
+        # in case of interpolation between 21:00 and 00:00
+        next_day = noon_utc + dt.timedelta(hours=24)
+        search_str = (
+            f"{self.site_abbrev}_*_"
+            f"{next_day.strftime('%Y%m%d')}*Z.map")
+        mapfiles.extend(
+             glob(os.path.join(self.map_path, search_str)))
 
         # find the right map files: bevore and after the hour of noon_utc
-        i_noon = 0  # local noon between i_noon and i_noon-1
+        i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
         for i, file in enumerate(mapfiles):
             hour_file = int(file[-7:-5])
             if hour_file > noon_hour:
                 i_noon = i
                 break
+        if i_noon in [None, 0]:
+            self.logger.critical(
+                f"Could not calculate mapfile for {noon_utc} UTC "
+                "from the following files:\n"
+                f"{' '.join(mapfiles)}"
+                )
+            sys.exit()
 
         file1 = pd.read_csv(
             mapfiles[i_noon-1],
