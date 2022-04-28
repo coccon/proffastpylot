@@ -878,6 +878,7 @@ class Preparation():
         # write header
         with open(mapfiles[0], "r") as f:
             header = f.readlines()[:12]
+        self._check_mapfile_coordinates(header)
         with open(output_mapfile, "w") as f:
             for line in header:
                 f.write(line)
@@ -891,6 +892,33 @@ class Preparation():
             file1 = file1.transpose()
             for line in file1:
                 f.write(frw.write(line) + "\n")
+
+    def _check_mapfile_coordinates(self, header):
+        """Check if the coordinates of the mapfile are consistent.
+        Print a warning if not.
+
+        params:
+            header (list of lines): originating from a GGG20 mapfile
+        """
+        line = header[1]
+        lat_map = float(line[3:5])
+        if line[5] == "S":
+            lat_map *= -1
+        lon_map = float(line[7:10])
+        if line[10] == "W":
+            lon_map *= -1
+
+        lat = self.coords["lat"]
+        lon = self.coords["lon"]
+
+        if round(lat, 0) != lat_map:
+            self.logger.warning(
+                f"The Latitude of the map file ({lat_map}) "
+                f"does not match the Latitude given to PROFFASTpylot ({lat})!")
+        if round(lon, 0) != lon_map:
+            self.logger.warning(
+                f"The Longitude of the map file ({lon_map}) "
+                f"Does not match the Latitude given to PROFFASTpylot ({lon})!")
 
     def _tccon_mode_warning(self):
         """Print warning if TCCON mode is activated """
