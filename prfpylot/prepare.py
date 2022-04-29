@@ -351,6 +351,12 @@ class Preparation():
 
         params:
             template_type (str): Can be "prep", "tccon", "pt", "inv" or "pcxc"
+
+        Return:
+            prf_input_file(s) (str, list of str or None):
+                In case of inverse multiple input 
+                files are created if spectra of one measurement day belong to
+                different map files. If no spectra are, return None
         """
         # the name of the input file to be generated
         prf_input_file = self.get_prf_input_path(template_type, date)
@@ -358,13 +364,12 @@ class Preparation():
         if date is not None:
             date_str = dt.strftime(date, "%y%m%d")
 
-        foundData = True
         if template_type == "prep":
             self.logger.debug(
                 f"Generating preprocess inp file for {date_str}..")
             parameters = self.get_prep_parameters(date)
             if parameters["igrams"] == "":
-                foundData = False
+                return None
 
         elif template_type == "tccon":
             parameters = {"tccon_setting": self.tccon_setting}
@@ -382,26 +387,20 @@ class Preparation():
             parameters = self.get_inv_parameters(date)
             prf_input_files = []
             for i, parameter_i in enumerate(parameters):
-                # TODO: check if this is neccessary 
-                # if parameter_i["SPECTRA_PT_INPUT"] == "":
-                #     foundData = False
                 prf_input_files.append(prf_input_file[:-4] + f"_{i}.inp")
                 self.replace_params_in_template(
                     parameter_i, template_type, prf_input_files[-1])
             # safe inputfiles in global list to move/delete them later
             self.global_inputfile_list.extend(prf_input_files)
-            # return several input files hence to it already here:
+            # return several input files hence do it already here:
             return prf_input_files
         else:
             raise ValueError(f"Unknown template_type {template_type}")
 
         self.replace_params_in_template(
             parameters, template_type, prf_input_file)
-        if foundData:
-            self.global_inputfile_list.append(prf_input_file)
-            return prf_input_file
-        else:
-            return None
+        self.global_inputfile_list.append(prf_input_file)
+        return prf_input_file
 
     def get_igrams(self, date):
         """Search for interferograms on disk and return a list of files."""
