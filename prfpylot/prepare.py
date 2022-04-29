@@ -56,7 +56,6 @@ class Preparation():
         "pressure_type_file",
         "interferogram_path",
         "analysis_path",
-        "start_with_spectra",
         "result_path",
     ]
 
@@ -226,7 +225,7 @@ class Preparation():
 
         date_str_list = [date.strftime("%y-%m-%d") for date in dates]
         self.logger.info(
-            f"The following dates were found at {self.interferogram_path}: "
+            f"The following dates were found at {datapath[:-2]}: "
             f"{', '.join(date_str_list)}")
 
         if start_date is not None:
@@ -254,11 +253,11 @@ class Preparation():
                 self.logger.critical(coord_error)
                 sys.exit()
             coords = self.get_coords_from_file(self.dates[0])
-            # check for consisten coordinates in measurement period
+            # check for consistent coordinates in measurement period
             last_coords = self.get_coords_from_file(self.dates[-1])
             if last_coords != coords:
                 self.logger.critical(
-                    f"Coordinates at the start date {coords} does not match "
+                    f"Coordinates at the start date {coords} do not match "
                     f"the coordinates at the end date {last_coords}!"
                     "PROFFASTpylot can not preprocess data from different "
                     "sites in one run! Please adapt the start and end date.")
