@@ -36,6 +36,7 @@ import pytz
 import fortranformat
 import inspect
 import codecs
+from random import randint
 
 
 class Preparation():
@@ -173,7 +174,8 @@ class Preparation():
 
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
-        logger = logging.getLogger('prfpylot')
+        r = str(randint(10000, 99999))
+        logger = logging.getLogger(r)
         # set logging to debug to record everything in the first place
         logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
