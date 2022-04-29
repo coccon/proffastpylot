@@ -35,6 +35,7 @@ from timezonefinder import TimezoneFinder
 import pytz
 import fortranformat
 import inspect
+import codecs
 
 
 class Preparation():
@@ -445,15 +446,57 @@ class Preparation():
         all_spectra.sort()
         localdate_spectra = {}
         for spectrum in all_spectra:
-            spectrum = os.path.basename(spectrum)
-            utc_time = dt.strptime(spectrum, "%y%m%d_%H%M%SSN.BIN")
-            local_time = utc_time + timedelta(hours=self._localtime_offset)
+            spectrum_name = os.path.basename(spectrum)
+            meas_time, local_time, utc_time = self.get_times_of(
+                spectrum=spectrum)
             local_date = local_time.date()
             if local_date in localdate_spectra.keys():
-                localdate_spectra[local_date].append(spectrum)
+                localdate_spectra[local_date].append(spectrum_name)
             else:
-                localdate_spectra[local_date] = [spectrum]
+                localdate_spectra[local_date] = [spectrum_name]
         return localdate_spectra
+
+    def get_times_of(self, spectrum):
+        """Read measurement time from filename, calculate local and utc time.
+        Check if UTC time is consistent in the spectra header.
+
+        Params:
+            spectrum (str): full path to a spectrum
+
+        Return:
+            meas_time (dt.DateTime): time parsed from the filename
+            local_time (dt.DateTime): calculated local time
+            utc_time (dt.DateTime): read from spectra header
+        """
+        spectrum_name = os.path.basename(spectrum)
+        meas_time = dt.strptime(spectrum_name, "%y%m%d_%H%M%SSN.BIN")
+        local_time = meas_time + timedelta(hours=self._localtime_offset)
+
+        # read UTC time from header
+        with codecs.open(
+                spectrum, "r", encoding="utf-8", errors="ignore") as f:
+            header = f.readlines(1)[:24]
+        UTh = float(header[13].strip())
+        UT_date = header[12].strip()
+        utc_time = dt.strptime(UT_date, "%y%m%d") + timedelta(hours=UTh)
+
+        # check if times are consistent
+        total_offset = self._localtime_offset + self.utc_offset
+        pylot_utc_time = local_time - timedelta(hours=total_offset)
+
+        # utc_time is shifted by half of the measurement time
+        time_difference = (pylot_utc_time - utc_time).total_seconds()
+        if abs(time_difference) > 300:  # not greater than 5 min
+            self.logger.critical(
+                f"Inconsistent times in spectrum {spectrum}!\n"
+                f"UTC time of spectrum: {utc_time},\n"
+                f"measurement time of spectrum: {meas_time},\n"
+                f"local time of spectrum: {local_time}.\n"
+                "Check if you entered the correct utc_offset or if there are "
+                "files from another processing in the analysis folder!"
+                )
+            sys.exit()
+        return meas_time, local_time, utc_time
 
     def replace_params_in_template(
             self, parameters, template_type, prf_input_file):
