@@ -1,61 +1,53 @@
 # Pressure Input
 
-_This might be restructured in the future._
+_The pressure input was reorganized in version 1.1_
 
-This article explains how handle pressure data with PROFFASTpylot.
+This article explains how to handle pressure data with PROFFASTpylot.
 To perform the retrieval PROFFAST needs pressure data from the measurement site.
-This data ist provided for PROFFAST using the file `pt_intraday.inp`.
+This data is provided for PROFFAST 2.1 together with the spectra in the invers input file.
 A template for this file can be found in the `prfpylot/templates` folder.
+The `pT_intraday.inp` file is deprecated, the interpolation of the pressure is handled by PROFFASTpylot.
 
 
 ## Provided options in PROFFASTpylot
 
-Two parameters in the input file specify how the pressure is handled by PROFFASTpylot.
+Two parameters in the main input file specify how the pressure is handled by PROFFASTpylot.
 
 - `pressure_path` is the location of the pressure files
-- `pressure_type` specifies the format of the pressure file
+- `pressure_type_file` links to a second input file in which the format of the pressure files is defined
 
-### pressure_type: original
+## Pressure type file
 
-It is possible to create the `pt_intraday.inp` file externally by your own.
-Then, the files in the pressure_path are assumed to be named in the following way:
-`<site_abbrev>_<yy-mm-dd>.inp`.
-
-### pressure_type: log
-
-For users using the dataformat in the KIT-style, the pressure_type `log` have to be used.
+For users using the dataformat in the KIT-style, a example pressure type file is provided in `example/log_type_pressure.yml`
 The pressure files recorded by the KIT datalogger need to be placed inside the `pressure_path`.
 
-### Custom pressure types
+To adapt this file two your own type of files, the most important options are explained in the following.
 
-It is possible to define your own pressure type. Therefore you need to extend the class `PressureParameters` in `prfpylot/pressure.py`. Add an entry for your new pressure type to the `filename_parameters` and `dataframe_parameters` dictionaries in the class.
+### Filename parameters
 
-```python
-class PressureParameters():
-    """Storage for different pressure file formats."""
-
-    filename_parameters = {
-        "log": {
-            "basename": "",
-            "time_format": "%Y-%m-%d",
-            "ending": "*.dat"
-        }
-    }
-
-    dataframe_parameters = {
-        "log": {
-            "key_pressure": "BaroTHB40",
-            "key_time": "UTCtime___",
-            "fmt_time": "%H:%M:%S",
-            "csv_kwargs": {
-                "sep": "\t"
-            }
-        }
-    }
+The filename parameters define how the filename of the pressure file is constructed.
+```yaml
+filename_parameters:
+  basename: ""
+  time_format: "%Y-%m-%d"
+  ending: "*.dat"
 ```
 
-In the `filename_parameters` the naming of your pressure files can be specified.
-In the `dataframe_parameters`, the internal formatting of your file can be given.
+### Dataframe parameters
+
+In the dataframe parameters the internal formatting of your files is specified.
+```yaml
+dataframe_parameters:
+  pressure_key: "BaroTHB40"
+  time_key: "UTCtime___"
+  time_fmt: "%H:%M:%S"
+  date_key: "UTCdate_____"
+  date_fmt: "%d.%m.%Y"
+  datetime_key: ""
+  datetime_fmt: ""
+  csv_kwargs:
+    sep: "\t"
+```
 
 The pressure file will be read in the following way.
 
@@ -74,7 +66,14 @@ filename = "".join(
 
 df = pd.read_csv(filename, **csv_kwargs)
 ```
-
-`df[key_time]` is the name of the time column and will be converted with the `fmt_time` format string. `df[key_pressure]` should contain the corresponding pressure values.
+For the date- and timestamp the datetime can be constructed from two separate columns (time_key and date_key) or one column (datetime_key). It will be parsed with the corresponding format string.
+`df[pressure_key]` should contain the corresponding pressure values.
 
 For more information you can look at the pandas [documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) of `read_csv()` and the [datetime package](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+
+# Additional Options
+
+A UTC offset of the pressure file can be given as `utc_offset`.
+In `data_parameters` you can define minimum and maximum pressure values.
+
+The frequency of your files can be defined. Currently the frequencies `"dayly"`, `"subdayly"` and `"yearly"` are available.

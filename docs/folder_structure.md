@@ -60,13 +60,14 @@ The analysis folder has the following structure:
 analysis_path
 ├── <site_name>_<instrument>
 |	├──YYMMDD
-│	|	├── cal
-│	|	└── pT
+│	|	└── cal
 |	├──YYMMDD
 ...
 ```
+Inside the `YYMMDD` folder are the spectra, which are named `YYMMDD_HHMMSSSN.BIN` (or `SM.BIN`). Note that this timestamp as well as the folder name correspond to the measurement time. 
+The UTC time of the measurement, that is derived from the variable `utc_offset` in `preprocess`, is written to the header of the spectrum. For more information on time offsets, see [`docs/time_offsets.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/time_offsets.md).
 
-It is compatible to PROFFIT.
+The files that were located in `YYMMDD/pT` are handled elsewhere since version 1.1. 
 
 ### Result path
 In the result folder run-specific information is stored.
