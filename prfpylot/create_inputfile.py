@@ -131,11 +131,11 @@ class InputfileGenerator():
         )
         print(
             "This tool helps you to create the inputfile of PROFFASTpylot to "
-            "run the files of one device at one location.\n"
+            "run the files of\none device at one location.\n"
             "Please generate a unique inputfile (manually or by using this "
-            "tool) for each instrument and each location. Please note, that "
-            "files like pressure and *.map files can be shared among various "
-            "intruments at the same site."
+            "tool) for each\ninstrument and each location.\nPlease note, that "
+            "files like pressure and *.map files can be shared among various\n"
+            "intruments at the same site.\n"
         )
         temp = input("To start the configuration press enter")
         print(
@@ -308,7 +308,7 @@ class InputfileGenerator():
                              )
 
         temp = input(
-            "Process already available spectra:\n"
+            "\nProcess already available spectra:\n"
             "If the spectra of a measurement are already available this has "
             "to be given here. This can happen if e.g. you want to reprocess "
             "some data with other pressure values or a-priori files.\n"
@@ -325,7 +325,8 @@ class InputfileGenerator():
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
         temp = input(
-            "Do you want to delete the abscos.bin files after the execution?\n"
+            "\nDo you want to delete the abscos.bin files after"
+            " the execution?\n"
             "These file contain the simulation of the atmosphere which is the "
             "result or the "
             "'pcxs' program. To keep the files can save computation time if "
@@ -345,7 +346,8 @@ class InputfileGenerator():
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
         temp = input(
-            "Do you want to delete the pT and VMR files after the execution?\n"
+            "\nDo you want to delete the pT and VMR"
+            " files after the execution?\n"
             "The pT files contain the daily a priori height profiles of"
             " pressure, temperature, ... \n"
             "The VMR files contain the a priori vertical mix ratios of the "
@@ -363,7 +365,7 @@ class InputfileGenerator():
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
         temp = input(
-            "Do you want to delete the input files after the execution?\n"
+            "\nDo you want to delete the input files after the execution?\n"
             "If the inpuf files are not deleted they are moved after "
             "execution to the result "
             "folder specified earlier. It could be usefull to keep the input "
@@ -383,14 +385,14 @@ class InputfileGenerator():
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
         temp = input(
-            "Please enter the path to the pressure type file.\n"
+            "\nPlease enter the path to the pressure type file.\n"
             "This file specifies how the pressure input is read in.\n"
             "For more details please see the documentaion\n"
         )
         self.input_data["pressure_type_file"] = temp
 
         temp = input(
-            "Do you want to enable TCCON mode? "
+            "\nDo you want to enable TCCON mode? "
             "This setting is only needed if you want to process "
             "interferograms which where recoreded with a TCCON-Spectrometer.\n"
             "Default: 'No'. Yes/No.\n"
@@ -412,7 +414,7 @@ class InputfileGenerator():
 
         if self.input_data["tccon_mode"] == "True":
             temp = input(
-                "What kind of TCCON setup do you use? Enter 1 or 2:\n"
+                "\nWhat kind of TCCON setup do you use? Enter 1 or 2:\n"
                 ": OPUS file containing one interferogram covering extended "
                 "InGaAs. Spectral range (standard TCCON setup)\n"
                 " 2: OPUS file containing two interferograms "
@@ -462,6 +464,7 @@ class InputfileGenerator():
             config_stream.write(new_line)
         templ_stream.close()
         config_stream.close()
+        print(f"\nWrote inputfile to {self.inptfl}")
 
     def _replace_backslash(self, line):
         """Replace backslash with slash if run on linux."""
