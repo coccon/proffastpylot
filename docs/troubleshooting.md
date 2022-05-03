@@ -2,18 +2,19 @@
 
 _(to be extended)_
 
-If you encounter any problems, please do not hesitate to contact us. We will update this documentation with the occurring problems.
+If you encounter any problems, please do not hesitate to contact us via email (benedikt.herkommer@kit.edu and lena.feld@kit.edu) or directly in GitLab.
+We will update this documentation with the occurring problems.
 
 
 ## Installation
 
 ### Problems creating a virtual environment
 
-If you have several python installations, where some are not included to your
+If you have several python installations, and some are not included to your
 PATH variable it might happen that the creation of an virtual environment
 results in  `Error: [WinError 2] The system cannot find the file specified`.      
 
-In this case the a solution can be to give to full path to your python
+In this case the solution can be to give to full path to your python
 executable whilst creating the virtual environment: `C:\path\to\your\python\python.exe -m venv prf_venv`
 
 
