@@ -178,7 +178,7 @@ class Pylot(FileMover):
             self.localdate_spectra = self.get_localdate_spectra()
         output = []
 
-        # the interpolated pressure is stored and can be 
+        # the interpolated pressure is stored and can be
         # accesed from self.pressure_handler
         self.pressure_handler.prepare_pressure_df()
 
@@ -267,6 +267,18 @@ class Pylot(FileMover):
                 "They are located in "
                 f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
             self.check_abscosbin_summed_size()
+
+        # handling pT and VMR files:
+        if self.delete_pT_VMR_files:
+            self.logger.debug("Deleting pT and VMR files...")
+            self.delete_pT_VMR_files()
+        else:
+            self.logger.info(
+                "Keeping pT and VMR files...\n"
+                "They are located in "
+                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
+            
+
 
         # handling input files
         if self.delete_input_files:

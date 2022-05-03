@@ -79,6 +79,7 @@ class InputfileGenerator():
         self.input_data["note"] = ""
 
         self.input_data["delete_abscosbin_files"] = "True"
+        self.input_data["delete_pT_and_VMR_files"] = "True"
         self.input_data["delete_input_files"] = "False"
         self.input_data["min_interferogram_size"] = 3.7
         self.input_data["start_with_spectra"] = "False"
@@ -245,9 +246,8 @@ class InputfileGenerator():
                                  "Number:\n")
             self.input_data["alt"] = temp
 
-        # TODO: Find out in which format the UTC-offset is needed.
         temp = input(
-            "\nIf your igrams have a UTC-offset plase give it "
+            "\nIf your have a UTC-offset plase give it "
             "here. If not just leave it empty and press enter: \n")
         self.input_data["utc_offset"] = temp
 
@@ -334,6 +334,24 @@ class InputfileGenerator():
                 break
             elif temp == "No":
                 self.input_data["delete_abscosbin_files"] = False
+                break
+            else:
+                temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
+
+        temp = input(
+            "Do you want to delete the pT and VMR files after the execution?\n"
+            "The pT files contain the daily a priori height profiles of"
+            " pressure, temperature, ... \n"
+            "The VMR files contain the a priori vertical mix ratios of the "
+            "gases."
+            "Delete files? Yes/No?\n"
+        )
+        while True:
+            if temp == "Yes":
+                self.input_data["delete_pT_and_VMR_files"] = True
+                break
+            elif temp == "No":
+                self.input_data["delete_pT_and_VMR_files"] = False
                 break
             else:
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")

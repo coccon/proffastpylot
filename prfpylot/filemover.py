@@ -146,8 +146,24 @@ class FileMover(Preparation):
                     self.logger.error("Unknown error while movig file "
                                       f"{source}. Errormessage: {e}")
 
+    def delete_pT_VMR_files(self):
+        """Delete the pT and VMR files created by pcxs."""
+        wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
+        for date in self.dates:
+            pTFile =\
+                f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
+            VMRFile =\
+                f"{self.site_name}{date.strftime('%y%m%d')}-VMR_fast_out.dat"
+            for file in [pTFile, VMRFile]:
+                try:
+                    os.remove(os.path.join(wrk_fast_folder, file))
+                except FileNotFoundError:
+                    self.logger.error(
+                        "File not Found: "
+                        f"Could not delete {file}")
+
     def delete_abscos_files(self):
-        """Delete the abscos.bin files."""
+        """Delete the abscos.bin files created by pcxs."""
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         for date in self.dates:
             filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
