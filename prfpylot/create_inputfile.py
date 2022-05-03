@@ -247,13 +247,19 @@ class InputfileGenerator():
             self.input_data["alt"] = temp
 
         temp = input(
-            "\nIf your have a UTC-offset plase give it "
-            "here. If not just leave it empty and press enter: \n")
+            "\nThe UTC-offset is the difference of the timestamp in you "
+            " interferograms to UTC-time.\n"
+            "This can occur e.g. if you are recording your data in localtime"
+            " or if the clock of your computer was set wrong.\n"
+            "If there is no time offset, leave it empty and press enter: \n")
         self.input_data["utc_offset"] = temp
 
         print(
             "\nIf you do not want to process all interferograms of your site\n"
             "you can now specify a start and stop date.\n"
+            "Please Note: These dates are relative to measurement times.\nThis"
+            " means that the dates have to be given in UTC if you have "
+            "measured in UTC.\n"
             "Leave it empty if you want to process all dates:")
         strt_stp = ["start", "end"]
         for i, strtstp in enumerate(strt_stp):
@@ -361,7 +367,7 @@ class InputfileGenerator():
             "If the inpuf files are not deleted they are moved after "
             "execution to the result "
             "folder specified earlier. It could be usefull to keep the input "
-            "files for to "
+            "files to "
             "find potential errors and to understand the evaluation after "
             "some time. "
             "Delete input files? Yes/No?\n"
@@ -377,7 +383,9 @@ class InputfileGenerator():
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.:\n")
 
         temp = input(
-            "Please enter the path to the pressure type file.\n "
+            "Please enter the path to the pressure type file.\n"
+            "This file specifies how the pressure input is read in.\n"
+            "For more details please see the documentaion\n"
         )
         self.input_data["pressure_type_file"] = temp
 
@@ -395,6 +403,10 @@ class InputfileGenerator():
                 self.input_data["tccon_mode"] = "False"
                 self.input_data["tccon_setting"] = 0
                 break
+            elif temp == "":
+                print("No input detected. Set to 'No'.")
+                self.input_data["tccon_mode"] = "False"
+                self.input_data["tccon_setting"] = 0
             else:
                 temp = input("Could not parse input. Enter 'Yes' or 'No'.\n")
 
