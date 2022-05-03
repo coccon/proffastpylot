@@ -76,4 +76,4 @@ For more information you can look at the pandas [documentation](https://pandas.p
 A UTC offset of the pressure file can be given as `utc_offset`.
 In `data_parameters` you can define minimum and maximum pressure values.
 
-The frequency of your files can be defined. Currently the frequencies `"dayly"`, `"subdayly"` and `"yearly"` are available.
+The frequency of your files can be defined. Currently the frequencies `"daily"`, `"subdaily"` and `"yearly"` are available.
