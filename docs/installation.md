@@ -103,6 +103,7 @@ proffastpylot
 │   ├── ...
 ├── example
 │   ├── input_sodankyla_example.yml
+│   ├── log_type_pressure.yml
 │   └── run.py
 ├── prf
 │   ├── docs
