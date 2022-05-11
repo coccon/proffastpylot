@@ -211,7 +211,7 @@ class PressureHandler():
 
     def _multiply_pressure_factor(self):
         """Multiply the pressure column with the pressure factor."""
-        pressure_key = self.data_parameters["pressure_key"]
+        pressure_key = self.dataframe_parameters["pressure_key"]
         self.p_df[pressure_key] *= self.pressure_factor
 
     def _parse_datetime_col(self, df, date=None):
