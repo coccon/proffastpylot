@@ -37,6 +37,12 @@ data_parameters:
 # Have to be given even if data is processed in localtime!
 utc_offset: 0.0
 
+# pressure factor:
+# The pressure column will be multiplied by this factor.
+# Can be used e.g. for unit conversion or to correct for hight differences.
+# The pressure column is assumed to be in hPa.
+pressure_factor: 1.0
+
 # Frequency of pressure files. Options are 
 # - subdaily: Several files per day
 # - daily: One single file per day

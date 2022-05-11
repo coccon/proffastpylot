@@ -39,6 +39,12 @@ class PressureHandler():
         "data_parameters",
         "frequency"
     ]
+
+    default_options = {
+        "utc_offset": 0.0,
+        "pressure_factor": 1.0
+    }
+
     parsed_dtcol = "parsed_datetime"
 
     def __init__(self, pressure_type_file, pressure_path, dates, logger):
@@ -62,8 +68,12 @@ class PressureHandler():
         for option, value in args.items():
             self.__dict__[option] = value
 
-        if self.utc_offset is None:
-            self.utc_offset = 0
+        for option, default in self.default_options.items():
+            if self.__dict__.get(option) is None:
+                self.__dict__[option] = default
+                self.logger.debug(
+                    f"The optional option {option} was set to the default "
+                    f"value: {default}.")
 
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
@@ -76,11 +86,18 @@ class PressureHandler():
 
     def prepare_pressure_df(self):
         """Read the pressure of a day, from files with a various frequencies.
+
+        The dataframe self.p_df is created as a object of the pressure_handler
+        instance Containing the pressure and a datetime column.
+
+        The pressure column is multiplied by the pressure_factor given in the 
+        pressure input file.
+
         """
         self.logger.debug("Execute prepare_pressure_df()...")
         frequency = self.frequency
 
-        # Create a list containing all pressure files:
+        # Create the p_df for different file frequencies
         if frequency == "subdaily":
             self._read_subdaily_files()
         elif frequency == "daily":
@@ -95,6 +112,8 @@ class PressureHandler():
             self._read_yearly_files()
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
+
+        self._multiply_pressure_factor()
 
     def get_pressure_at(self, timestamp):
         """ Return the pressure at timestamp
@@ -189,6 +208,11 @@ class PressureHandler():
         self.p_df[p_key] = np.where(
             self.p_df[p_key] < minVal, replace_val, self.p_df[p_key])
         self.p_df = self.p_df.dropna(subset=[p_key])
+
+    def _multiply_pressure_factor(self):
+        """Multiply the pressure column with the pressure factor."""
+        pressure_key = self.data_parameters["pressure_key"]
+        self.p_df[pressure_key] *= self.pressure_factor
 
     def _parse_datetime_col(self, df, date=None):
         """
