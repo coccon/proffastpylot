@@ -261,24 +261,18 @@ class Pylot(FileMover):
         if self.delete_abscosbin_files:
             self.logger.debug("Deleting abscos.bin files ...")
             self.delete_abscos_files()
+            self.logger.debug("Deleting pT and VMR files...")
+            self.delete_pT_VMR_files()
         else:
             self.logger.info(
                 "Keeping abscos.bin files ...\n"
                 "They are located in "
                 f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
             self.check_abscosbin_summed_size()
-
-        # handling pT and VMR files:
-        if self.delete_pT_VMR_files:
-            self.logger.debug("Deleting pT and VMR files...")
-            self.delete_pT_VMR_files()
-        else:
             self.logger.info(
                 "Keeping pT and VMR files...\n"
                 "They are located in "
                 f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
-            
-
 
         # handling input files
         if self.delete_input_files:

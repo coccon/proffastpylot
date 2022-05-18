@@ -66,7 +66,6 @@ class Preparation():
         "utc_offset": 0.0,
         "start_with_spectra": False,
         "delete_abscosbin_files": False,
-        "delete_pT_and_VMR_files": False,
         "delete_input_files": False,
         "min_interferogram_size": 3.7,
         "tccon_mode": False,
