@@ -238,7 +238,7 @@ class Preparation():
             i = self._get_end_date_pos(end_date, dates)
             dates = dates[:i]
 
-        print_date_list = [d.strftime(%Y-%m-%d) for d in dates]
+        print_date_list = [d.strftime("%Y-%m-%d") for d in dates]
         print_date_str = ", ".join(print_date_list)
         self.logger.info(
             "The following dates will be processed:\n"
