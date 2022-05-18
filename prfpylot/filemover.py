@@ -98,20 +98,27 @@ class FileMover(Preparation):
         # The result_foldername and result dir are already specified in
         # the init of prepare
         if os.path.exists(self.result_folder):
-            # check if already other backuped folder exist as well:
+            if self.backup_results is True:
+                # check if already other backuped folder exist as well:
 
-            backuped_results = glob(self.result_folder + "_backup*")
-            # rename existing folder by adding _backupN where N is the N-th
-            # backup
-            result_folder_backup = self.result_folder\
-                + f"_backup{len(backuped_results)}"
-            self.logger.warning(
-                f"The result directory {self.result_folder} exists already! "
-                "Renamed existing one to "
-                f"{result_folder_backup} and created a new one.")
-            # rename and create new, empty folder
-            os.rename(self.result_folder, result_folder_backup)
-            os.makedirs(self.result_folder)
+                backuped_results = glob(self.result_folder + "_backup*")
+                # rename existing folder by adding _backupN where N is the N-th
+                # backup
+                result_folder_backup = self.result_folder\
+                    + f"_backup{len(backuped_results)}"
+                self.logger.warning(
+                    f"The result directory {self.result_folder} exists "
+                    "already! "
+                    "Renamed existing one to "
+                    f"{result_folder_backup} and created a new one.")
+                # rename and create new, empty folder
+                os.rename(self.result_folder, result_folder_backup)
+                os.makedirs(self.result_folder)
+            else:  # backup_results is False
+                self.logger.warning(
+                    f"The result directory {self.result_folder} exists "
+                    "already! The content may be overwritten."
+                    )
         else:
             os.makedirs(self.result_folder)
 

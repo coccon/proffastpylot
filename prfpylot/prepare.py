@@ -67,6 +67,7 @@ class Preparation():
         "start_with_spectra": False,
         "delete_abscosbin_files": False,
         "delete_input_files": False,
+        "backup_results": True,
         "min_interferogram_size": 3.7,
         "tccon_mode": False,
         "ggg2020mapfiles": False  # do not give in input file!
