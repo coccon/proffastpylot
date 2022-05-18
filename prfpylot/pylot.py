@@ -334,7 +334,11 @@ class Pylot(FileMover):
 
     def _add_timezones_to(self, df):
         """Add UTC and local timezone at measurement location."""
-        df["JulianDate"] = df["JulianDate"]
+
+        # drop columns with JulianDate == 0
+        df["JulianDate"] = df["JulianDate"].replace(0., np.nan)
+        df.dropna(subset=["JulianDate"], inplace=True)
+
         df["UTC"] = pd.to_datetime(
             df["JulianDate"].values, origin="julian", unit="D", utc=True)
 
