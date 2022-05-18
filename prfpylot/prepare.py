@@ -227,7 +227,7 @@ class Preparation():
             sys.exit()
 
         date_str_list = [date.strftime("%y-%m-%d") for date in dates]
-        self.logger.info(
+        self.logger.debug(
             f"The following dates were found at {datapath[:-2]}: "
             f"{', '.join(date_str_list)}")
 
@@ -237,6 +237,12 @@ class Preparation():
         if end_date is not None:
             i = self._get_end_date_pos(end_date, dates)
             dates = dates[:i]
+
+        print_date_list = [d.strftime(%Y-%m-%d) for d in dates]
+        print_date_str = ", ".join(print_date_list)
+        self.logger.info(
+            "The following dates will be processed:\n"
+            f"{print_date_str}.")
 
         return dates
 
