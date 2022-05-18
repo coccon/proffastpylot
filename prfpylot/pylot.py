@@ -138,7 +138,7 @@ class Pylot(FileMover):
                     " Skip calculation..")
                 self.logger.info(message)
                 output.append(
-                    [message, "No return code", "No Error", "No call String"])
+                    [message, "No return code", "", "No call String"])
                 continue
             # Generate input files:
             inputfile = self.generate_prf_input("pcxs", date)
