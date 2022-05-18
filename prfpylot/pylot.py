@@ -336,6 +336,10 @@ class Pylot(FileMover):
         """Add UTC and local timezone at measurement location."""
 
         # drop columns with JulianDate == 0
+        if 0. in df["JulianDate"].values:
+            self.logger.warning(
+                "Spectrum in invparm.dat was skipped because it had entry "
+                "where JulianDate equaled 0.0!")
         df["JulianDate"] = df["JulianDate"].replace(0., np.nan)
         df.dropna(subset=["JulianDate"], inplace=True)
 
