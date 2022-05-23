@@ -6,6 +6,7 @@ date
 absco file
 pT detail dec (True/False)
 quiet run option (True/False)
+handle (single character is appended to the output files. For default behaviour choose 'X')
 $
 %DATAPATH%\%MEASUREMENT_DATE%
 %SITE%
@@ -13,7 +14,7 @@ $
 %SITE%%LOCAL_DATE%-abscos.bin
 .true.
 .true.
-
+%SUFFIX%
 
 Unrefracted (False / COCCON standard) or refracted (True) solar elevation in *.bin file?
 $

@@ -126,13 +126,14 @@ class FileMover(Preparation):
         """Move the results to the data folder.
         """
         suffix_list = [
-            "colsens.dat",
-            "invparms.dat",
-            "job01.spc",
-            "job02.spc",
-            "job03.spc",
-            "job04.spc",
-            "job05.spc"
+            "colsens_?.dat",
+            "invparms_?.dat",
+            "job01_?.spc",
+            "job02_?.spc",
+            "job03_?.spc",
+            "job04_?.spc",
+            "job05_?.spc",
+            "version_?.dat"
         ]
         source_folder = os.path.join(self.proffast_path, "out_fast")
         for date in self.dates:
@@ -141,17 +142,21 @@ class FileMover(Preparation):
             for suffix in suffix_list:
                 file = prefix + suffix
                 source = os.path.join(source_folder, file)
-                target = os.path.join(self.result_folder, file)
-                try:
-                    shutil.move(source, target)
-                except FileNotFoundError:
-                    self.logger.error(f"File {source} was not found!")
-                except PermissionError:
-                    self.logger.error(f"Could not write {target} due to "
-                                      "permission issues.")
-                except OSError as e:
-                    self.logger.error("Unknown error while movig file "
-                                      f"{source}. Errormessage: {e}")
+                sourcefiles = glob(source)
+                for sfile in sourcefiles:
+                    target = os.path.join(
+                        self.result_folder,
+                        os.path.basename(sfile))
+                    try:
+                        shutil.move(sfile, target)
+                    except FileNotFoundError:
+                        self.logger.error(f"File {sfile} was not found!")
+                    except PermissionError:
+                        self.logger.error(f"Could not write {target} due to "
+                                          "permission issues.")
+                    except OSError as e:
+                        self.logger.error("Unknown error while movig file "
+                                          f"{sfile}. Errormessage: {e}")
 
     def delete_pT_VMR_files(self):
         """Delete the pT and VMR files created by pcxs."""

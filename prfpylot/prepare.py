@@ -396,8 +396,9 @@ class Preparation():
                 f" inp file for {date_str}..")
             parameters = self.get_inv_parameters(date)
             prf_input_files = []
-            for i, parameter_i in enumerate(parameters):
-                prf_input_files.append(prf_input_file[:-4] + f"_{i}.inp")
+            for parameter_i in parameters:
+                suffix = parameter_i["SUFFIX"]
+                prf_input_files.append(prf_input_file[:-4] + f"_{suffix}.inp")
                 self.replace_params_in_template(
                     parameter_i, template_type, prf_input_files[-1])
             # safe inputfiles in global list to move/delete them later
@@ -612,13 +613,15 @@ class Preparation():
         """
         spectra_pT_input = self.get_spectra_pT_input(date)
         parameters = []
-        for sub_pT_input in spectra_pT_input:
+        charlist = ["a", "b", "c", "d", "e"]
+        for i, sub_pT_input in enumerate(spectra_pT_input):
             measurement_date = sub_pT_input[0][0:6]
             temp_parameters = {
                 "DATAPATH": self.analysis_instrument_path,
                 "MEASUREMENT_DATE": measurement_date,
                 "LOCAL_DATE": date.strftime("%y%m%d"),
                 "SITE": self.site_name,
+                "SUFFIX": charlist[i],
                 "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
             }
             parameters.append(temp_parameters)

@@ -322,7 +322,7 @@ class Pylot(FileMover):
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""
         search_str = os.path.join(
-            self.result_folder, "*-invparms.dat")
+            self.result_folder, f"{self.site_name}*-invparms_?.dat")
         invparms_filelist = glob(search_str)
 
         df_list = [
