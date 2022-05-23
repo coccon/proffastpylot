@@ -5,7 +5,7 @@ Create relevant folders.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
-Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
                         Karlsruhe Institut of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
@@ -52,7 +52,7 @@ class FileMover(Preparation):
     def _create_analysis_subdirs(self):
         """Create subdirs of the analysis folder.
 
-        Created folders: 
+        Created folders:
             - 'cal' (for the spectra),
             - 'VMR-dim' (VMR-files),
             - pT

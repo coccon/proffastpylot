@@ -364,7 +364,7 @@ class Preparation():
 
         Return:
             prf_input_file(s) (str, list of str or None):
-                In case of inverse multiple input 
+                In case of inverse multiple input
                 files are created if spectra of one measurement day belong to
                 different map files. If no spectra are, return None
         """
@@ -818,7 +818,7 @@ class Preparation():
         This method is only called for mapfiles of type GGG2020.
 
         params:
-            date (dt.datetime): datetime in local time (is called with 
+            date (dt.datetime): datetime in local time (is called with
                 elements of the localdate_spectra)
         """
         # create a timestamp of local noon
