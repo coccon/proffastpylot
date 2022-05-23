@@ -369,6 +369,7 @@ class Pylot(FileMover):
         sel_cols = [
             "UTC", "LocalTime",
             "JulianDate", "UTtimeh",
+            "spectrum",
             "gndP", "gndT",
             "latdeg", "londeg",
             "appSZA", "azimuth",
