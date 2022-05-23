@@ -242,12 +242,24 @@ class Pylot(FileMover):
             lambda x: x.strftime("%Y-%m-%d %X"))
 
         format_list = [
-            "%s", "%s", "%12.5f", "%6.1f", "%5.2f", "%5.2f", "%7.5f", "%7.5f",
-            "%4.2f", "%5.2f", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e",
-            "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e"
+            "%s", "%s", "%s", "%12.5f", "%6.1f", "%5.2f", "%5.2f", "%7.5f",
+            "%7.5f", "%4.2f", "%5.2f", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e",
+            "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e"
                       ]
+        # The headerstr formatted such, that the columns match with the
+        # data cols:
+        headerstr = (
+            "UTC,                 LocalTime,           spectrum,"
+            "            JulianDate,   UTtimeh, gndP,    gndT,   latdeg,   ",
+            "londeg,   appSZA, azimuth, XH2O,       XAIR,        XCO2,",
+            "        XCH4,        XCO,         XCH4_S5P,    H2O,         O2,",
+            "          CO2,         CH4,         CO,          CH4_S5P")
+        for key in df.keys():
+            if key not in headerstr:
+                headerstr = ", ".join(df.columns)
+                break
         np.savetxt(combined_file, df.values, fmt=format_list,
-                   delimiter=', ', header=', '.join(df.columns), comments='')
+                   delimiter=', ', header=headerstr, comments='')
 
         self.logger.info(
             "The combined results of PROFFAST were written "
@@ -337,9 +349,10 @@ class Pylot(FileMover):
 
         # drop columns with JulianDate == 0
         if 0. in df["JulianDate"].values:
+            spectrumList = df["spectrum"].loc[df["JulianDate"] == 0]
             self.logger.warning(
-                "Spectrum in invparm.dat was skipped because it had entry "
-                "where JulianDate equaled 0.0!")
+                "The following spectra in invparm.dat where skipped since "
+                "JulianDate equaled 0.0:\n" + "\n".join(spectrumList))
         df["JulianDate"] = df["JulianDate"].replace(0., np.nan)
         df.dropna(subset=["JulianDate"], inplace=True)
 
@@ -367,9 +380,8 @@ class Pylot(FileMover):
         df = df.rename(columns=rename)
 
         sel_cols = [
-            "UTC", "LocalTime",
+            "UTC", "LocalTime", "spectrum",
             "JulianDate", "UTtimeh",
-            "spectrum",
             "gndP", "gndT",
             "latdeg", "londeg",
             "appSZA", "azimuth",
