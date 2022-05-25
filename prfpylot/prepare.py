@@ -606,7 +606,7 @@ class Preparation():
         return parameters
 
     def get_inv_parameters(self, date):
-        """Return Parameters to replace in the invers10.inp file.
+        """Return Parameters to replace in the invers20.inp file.
         Returns:
             parameters(list): contains one or two dict depending on measurement
                               time. See get_spectra_pT_input docstring.
