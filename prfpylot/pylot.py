@@ -249,11 +249,12 @@ class Pylot(FileMover):
         # The headerstr formatted such, that the columns match with the
         # data cols:
         headerstr = (
-            "UTC,                 LocalTime,           spectrum,"
-            "            JulianDate,   UTtimeh, gndP,    gndT,   latdeg,   ",
-            "londeg,   appSZA, azimuth, XH2O,       XAIR,        XCO2,",
-            "        XCH4,        XCO,         XCH4_S5P,    H2O,         O2,",
+            "UTC,                 LocalTime,           spectrum," 
+            "            JulianDate,   UTtimeh, gndP,    gndT,   latdeg,   "
+            "londeg,   appSZA, azimuth, XH2O,      XAIR,        XCO2,"
+            "        XCH4,        XCO,         XCH4_S5P,    H2O,         O2,"
             "          CO2,         CH4,         CO,          CH4_S5P")
+        # Backup in case something changed:
         for key in df.keys():
             if key not in headerstr:
                 headerstr = ", ".join(df.columns)
