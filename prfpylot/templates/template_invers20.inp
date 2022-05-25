@@ -10,7 +10,7 @@ handle (single character is appended to the output files. For default behaviour 
 $
 %DATAPATH%\%MEASUREMENT_DATE%
 %SITE%
-%MEASUREMENT_DATE%
+%LOCAL_DATE%
 %SITE%%LOCAL_DATE%-abscos.bin
 .true.
 .true.
