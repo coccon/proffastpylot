@@ -110,10 +110,15 @@ class PressureHandler():
                 f"{frequency} frequency not implemented yet.")
         elif frequency == "yearly":
             self._read_yearly_files()
+        elif frequency == "unregular":
+            self._read_unregular_files()
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
 
         self._multiply_pressure_factor()
+        # Reset index to let in be unique
+        self.p_df.reset_index(drop=True, inplace=True)
+
 
     def get_pressure_at(self, timestamp):
         """ Return the pressure at timestamp
@@ -129,20 +134,56 @@ class PressureHandler():
         inds.sort()
         i1 = inds[0]
         i2 = inds[1]
+        t1 = self.p_df.loc[i1][self.parsed_dtcol]
+        t2 = self.p_df.loc[i2][self.parsed_dtcol]
+        if not (t1 < timestamp and t2 > timestamp):
+            if i1 == 0 or i2 == len(self.p_df) - 1:
+                # at the beginning of the dataseries, data will be extrapolated
+                self.logger.warning(
+                    f"No pressure data available for {timestamp}."
+                    "Pressure data will be linear extrapolated!")
+            else:
+                # for not equistant data this case can happen
+                if t2 < timestamp:
+                    i2 += 1
+                    i1 += 1
+                if t1 > timestamp:
+                    i1 -= 1
+                    i2 -= 1
+                t1 = self.p_df.loc[i1][self.parsed_dtcol]
+                t2 = self.p_df.loc[i2][self.parsed_dtcol]
+
         m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
-            / abs(
-                    (self.p_df.loc[i2][self.parsed_dtcol]
-                     - self.p_df.loc[i1][self.parsed_dtcol]).total_seconds()
-                 )
+            / abs((t2 - t1).total_seconds())
+
+        if np.isnan(m):
+            m = 0
+            self.logger.warning(
+                "There was unknown Error whilst interpolating the pressure "
+                f"for datetime {timestamp}."
+                "Take the non inpterpolated nearest neighbour instead"
+            )
+
         p = m * \
-            (timestamp - self.p_df.loc[i1][self.parsed_dtcol]).total_seconds()\
+            (timestamp - t1).total_seconds()\
             + self.p_df.loc[i1][pkey]
+        # Good for debuging:
+        # if timestamp.hour == 13:
+        #     print("==============")
+        #     print(f"timestamp: {timestamp}")
+        #     print(self.p_df.loc[i1-1:i2+1, ["TIMESTAMP", "parsed_datetime","BP_CS115"]])
+        #     print(f"i1: {i1}, i2: {i2}")
+        #     print(f"p1: {self.p_df.loc[i1][pkey]},p2: {self.p_df.loc[i2][pkey]}")
+        #     print(f"Final value: p = {p}")
+        #     print("===============")
+
         return p
 
     def _read_subdaily_files(self):
         """Reads the subdaily AND daily files into the internal p_df
         """
         for day in self.dates:
+
             daily_df = pd.DataFrame()
             filename = self._get_filename(day)
             dataloggerFileList = glob.glob(
@@ -150,13 +191,18 @@ class PressureHandler():
             dataloggerFileList.sort()
             # get all files of one day and concat them:
             for file in dataloggerFileList:
+                # print(f"Read in file {file}")
                 temp = pd.read_csv(
                     file,
                     **(self.dataframe_parameters["csv_kwargs"]))
-                daily_df = pd.concat([temp, daily_df])
+                daily_df = pd.concat([daily_df, temp])
+                # print(daily_df)
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
+        
         self.p_df.reset_index(drop=True, inplace=True)
+        # print(self.p_df)
+        # a = input("enter to continue")
         self._parse_pressure()
 
     def _read_yearly_files(self):
@@ -183,6 +229,21 @@ class PressureHandler():
             temp = pd.read_csv(
                 fileList[0],
                 **(self.dataframe_parameters["csv_kwargs"]))
+            df = pd.concat([df, temp])
+        df = self._parse_datetime_col(df)
+        self.p_df = df
+        self._parse_pressure()
+
+    def _read_unregular_files(self):
+        """read unregular files. Save the result in self.p_df DataFrame"""
+        params = self.filename_parameters
+        filename = "".join([params["basename"], "*", params["ending"]])
+        file_list = glob.glob(os.path.join(self.pressure_path, filename))        
+
+        df = pd.DataFrame()
+        for file in file_list:
+            temp = pd.read_csv(
+                file, **(self.dataframe_parameters["csv_kwargs"]))
             df = pd.concat([df, temp])
         df = self._parse_datetime_col(df)
         self.p_df = df
