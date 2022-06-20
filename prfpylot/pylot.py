@@ -249,7 +249,7 @@ class Pylot(FileMover):
         # The headerstr formatted such, that the columns match with the
         # data cols:
         headerstr = (
-            "UTC,                 LocalTime,           spectrum," 
+            "UTC,                 LocalTime,           spectrum,"
             "            JulianDate,   UTtimeh, gndP,    gndT,   latdeg,   "
             "londeg,   appSZA, azimuth, XH2O,      XAIR,        XCO2,"
             "        XCH4,        XCO,         XCH4_S5P,    H2O,         O2,"
