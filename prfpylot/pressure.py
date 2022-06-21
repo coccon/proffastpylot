@@ -119,7 +119,6 @@ class PressureHandler():
         # Reset index to let in be unique
         self.p_df.reset_index(drop=True, inplace=True)
 
-
     def get_pressure_at(self, timestamp):
         """ Return the pressure at timestamp
         params:
@@ -142,6 +141,16 @@ class PressureHandler():
                 self.logger.warning(
                     f"No pressure data available for {timestamp}."
                     "Pressure data will be linear extrapolated!")
+                # print("==============")
+                # print("IN GET PRESSURE: USING DATAFRAME:", self.p_df)
+                # print(f"timestamp: {timestamp}")
+                # print(self.p_df.loc[i1-1:i2+1])
+                # print(f"i1: {i1}, i2: {i2}")
+                # print(f"t1: {t1}, t2: {t2}")
+                # print(
+                #   f"p1: {self.p_df.loc[i1][pkey]},"
+                #   f"p2: {self.p_df.loc[i2][pkey]}")
+                # print("===============")
             else:
                 # for not equistant data this case can happen
                 if t2 < timestamp:
@@ -152,7 +161,12 @@ class PressureHandler():
                     i2 -= 1
                 t1 = self.p_df.loc[i1][self.parsed_dtcol]
                 t2 = self.p_df.loc[i2][self.parsed_dtcol]
-
+        if abs((t2 - t1).total_seconds()) / 3600 > 6:
+            self.logger.warning(
+                "Pressure is interpolated for a time range larger than 6 h "
+                f"for date {timestamp}. This might give wrong results!"
+                "Please check the input data for this day."
+            )
         m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
             / abs((t2 - t1).total_seconds())
 
@@ -167,16 +181,6 @@ class PressureHandler():
         p = m * \
             (timestamp - t1).total_seconds()\
             + self.p_df.loc[i1][pkey]
-        # Good for debuging:
-        # if timestamp.hour == 13:
-        #     print("==============")
-        #     print(f"timestamp: {timestamp}")
-        #     print(self.p_df.loc[i1-1:i2+1, ["TIMESTAMP", "parsed_datetime","BP_CS115"]])
-        #     print(f"i1: {i1}, i2: {i2}")
-        #     print(f"p1: {self.p_df.loc[i1][pkey]},p2: {self.p_df.loc[i2][pkey]}")
-        #     print(f"Final value: p = {p}")
-        #     print("===============")
-
         return p
 
     def _read_subdaily_files(self):
@@ -188,6 +192,7 @@ class PressureHandler():
             filename = self._get_filename(day)
             dataloggerFileList = glob.glob(
                 os.path.join(self.pressure_path, filename))
+            # print("Files to read in: ", dataloggerFileList)
             dataloggerFileList.sort()
             # get all files of one day and concat them:
             for file in dataloggerFileList:
@@ -196,13 +201,8 @@ class PressureHandler():
                     file,
                     **(self.dataframe_parameters["csv_kwargs"]))
                 daily_df = pd.concat([daily_df, temp])
-                # print(daily_df)
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
-        
-        self.p_df.reset_index(drop=True, inplace=True)
-        # print(self.p_df)
-        # a = input("enter to continue")
         self._parse_pressure()
 
     def _read_yearly_files(self):
@@ -280,6 +280,10 @@ class PressureHandler():
         parse the dataframe for a suitable datetime.
         Add the column 'parsed_datecol' to the dataframe
         """
+        if len(df) == 0:
+            self.logger.warning(
+                f"For date {date} an empty dataset is read in!")
+            return df
         df_args = self.dataframe_parameters
         time_key = df_args["time_key"]
         time_fmt = df_args["time_fmt"]
@@ -298,21 +302,41 @@ class PressureHandler():
                 # no date key avaliable as well. Do only take the time from
                 # file.
                 # day is taken from call day
-                df[self.parsed_dtcol] = pd.to_datetime(
-                    df[time_key], format=time_fmt)
+                try:
+                    df[self.parsed_dtcol] = pd.to_datetime(
+                        df[time_key], format=time_fmt)
+                except KeyError:
+                    self.logger.critical(
+                        f"Could not access key {time_key} in pressure data."
+                        "Exit Program.")
+                    exit()
 
                 df[self.parsed_dtcol] = df[self.parsed_dtcol].apply(
                     lambda x: x.replace(
                         day=date.day, month=date.month, year=date.year))
             else:
                 # combine two columns to datetime
-                df[self.parsed_dtcol] = pd.to_datetime(
-                    df[date_key] + df[time_key],
-                    format=date_fmt+time_fmt)
+                try:
+                    df[self.parsed_dtcol] = pd.to_datetime(
+                        df[date_key] + df[time_key],
+                        format=date_fmt+time_fmt)
+                except KeyError:
+                    self.logger.critical(
+                        f"Could not find key {date_key} or {time_key} in "
+                        f"pressure data for date {date}. Exit Program.")
+                    self.logger.debug(f"The dataframe is: {df}")
+                    exit()
         else:
             # seems that a datetime column is available:
-            df[self.parsed_dtcol] = pd.to_datetime(
-                df[dt_key], format=dt_fmt)
+            try:
+                df[self.parsed_dtcol] = pd.to_datetime(
+                    df[dt_key], format=dt_fmt)
+            except KeyError:
+                self.logger.critical(
+                    f"Could not fine key {dt_key} in "
+                    "pressure data. Exit Program.")
+                exit()
+
         return df
 
     def _get_filename(self, date):
