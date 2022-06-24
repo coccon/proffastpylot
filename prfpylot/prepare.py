@@ -70,7 +70,8 @@ class Preparation():
         "backup_results": True,
         "min_interferogram_size": 3.7,
         "tccon_mode": False,
-        "ggg2020mapfiles": False  # do not give in input file!
+        "ggg2020mapfiles": False,  # do not give in input file!
+        "ils_parameters": None
     }
 
     def __init__(self, input_file, logginglevel="info"):
@@ -135,6 +136,19 @@ class Preparation():
 
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')
+
+        # ILS parameters; if set in input file
+        if self.ils_parameters is not None:
+            self.ils_parameters = tuple(self.ils_parameters)
+            # check for correct length
+            if len(self.ils_parameters) != 4:
+                raise ValueError(
+                    "You must either give all 4 ILS Parameters, or None."
+                    f"Given ILS Parameters were {self.ils_parameters}.")
+            self.logger.warning(
+                "Individual ILS Parameters were used, the parameters were not "
+                "taken from the official COCCON ILS list!\n"
+                f"Used ILS Parameters: {self.ils_parameters}.")
 
         self.analysis_instrument_path = os.path.join(
                     self.analysis_path,
@@ -544,7 +558,10 @@ class Preparation():
 
     def get_prep_parameters(self, date):
         """Return Parameters to be replaced in the pereprocess input file."""
-        ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
+        if self.ils_parameters is None:
+            ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
+        else:
+            ME1, PE1, ME2, PE2 = self.ils_parameters
         lat = self.coords["lat"]
         lon = self.coords["lon"]
         alt = self.coords["alt"]
@@ -687,11 +704,15 @@ class Preparation():
         return spectra_pT_input
 
     def get_ils_from_file(self, date):
-        """
-        This methods reads the ILS from the Instrument_list.
-        If return_string=True, it returns a string which is already
-        preformatted such that it can be inserted into the template file
-        directly.
+        """Read the ILS parameters form the given file.
+
+        Parameters:
+            date (dt.datetime): If multiple ILS Parameters are given in the
+                list, get the newest ILS parameters, that are already valid
+                at date.
+
+        Returns:
+            ils_parameters (tuple): MEChan1, PEChan1, MEChan2, PEChan2
         """
         if self.tccon_mode:
             return (0.983, 0., 0.983, 0.)
