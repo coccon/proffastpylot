@@ -36,7 +36,6 @@ import pytz
 import fortranformat
 import inspect
 import codecs
-from random import randint
 
 
 class Preparation():
