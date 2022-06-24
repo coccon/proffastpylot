@@ -76,7 +76,7 @@ class Preparation():
     def __init__(self, input_file, logginglevel="info"):
         self.logger = self.get_logger(logginglevel=logginglevel)
         self.logger.info(
-            "++++ Welcome to PROFFASTpylot ++++\n")
+            "++++ Welcome to PROFFASTpylot ++++")
         self.logger.debug("Start reading input file...")
 
         # read input file
@@ -89,7 +89,7 @@ class Preparation():
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
                 self.logger.critical(
-                    f"Mandatory option {option} not given in the inpuf file"
+                    f"Mandatory option {option} not given in the input file"
                     f" file {input_file}!")
                 sys.exit()
 
@@ -181,9 +181,9 @@ class Preparation():
         logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
         cwd = os.getcwd()
-        self.generalLogfile = os.path.join(cwd, "GeneralLogfile.log")
-        logfile = os.path.join("GeneralLogfile.log")
-        FHandler = logging.FileHandler(logfile, mode='w')
+        logfile_name = "pylot_{r}.log"
+        self.pylot_log = os.path.join(cwd, logfile_name)
+        FHandler = logging.FileHandler(logfile_name, mode='w')
 
         if logginglevel == "debug":
             StreamHandler.setLevel(logging.DEBUG)
@@ -202,6 +202,8 @@ class Preparation():
             style='{')
         StreamHandler.setFormatter(StreamFormat)
         FHandler.setFormatter(StreamFormat)
+
+        logger.debug(f"Initialized logger with number {r}.")
         return logger
 
     def get_dates(self, start_date=None, end_date=None):
@@ -241,9 +243,14 @@ class Preparation():
 
         print_date_list = [d.strftime("%Y-%m-%d") for d in dates]
         print_date_str = ", ".join(print_date_list)
+
+        # print run information
         self.logger.info(
+            "Run information:\n"
+            f"Retrieval for Instrument {self.instrument_number} "
+            f"at {self.site_name} with time offset {self.utc_offset}.\n"
             "The following dates will be processed:\n"
-            f"{print_date_str}.")
+            f"{print_date_str}.\n")
 
         return dates
 

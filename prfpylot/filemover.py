@@ -228,13 +228,13 @@ class FileMover(Preparation):
                 self.logger.error(
                     "File not found: "
                     f"Could not move {type} input file"
-                    f" {inp_file}")
+                    f" {inp_file}.")
 
     def _create_logfile_dir(self):
         """Create logfile dir if is does not exist."""
         if not os.path.exists(self.logfile_path):
             self.logger.debug(
-                f"Logfile path did not exist, create {self.logfile_path}")
+                f"Logfile path did not exist, create {self.logfile_path}.")
             os.makedirs(self.logfile_path)
         self.logger.debug(f"Logfile_path: {self.logfile_path}")
 
@@ -250,18 +250,18 @@ class FileMover(Preparation):
                 del handler
             # self.logger.handlers[:][1].close()
         target = os.path.join(self.logfile_path,
-                              os.path.basename(self.generalLogfile))
+                              os.path.basename(self.pylot_log))
         try:
-            shutil.move(self.generalLogfile, target)
+            shutil.move(self.pylot_log, target)
             self.logger.debug(
                 "Moved the general logfile to the"
-                " result/logfiles folder")
+                " result/logfiles folder.")
         except (FileNotFoundError) as e:
-            self.logger.debug(f"\nsource: {self.generalLogfile} "
+            self.logger.debug(f"\nsource: {self.pylot_log} "
                               f"\ntarget: {target}")
             self.logger.debug(e)
             self.logger.error("Could not move logfile to new logfile dir! "
-                              f"File is located in: {self.generalLogfile}")
+                              f"File is located in: {self.pylot_log}")
 
     def _move_prf_config_file(self):
         """Copy the PROFFASTpylot input file to the result folder."""
