@@ -189,13 +189,13 @@ class Preparation():
 
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
-        r = str(randint(10000, 99999))
-        logger = logging.getLogger(r)
+        pid = os.getpid()
+        logger = logging.getLogger(pid)
         # set logging to debug to record everything in the first place
         logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
         cwd = os.getcwd()
-        logfile_name = "pylot_{r}.log"
+        logfile_name = f"pylot_{pid}.log"
         self.pylot_log = os.path.join(cwd, logfile_name)
         FHandler = logging.FileHandler(logfile_name, mode='w')
 
@@ -217,7 +217,7 @@ class Preparation():
         StreamHandler.setFormatter(StreamFormat)
         FHandler.setFormatter(StreamFormat)
 
-        logger.debug(f"Initialized logger with number {r}.")
+        logger.debug(f"Initialized logger with pid {pid}.")
         return logger
 
     def get_dates(self, start_date=None, end_date=None):
