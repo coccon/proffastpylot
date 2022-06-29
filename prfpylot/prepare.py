@@ -36,6 +36,7 @@ import pytz
 import fortranformat
 import inspect
 import codecs
+from random import randint
 
 
 class Preparation():
@@ -188,13 +189,13 @@ class Preparation():
 
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
-        pid = os.getpid()
-        logger = logging.getLogger(pid)
+        r = str(randint(10000, 99999))
+        logger = logging.getLogger(r)
         # set logging to debug to record everything in the first place
         logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
         cwd = os.getcwd()
-        logfile_name = f"pylot_{pid}.log"
+        logfile_name = f"pylot_{r}.log"
         self.pylot_log = os.path.join(cwd, logfile_name)
         FHandler = logging.FileHandler(logfile_name, mode='w')
 
@@ -216,7 +217,7 @@ class Preparation():
         StreamHandler.setFormatter(StreamFormat)
         FHandler.setFormatter(StreamFormat)
 
-        logger.debug(f"Initialized logger with pid {pid}.")
+        logger.debug(f"Initialized logger with random number {r}.")
         return logger
 
     def get_dates(self, start_date=None, end_date=None):
