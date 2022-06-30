@@ -384,7 +384,7 @@ class Pylot(FileMover):
             "UTC", "LocalTime", "spectrum",
             "JulianDate", "UTtimeh",
             "gndP", "gndT",
-            "latdeg", "londeg",
+            "latdeg", "londeg", "altim",
             "appSZA", "azimuth",
             "XH2O", "XAIR",
             "XCO2", "XCH4",
