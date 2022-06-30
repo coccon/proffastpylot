@@ -246,21 +246,8 @@ class Pylot(FileMover):
             "%7.5f", "%4.2f", "%5.2f", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e",
             "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e"
                       ]
-        # The headerstr formatted such, that the columns match with the
-        # data cols:
-        headerstr = (
-            "UTC,                 LocalTime,           spectrum,"
-            "            JulianDate,   UTtimeh, gndP,    gndT,   latdeg,   "
-            "londeg,   appSZA, azimuth, XH2O,      XAIR,        XCO2,"
-            "        XCH4,        XCO,         XCH4_S5P,    H2O,         O2,"
-            "          CO2,         CH4,         CO,          CH4_S5P")
-        # Backup in case something changed:
-        for key in df.keys():
-            if key not in headerstr:
-                headerstr = ", ".join(df.columns)
-                break
         np.savetxt(combined_file, df.values, fmt=format_list,
-                   delimiter=', ', header=headerstr, comments='')
+                   delimiter=', ', comments='')
 
         self.logger.info(
             "The combined results of PROFFAST were written "
