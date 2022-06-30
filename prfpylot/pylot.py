@@ -230,11 +230,13 @@ class Pylot(FileMover):
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
 
-        resultfile = "combined_invparms_{}_{}-{}.csv".format(
-                            self.site_name,
-                            self.dates[0].strftime("%Y%m%d"),
-                            self.dates[-1].strftime("%Y%m%d")
-                            )
+        dt_format = "%y%m%d"
+        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
+            self.site_name,
+            self.instrument_number,
+            self.dates[0].strftime(dt_format),
+            self.dates[-1].strftime(dt_format)
+        )
         combined_file = os.path.join(
             self.result_folder, resultfile)
         df["UTC"] = df["UTC"].apply(lambda x: x.strftime("%Y-%m-%d %X"))

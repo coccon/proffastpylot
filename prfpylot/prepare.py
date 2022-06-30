@@ -162,8 +162,8 @@ class Preparation():
                 self.logger.critical("Give TCCON setting in TCCON mode!")
                 sys.exit()
 
-        dt_format = "%Y%m%d"
-        result_foldername = "{}_{}_{}_{}".format(
+        dt_format = "%y%m%d"
+        result_foldername = "{}_{}_{}-{}".format(
             self.site_name,
             self.instrument_number,
             self.dates[0].strftime(dt_format),
