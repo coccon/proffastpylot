@@ -244,12 +244,39 @@ class Pylot(FileMover):
             lambda x: x.strftime("%Y-%m-%d %X"))
 
         format_list = [
-            "%s", "%s", "%s", "%12.5f", "%6.1f", "%5.2f", "%5.2f", "%7.5f",
-            "%7.5f", "%4.2f", "%5.2f", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e",
-            "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e"
-                      ]
-        np.savetxt(combined_file, df.values, fmt=format_list,
-                   delimiter=', ', comments='')
+            "%s",  # UTC
+            "%s",  # LocalTime
+            "%s",  # spectrum
+            "%12.5f",  # JulianDate
+            "%6.1f",  # UTtimeh
+            "%5.2f",  # gndP
+            "%5.2f",  # gndT
+            "%7.5f",  # latdeg
+            "%7.5f",  # londeg
+            "%7.3f",  # altim
+            "%4.2f",  # appSZA
+            "%5.2f",  # azimuth
+            "%.5e",  # XH20
+            "%.5e",  # XAIR
+            "%.5e",  # XCO2
+            "%.5e",  # XCH4
+            "%.5e",  # XCO
+            "%.5e",  # XCH4_S5P
+            "%.5e",  # H20
+            "%.5e",  # O2
+            "%.5e",  # CO2
+            "%.5e",  # CH4
+            "%.5e",  # CO
+            "%.5e"  # CH4_S5P
+        ]
+
+        header = ", ".join(df.columns)
+        np.savetxt(
+            combined_file, df.values,
+            header=header,
+            fmt=format_list,
+            delimiter=', ',
+            comments='')
 
         self.logger.info(
             "The combined results of PROFFAST were written "
