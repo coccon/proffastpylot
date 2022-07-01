@@ -62,6 +62,12 @@ class Pylot(FileMover):
 
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""
+        if self.start_with_spectra is True:
+            self.logger.info(
+                "Running with option: 'start_with_spectra', "
+                "skipping preprocessing. ...\n")
+            return
+
         self.logger.info(
             f"Running preprocess with {n_processes} task(s) ...")
         # check if TCCON Mode is activated. If yes create the tccon input file

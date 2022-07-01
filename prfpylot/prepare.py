@@ -106,6 +106,11 @@ class Preparation():
         # inspect.getsourcefile needes __init__.py!
         self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
 
+        # define full path <analysis>/<site>_<instrument_nr>
+        self.analysis_instrument_path = os.path.join(
+                    self.analysis_path,
+                    f"{self.site_name}_{self.instrument_number}")
+
         # path to the PROFFAST executables
         if args.get("proffast_path") is None:
             head, _ = os.path.split(self.prfpylot_path)
@@ -127,7 +132,8 @@ class Preparation():
         # make relative paths absolute
         paths = [
             "map_path", "pressure_path", "pressure_type_file",
-            "interferogram_path", "analysis_path", "result_path"]
+            "interferogram_path", "analysis_path", "result_path",
+            "analysis_instrument_path"]
         for path in paths:
             self.__dict__[path] = os.path.abspath(self.__dict__[path])
 
@@ -149,10 +155,6 @@ class Preparation():
                 "Individual ILS Parameters were used, the parameters were not "
                 "taken from the official COCCON ILS list!\n"
                 f"Used ILS Parameters: {self.ils_parameters}.")
-
-        self.analysis_instrument_path = os.path.join(
-                    self.analysis_path,
-                    f"{self.site_name}_{self.instrument_number}")
 
         # check if tccon mode is activated. Raise warning if it is activated
         if self.tccon_mode is True:
@@ -228,11 +230,11 @@ class Preparation():
             start_date (dt.date): optional start date
             end_date (dt.date): optional end date
         """
-        if not self.start_with_spectra:
+        if self.start_with_spectra is False:
             self.logger.debug(
                 "Searching for all interferogram folders ...")
             datapath = os.path.join(self.interferogram_path, "*")
-        else:
+        elif self.start_with_spectra is True:
             self.logger.debug(
                 "Searching for all spectra folders ...")
             datapath = os.path.join(self.analysis_instrument_path, "*")
