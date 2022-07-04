@@ -125,7 +125,7 @@ class Pylot(FileMover):
         self.logger.info("Finished preprocessing.\n")
 
     def run_pcxs(self, n_processes=1):
-        """Run pxcs.
+        """Run pcxs.
         If n_processes > 1, run_pcxs_at is
         called directly. Otherwise it is called via run_parallel
         """
@@ -171,7 +171,7 @@ class Pylot(FileMover):
             pool = multiprocessing.Pool(processes=n_processes)
             temp = pool.map(subs_method, inputfile_list)
             output.extend(temp)
-        self._write_logfile("pcsx", output)
+        self._write_logfile("pcxs", output)
         self.logger.info("Finished pcxs.\n")
 
     def run_inv(self, n_processes=1):
