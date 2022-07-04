@@ -15,3 +15,4 @@ GeneralLogfile.log
 prf_venv/
 .vscode/settings.json
 hdf_test
+KA_LongTerm/
