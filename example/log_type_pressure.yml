@@ -49,5 +49,8 @@ pressure_factor: 1.0
 # - weekly: One single file per Week
 # - monthly: One single file per month
 # - yearly: One single file per year
-# 
+# - unregular: Unregular spaced files.
+#              Please note: Algorithm is not very stable. It does not take into
+#                           account any datetime but only the basename and
+#                           ending.
 frequency: "subdaily"

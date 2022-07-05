@@ -203,6 +203,8 @@ class PressureHandler():
                 daily_df = pd.concat([daily_df, temp])
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
+        
+        self.p_df.reset_index(drop=True, inplace=True)
         self._parse_pressure()
 
     def _read_yearly_files(self):
