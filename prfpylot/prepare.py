@@ -821,7 +821,10 @@ class Preparation():
         return line
 
     def prepare_map_file(self, date):
-        """Generate map file if GGG2020 map file"""
+        """Generate map file if GGG2020 map file.
+        Returns True if map files where found and created, False if no files
+        where found.
+        """
         # search for GGG2020 map files:
         srchstrg = f"{self.site_abbrev}_*_*Z.map"
         mapfiles = glob(os.path.join(self.map_path, srchstrg))
@@ -837,10 +840,11 @@ class Preparation():
                 self.logger.debug("Detected GGG2014 map file!")
                 self.ggg2020mapfiles = False
             else:
-                self.logger.critical(
+                self.logger.warning(
                     "No suitable map file found at "
                     f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
-                sys.exit()
+                return False
+        return True
 
     def _interpolate_map_files(self, date):
         """Interpolate GGG2020 map files.
@@ -874,7 +878,7 @@ class Preparation():
              glob(os.path.join(self.map_path, search_str)))
         mapfiles.sort()
 
-        # find the right map files: bevore and after the hour of noon_utc
+        # find the correct map files: bevore and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
         for i, file in enumerate(mapfiles):

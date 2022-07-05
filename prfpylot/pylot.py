@@ -33,6 +33,7 @@ from timezonefinder import TimezoneFinder
 import pytz
 import numpy as np
 from functools import partial
+from copy import deepcopy
 
 
 class Pylot(FileMover):
@@ -131,11 +132,12 @@ class Pylot(FileMover):
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
         output = []
-
+        self.logger.debug("Get localdate spectra...")
         self.localdate_spectra = self.get_localdate_spectra()
         wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
         inputfile_list = []
-        for date, spectra in self.localdate_spectra.items():
+        temp = deepcopy(self.localdate_spectra)
+        for date, spectra in temp.items():
             # Check if absos file is there, skip
             srchstrg = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
             if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
@@ -146,12 +148,17 @@ class Pylot(FileMover):
                 output.append(
                     [message, "", "No return code", "No call String"])
                 continue
+            # Generate/find map files
+            success = self.prepare_map_file(date)
+            if not success:
+                self.logger.warning(
+                    f"Skip day {date} since no map file is present")
+                self.localdate_spectra.pop(date)
+                continue
             # Generate input files:
             inputfile = self.generate_prf_input("pcxs", date)
             inputfile_list.append(inputfile)
 
-            # Generate/find map files
-            self.prepare_map_file(date)
 
         pcxs_exe = self._get_executable("pcxs")
         # store the path to change the cwd for the popen commmand
