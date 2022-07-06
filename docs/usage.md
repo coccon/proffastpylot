@@ -31,7 +31,7 @@ The input file (stored in the yaml format) contains all the key information requ
 An example with explanations (`example_sodankyla_input.yml`) is provided. It contains all options that are required to process the example data set.
 Adjust this file to your requirements.
 
-Alternatively, PROFFASTpylot provides an interactive tool to create an input file.  
+Alternatively, PROFFASTpylot provides an interactive tool to create an input file.
 You can run
 ```
 python prfpylot/create_inputfile.py
@@ -50,22 +50,25 @@ input_file = "input_sodankyla_example.yml"
 MyPylot = Pylot(input_file)
 ```
 
-Afterwards you can either run all steps of PROFFAST individually with the following commands:
+Afterwards all steps of PROFFAST can be executed automatically one after the other:
 
 ```python
-n_processes = 2
-try:
-    MyPylot.run_preprocess(n_processes)
-    MyPylot.run_pcxs(n_processes)
-    MyPylot.run_inv(n_processes)
-    MyPylot.combine_results()
-finally:
-    MyPylot.clean_files()
+if __name__ == "__main__":
+    MyPylot.run(n_processes)
 ```
-Or run all these steps automatically one after the other by the command
+
+Alternatively you can run all steps of PROFFAST individually with the following commands:
 
 ```python
-my_pylot.run(n_processes)
+if __name__ == "__main__":
+    n_processes = 2
+    try:
+        MyPylot.run_preprocess(n_processes)
+        MyPylot.run_pcxs(n_processes)
+        MyPylot.run_inv(n_processes)
+        MyPylot.combine_results()
+    finally:
+        MyPylot.clean_files()
 ```
 
 You can execute `run.py` to test this with the example data provided.
@@ -73,11 +76,11 @@ You can execute `run.py` to test this with the example data provided.
 
 ## 2. Special case: Process spectra directly
 
-If the spectra are already available, set the option `start_with_spectra` to `True` in the input file.  
+If the spectra are already available, set the option `start_with_spectra` to `True` in the input file.
 The path to the spectra is given to PROFFASTpylot by the entry `analysis_path`.
 Note, that the folder `analysis_path` must have the
 following substructure: `analysis/SiteName_InstrumentNumber/YYMMDD`.  
-Afterwards, run the functions `run_pcxs`, `run_inv` and `combine_results`.
+Afterwards, `Pylot.run()` will not execute preprocess.
 
 ## 3. Folder structure
 

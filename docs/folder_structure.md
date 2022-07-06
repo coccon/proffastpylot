@@ -1,14 +1,20 @@
-# Folder Structure
+# Structuring of the Retrieval
 
-This articles gives an overview about the folder structure used by PROFFASTpylot.    
-The needed folders can be divided into three categories:
+With using PROFFASTpylot most of the folder structure can be chosen freely.
+This articles gives an overview about the needed folders and files.
+
+
+The needed folders and files can be divided into four categories
+
  1. Input data: Interferograms, pressure files, map files
  2. Output data: Spectra, results of the processing, config files
- 3. PROFFAST path: the folder where the binaries of the PROFFAST files are located
+ 3. Program Files: This includes the folder to the PROFFAST binaries as well as the `proffastpylot` directory (see note below).
+ 4. Steering Files: input files and run files for specific runs
 
- Please note that those three folders do not have to be in the same parent folder.
- The user is free to choose the folder structure as he likes.  
-_However, to run the example files using [`run.py`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) the folder structure must be as given in [`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md)_
+ All paths can be chosen freely (e.g. input data can be located on a external hard disk).
+ **We recommend disentangling input data, output data and the program execution files from each other.**
+
+_Note: To run the example files using [`run.py`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) PROFFAST must be located inside the proffastpylot directory as described in [`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md)._
 
 ## 1. Input data
 
@@ -37,9 +43,9 @@ interferogram_path
 ```
 
 ### Pressure input
-Inside the `pressure_path` for each day of measurements a pressure file should be provided.
-The filename should include the date information, apart from this the naming and the format of the file are flexible.
-More information on the input of pressure data can be found in [`docs/pressure_input.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/pressure_input.md).
+Inside the `pressure_path` pressure measurements for each measurement day should be provided.
+The frequency of the files (e.g. monthly or daily) and the formatting is flexible.
+In the `pressure_type_file` the file format can be defined. See [`docs/pressure_input.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/pressure_input.md), how the pressure type file is organized.
 
 
 ### Map Files
@@ -54,7 +60,7 @@ Two output paths have to be specified: the `analysis_path` and the `result_path`
 
 ### Analysis path
 Day-specific output files are written to the analysis folder by PROFFAST automatically.
-The analysis folder has the following structure:
+The analysis folder is created with the following structure:
 
 ```
 analysis_path
@@ -64,7 +70,7 @@ analysis_path
 |	├──YYMMDD
 ...
 ```
-Inside the `YYMMDD` folder are the spectra, which are named `YYMMDD_HHMMSSSN.BIN` (or `SM.BIN`). Note that this timestamp as well as the folder name correspond to the measurement time. 
+Inside the `YYMMDD` folder the spectra, which are named `YYMMDD_HHMMSSSN.BIN` (or `SM.BIN`) will be located. Note that this timestamp as well as the folder name correspond to the measurement time. 
 The UTC time of the measurement, that is derived from the variable `utc_offset` in `preprocess`, is written to the header of the spectrum. For more information on time offsets, see [`docs/time_offsets.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/time_offsets.md).
 
 The files that were located in `YYMMDD/pT` are handled elsewhere since version 1.1. 
@@ -76,33 +82,38 @@ single file `combined_invparms_<site_name>_StartStopDates<YYYYMMDD>_<YYYYMMDD>.c
 Furhtermore the logfiles of the runs are stored in `result_path/logfiles`.
 
 
-## 3. The PROFFAST path
+## 3. Program Files
 
-PROFFASTpylot needs the information where the binaries of the PROFFAST folder
-are stored in. This information is passed to PROFFASTpylot by `<proffast_path>`.
+In principle the `proffastpylot` directory can be located elsewhere than the PROFFAST binaries.
+The location can be given as `proffast_path` in the inputfile.
+The default is `proffastpylot/prf`
+
+## 4. Steering Files
+
+The input files and python scripts that calls proffastpylot do not need to be located inside the `proffastpylot` directory.
 
 
 # Example for a possible folder structure:
-An example of how a folder structure could look like is given below.
-```
-D:\EM27_InputData
-    ├── coords.csv
-    ├── interferograms_sodankyla
-    ├── map_sodankyla
-    └── pressure_sodankyla
 
+An example how a folder structure could look like is given below (most sub-directories are created automatically).
+```
+E:\EM27_Sodankyla_RawData
+    ├── interferograms
+    ├── map
+    └── pressure
 
 D:\EM27_OutputData
     ├── analysis
     │    └── Sodankyla_SN039
-    └── result_data
-        └── results_sodankyla
-
+    │       └── cal
+    └── results
+         └── Sodankyla_SN039_170608-170609
+            ├── logfiles
+            ├── ...
+            └── comb_invparms_Sodankyla_SN039_170608-170608.csv
 
 D:\proffastpylot
     ├── docs
-    ├── run_sodankyla.py
-    ├── input_sodankyla.yml
     ├── prf
     │    ├── pxcs20.exe
     │    ├── invers20.exe
@@ -114,16 +125,26 @@ D:\proffastpylot
     │    ├── ...
     │    └── wrk_fast
     └── prfpylot
-        ├── ILS-List.csv
-        ├── prepare.py
-        ├── ...
-        └── templates
-              └── ...
+        └── ...
 
+D:\Sodankyla_Retrieval
+    ├── run_sodankyla.py
+    ├── sodankyla_pressure_type.yml
+    ├── sodankyla_coords.csv
+    └── input_sodankyla.yml
 ```
-In this example some of the paths would be:
+
+In this example the relevant paths given in the input file would be
 ```
-proffast_path: D:\proffastpylot\prf
-interferogram_path: D:\EM27_InputData\interferograms_sodankyla
+coord_file: sodankyla_coords.csv
+
+interferogram_path: E:\EM27_Sodankyla_RawData\interferograms
+map_path: E:\EM27_Sodankyla_RawData\map
+pressure_path: E:\EM27_Sodankyla_RawData\pressure
+
+pressure_type_file: sodankya_pressure_type.yml
+
 analysis_path: D:\EM27_OutputData\analysis
+result_path: D:\EM27_OutputData\results
 ```
+Note that paths can also be relative.

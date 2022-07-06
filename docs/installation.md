@@ -45,7 +45,7 @@ https://www.imk-asf.kit.edu/english/3225.php
 
 **For Linux users**: Run the installation script to create the executables. 
 ```
-./install_proffast_linux.sh
+bash install_proffast_linux.sh
 ```
 For Windows users, the executables are already provided.
 
@@ -53,13 +53,6 @@ For Windows users, the executables are already provided.
 ### Copy the PROFFAST directory into `proffastpylot`
 
 Copy the PROFFAST directory into `proffastpylot` and rename it to `prf`.
-
-**For Linux Users**: Instead copying the directory you can create a symlink with e.g.
-```
-ln -s /path/to/proffast /path/to/proffastpylot/prf
-```
-
-
 
 ## 3. Create a virtual environment in python
 
@@ -69,16 +62,16 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 3. Enter `python -m venv prf_venv`
    This command will create a folder named `prf_venv` which contains the virtual environment
 4. Activate the virtual environment with
-   - *Windows PowerShell:* `.\prf_venv\Scripts\Activate.ps1`  
-   - *Windows Commandline:* `.\prf_venv\Scripts\activate` 
+   - *Windows PowerShell:* `.\prf_venv\Scripts\Activate.ps1`
+   - *Windows Commandline:* `.\prf_venv\Scripts\activate`
    - *Linux:* `source ./prf_venv/bin/activate`
 5. To deactivate run `deactivate`
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
 In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/troubleshooting.md) page.
 
-You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4.
-
+You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4,
+the other steps need to be executed only the first time.
 
 
 ## 4. Install the PROFFASTpylot repository

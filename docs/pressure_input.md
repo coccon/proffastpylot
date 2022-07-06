@@ -18,10 +18,12 @@ Two parameters in the main input file specify how the pressure is handled by PRO
 
 ## Pressure type file
 
-For users using the dataformat in the KIT-style, a example pressure type file is provided in `example/log_type_pressure.yml`
+For users using the data format in the KIT-style, a example pressure type file is provided in `example/log_type_pressure.yml`
 The pressure files recorded by the KIT datalogger need to be placed inside the `pressure_path`.
 
 To adapt this file two your own type of files, the most important options are explained in the following.
+
+
 
 ### Filename parameters
 
@@ -73,7 +75,7 @@ For more information you can look at the pandas [documentation](https://pandas.p
 
 # Additional Options
 
-A UTC offset of the pressure file can be given as `utc_offset`.
-In `data_parameters` you can define minimum and maximum pressure values.
-
-The frequency of your files can be defined. Currently the frequencies `"daily"`, `"subdaily"` and `"yearly"` are available.
+- A UTC offset of the pressure file can be given as `utc_offset`.
+- In `data_parameters` you can define minimum and maximum pressure values.
+- The `frequency` of your files can be defined. Currently the frequencies `"daily"`, `"subdaily"` and `"yearly"` are available.
+- The `pressure_factor` is multiplied to the pressure values. It can be used to correct for a height offset or a different unit. The pressure is expected to be given in hPa.
