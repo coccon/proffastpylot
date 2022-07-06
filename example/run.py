@@ -1,18 +1,14 @@
-from prfpylot.create_inputfile import InputfileGenerator
+# Check if example input data is already available on disk, if not download it.
+# This is not needed for your personal PROFASTpylot steering file
 from prfpylot.download_example import ExampleDownloadHandler
+ExampleDownloadHandler().check_and_download_example_data()
+
+
+# The following part can be adapted to your own retrieval
 from prfpylot.pylot import Pylot
 
+input_file = "input_sodankyla_example.yml"
+MyPylot = Pylot(input_file, logginglevel="info")
+
 if __name__ == "__main__":
-
-    # check if data is already available on disk. If not download it
-    MyDownloader = ExampleDownloadHandler()
-    MyDownloader.check_and_download_example_data()
-
-    # create the input file for the example data
-    MyInputfileGenerator = InputfileGenerator()
-    input_file = "input_sodankyla_example.yml"
-    MyInputfileGenerator.generate_sod_example(input_file)
-
-    # create prfPylot and run PROFFAST using the prfPylot
-    MyPylot = Pylot(input_file, logginglevel="info")
     MyPylot.run(n_processes=2)
