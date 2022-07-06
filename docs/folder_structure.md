@@ -1,17 +1,15 @@
 # Structuring of the Retrieval
 
-With using PROFFASTpylot most of the folder structure can be chosen freely.
-This articles gives an overview about the needed folders and files.
-
-
-The needed folders and files can be divided into four categories
+With PROFFASTpylot most of the folder structure can be chosen freely.
+This article gives an overview about the needed folders and files.
+They can be divided into four categories:
 
  1. Input data: Interferograms, pressure files, map files
  2. Output data: Spectra, results of the processing, config files
  3. Program Files: This includes the folder to the PROFFAST binaries as well as the `proffastpylot` directory (see note below).
  4. Steering Files: input files and run files for specific runs
 
- All paths can be chosen freely (e.g. input data can be located on a external hard disk).
+ All paths can be chosen freely (e.g. input data can be located on an external hard disk).   
  **We recommend disentangling input data, output data and the program execution files from each other.**
 
 _Note: To run the example files using [`run.py`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) PROFFAST must be located inside the proffastpylot directory as described in [`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md)._
@@ -77,15 +75,15 @@ The files that were located in `YYMMDD/pT` are handled elsewhere since version 1
 
 ### Result path
 In the result folder run-specific information is stored.
-In ths folder the retrieval of all days are stored. Those files are merged to a
-single file `combined_invparms_<site_name>_StartStopDates<YYYYMMDD>_<YYYYMMDD>.csv`.
-Furhtermore the logfiles of the runs are stored in `result_path/logfiles`.
+In the folder the retrieval of all days are stored. Those files are merged to a
+single file `comb_invparms_<site_name>_<instrument_nr>_<YYMMDD>-<YYMMDD>.csv`.
+Furthermore the logfiles of the runs are stored in `result_path/logfiles`.
 
 
 ## 3. Program Files
 
 In principle the `proffastpylot` directory can be located elsewhere than the PROFFAST binaries.
-The location can be given as `proffast_path` in the inputfile.
+The location can be given as `proffast_path` in the input file.
 The default is `proffastpylot/prf`
 
 ## 4. Steering Files
@@ -112,7 +110,13 @@ D:\EM27_OutputData
             ├── ...
             └── comb_invparms_Sodankyla_SN039_170608-170608.csv
 
-D:\proffastpylot
+D:\Sodankyla_Retrieval
+    ├── run_sodankyla.py
+    ├── sodankyla_pressure_type.yml
+    ├── sodankyla_coords.csv
+    └── input_sodankyla.yml
+
+D:\proffastpylot (does not contain any personal data)
     ├── docs
     ├── prf
     │    ├── pxcs20.exe
@@ -126,16 +130,10 @@ D:\proffastpylot
     │    └── wrk_fast
     └── prfpylot
         └── ...
-
-D:\Sodankyla_Retrieval
-    ├── run_sodankyla.py
-    ├── sodankyla_pressure_type.yml
-    ├── sodankyla_coords.csv
-    └── input_sodankyla.yml
 ```
 
 In this example the relevant paths given in the input file would be
-```
+```yaml
 coord_file: sodankyla_coords.csv
 
 interferogram_path: E:\EM27_Sodankyla_RawData\interferograms
