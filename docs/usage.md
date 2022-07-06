@@ -31,14 +31,6 @@ The input file (stored in the yaml format) contains all the key information requ
 An example with explanations (`example_sodankyla_input.yml`) is provided. It contains all options that are required to process the example data set.
 Adjust this file to your requirements.
 
-Alternatively, PROFFASTpylot provides an interactive tool to create an input file.
-You can run
-```
-python prfpylot/create_inputfile.py
-```
-A step by step wizard helps you to generate the input file for your site.
-
-
 #### Starting the processing
 
 For starting the processing you need to create an instance of the Pylot class with an input file.
