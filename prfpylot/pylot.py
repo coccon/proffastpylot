@@ -366,6 +366,9 @@ class Pylot(FileMover):
         search_str = os.path.join(
             self.result_folder, f"{self.site_name}*-invparms_?.dat")
         invparms_filelist = glob(search_str)
+        if len(invparms_filelist) == 0:
+            raise RuntimeError(
+                "Retrieval did not produce any *invparms*.dat files")
 
         df_list = [
             pd.read_csv(file, delimiter=",", skipinitialspace=True)
