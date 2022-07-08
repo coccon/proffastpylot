@@ -12,16 +12,13 @@
 ## 1. General use
 
 **Ready-to-use Example**  
-We explain the usage of the PROFFASTpylot with the help of an example from Sodankyla which is provided as `example/run.py`.
+You can follow the usage of PROFFASTpylot with the help of an example from Sodankyla which is provided as `example/run.py`.
 The example input data (i.e. the example interferogram, map- and pressure files) are downloaded automatically when running `run.py` the first time.
-Furthermore, it generates the `input_sodankyla_example.yml` file matching the paths on your computer.
-
-It is a ready to use example where all needed input files are downloaded and created automatically.
-
+The runscript needs to be executed inside the `example` folder.
 
 ### Executing PROFFAST with the PROFFASTpylot takes two steps
 1. Create an input file with the required information
-2. Execute PROFFASTpylot via a Python script.
+2. Execute PROFFASTpylot via a Python script
 
 Both steps will be explained in more detail, in the following.
 
@@ -38,21 +35,21 @@ For starting the processing you need to create an instance of the Pylot class wi
 ```python
 from prfpylot.pylot import Pylot
 
-input_file = "input_sodankyla_example.yml"
-MyPylot = Pylot(input_file)
+if __name__ == "__main__":
+    input_file = "input_sodankyla_example.yml"
+    MyPylot = Pylot(input_file)
 ```
+Note that the `if __name__ == "__main__"` statement needs to be put before initialising the Pylot to prevent problems with the multiprocessing on Windows.
 
 Afterwards all steps of PROFFAST can be executed automatically one after the other:
 
 ```python
-if __name__ == "__main__":
     MyPylot.run(n_processes)
 ```
 
 Alternatively you can run all steps of PROFFAST individually with the following commands:
 
 ```python
-if __name__ == "__main__":
     n_processes = 2
     try:
         MyPylot.run_preprocess(n_processes)
