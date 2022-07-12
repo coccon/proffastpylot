@@ -159,7 +159,6 @@ class Pylot(FileMover):
             inputfile = self.generate_prf_input("pcxs", date)
             inputfile_list.append(inputfile)
 
-
         pcxs_exe = self._get_executable("pcxs")
         # store the path to change the cwd for the popen commmand
         exec_path = os.path.dirname(pcxs_exe)
