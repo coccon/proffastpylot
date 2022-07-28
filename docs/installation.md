@@ -64,7 +64,7 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 4. Activate the virtual environment with
    - *Windows PowerShell:* `.\prf_venv\Scripts\Activate.ps1`
    - *Windows Commandline:* `.\prf_venv\Scripts\activate`
-   - *Linux:* `source ./prf_venv/bin/activate`
+   - *Linux:* `source prf_venv/bin/activate`
 5. To deactivate run `deactivate`
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
