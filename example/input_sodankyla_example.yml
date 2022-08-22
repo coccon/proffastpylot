@@ -40,6 +40,16 @@ coord_file: input_data/coords.csv
 # default: 0.0
 utc_offset: 
 
+# ILS parameters
+# WARNING: we recommend using the official ILS parameters distributed with
+# PROFFASTpylot in prfpylot/ILSList.csv.
+# This will be used automatically if ils_parameter are not given in the input
+# file.
+# ils_parameters:
+#   - 1.0  # Modulation Efficiency Channel 1
+#   - 0.0  # Phase Error Channel 1
+#   - 1.0  # Modulation Efficiency Channel 2
+#   - 0.0  # Phase Error Channel 2
 
 
 #############
