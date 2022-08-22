@@ -1,7 +1,5 @@
 # Troubleshooting
 
-_(to be extended)_
-
 If you encounter any problems, please do not hesitate to contact us via email (benedikt.herkommer@kit.edu and lena.feld@kit.edu) or directly in GitLab.
 We will update this documentation with the occurring problems.
 

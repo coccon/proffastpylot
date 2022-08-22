@@ -88,7 +88,7 @@ The default is `proffastpylot/prf`
 
 ## 4. Steering Files
 
-The input files and python scripts that calls proffastpylot do not need to be located inside the `proffastpylot` directory.
+The input files and python scripts that call proffastpylot do not need to be located inside the `proffastpylot` directory.
 
 
 # Example for a possible folder structure:

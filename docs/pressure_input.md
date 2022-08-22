@@ -4,7 +4,7 @@ _The pressure input was reorganized in version 1.1_
 
 This article explains how to handle pressure data with PROFFASTpylot.
 To perform the retrieval PROFFAST needs pressure data from the measurement site.
-PROFFAST 2.1 reads in this data together with the spectra in the invers input file.
+PROFFAST 2.2 reads in this data together with the spectra in the invers input file.
 A template for this file can be found in the `prfpylot/templates` folder.
 The `pT_intraday.inp` file is deprecated, the interpolation of the pressure is handled by PROFFASTpylot.
 
