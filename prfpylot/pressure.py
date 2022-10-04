@@ -119,6 +119,16 @@ class PressureHandler():
         # Reset index to let in be unique
         self.p_df.reset_index(drop=True, inplace=True)
 
+        # print df.head for debug purposes
+        df_args = self.dataframe_parameters
+        p_key = df_args["pressure_key"]
+        df_print = self.p_df[[self.parsed_dtcol, p_key]]
+        self.logger.debug(
+            "Created pressure DataFrame:\n\n"
+            "# start of self.p_df #\n"
+            f"{df_print.head()}\n"
+            )
+
     def get_pressure_at(self, timestamp):
         """ Return the pressure at timestamp
         params:
@@ -167,15 +177,21 @@ class PressureHandler():
                 f"for date {timestamp}. This might give wrong results!"
                 "Please check the input data for this day."
             )
+        if (t2 - t1).total_seconds() == 0:
+            self.logger.warning(
+                "Encountered duplicate times! Please check if\n"
+                "a) the time is parsed correctly (look for the pressure "
+                "DataFrame printout in the debug mode) and\n"
+                "b) if there are duplicate times in your pressure file."
+                )
         m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
             / abs((t2 - t1).total_seconds())
 
         if np.isnan(m):
             m = 0
             self.logger.warning(
-                "There was unknown Error whilst interpolating the pressure "
-                f"for datetime {timestamp}."
-                "Take the non inpterpolated nearest neighbour instead"
+                f"The interpolated pressure at {timestamp} is NaN! "
+                "Take the non interpolated nearest neighbor instead."
             )
 
         p = m * \
