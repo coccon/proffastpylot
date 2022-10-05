@@ -62,6 +62,7 @@ class PressureHandler():
         self.dates = dates
         self.logger = logger
         self.pressure_path = pressure_path
+        self.interpolation_failed_at = []
 
         with open(pressure_type_file, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
@@ -177,22 +178,24 @@ class PressureHandler():
                 f"for date {timestamp}. This might give wrong results!"
                 "Please check the input data for this day."
             )
-        if (t2 - t1).total_seconds() == 0:
-            self.logger.warning(
-                "Encountered duplicate times! Please check if\n"
-                "a) the time is parsed correctly (look for the pressure "
-                "DataFrame printout in the debug mode) and\n"
-                "b) if there are duplicate times in your pressure file."
-                )
+        # if (t2 - t1).total_seconds() == 0:
+        #     self.logger.warning(
+        #         "Encountered duplicate times! Please check if\n"
+        #         "a) the time is parsed correctly (look for the pressure "
+        #         "DataFrame printout in the debug mode) and\n"
+        #         "b) if there are duplicate times in your pressure file."
+        #         )
+        # end program here?
         m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
             / abs((t2 - t1).total_seconds())
 
         if np.isnan(m):
             m = 0
-            self.logger.warning(
-                f"The interpolated pressure at {timestamp} is NaN! "
-                "Take the non interpolated nearest neighbor instead."
-            )
+            self.interpolation_failed_at.append(timestamp)
+            # self.logger.warning(
+            #     f"The interpolated pressure at {timestamp} is NaN! "
+            #     "Take the non interpolated nearest neighbor instead."
+            # )
 
         p = m * \
             (timestamp - t1).total_seconds()\

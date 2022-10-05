@@ -217,6 +217,18 @@ class Pylot(FileMover):
             pool = multiprocessing.Pool(processes=n_processes)
             output = pool.map(subs_method, all_inputfiles)
 
+        # check for failed interpolation of pressure
+        n_failed_interpolation = len(
+            self.pressure_handler.interpolation_failed_at)
+        if n_failed_interpolation > 0:
+            self.logger.error(
+                "The interpolated pressure was NaN! This occured "
+                f"{n_failed_interpolation} times. Check if the time is parsed "
+                "correctly and if there are duplicates in the pressure data. "
+                "The interpolation failed at the following times: "
+                f"{' '.join(n_failed_interpolation)}."
+                )
+
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
 
