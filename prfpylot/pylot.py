@@ -218,16 +218,32 @@ class Pylot(FileMover):
             output = pool.map(subs_method, all_inputfiles)
 
         # check for failed interpolation of pressure
-        n_failed_interpolation = len(
-            self.pressure_handler.interpolation_failed_at)
+        interpolation_failed_at = self.pressure_handler.interpolation_failed_at
+        n_failed_interpolation = len(interpolation_failed_at)
         if n_failed_interpolation > 0:
-            self.logger.error(
-                "The interpolated pressure was NaN! This occured "
-                f"{n_failed_interpolation} times. Check if the time is parsed "
-                "correctly and if there are duplicates in the pressure data. "
-                "The interpolation failed at the following times: "
-                f"{' '.join(n_failed_interpolation)}."
+            failed_list_print = " ".join(
+                [
+                    d.strftime("%Y-%m-%d %H:%M:%S")
+                    for d in interpolation_failed_at
+                    ]
                 )
+            self.logger.error(
+                "The interpolated pressure was NaN!\n"
+                f"This occured {n_failed_interpolation} times. Check if the "
+                "time is parsed correctly and if there are duplicates in the "
+                "pressure data. The interpolation failed at the following "
+                "times:\n"
+                f"{failed_list_print}.\n"
+                "If this is due to unaivaoidable overlap from different "
+                "pressure files and only occured in limited time ranges, "
+                "there is an option to continue execution. Set\n"
+                "ignore_interpolation_error: True\n"
+                "in the PROFFASTpylot input file."
+                )
+            if self.ignore_interpolation_error is not True:
+                raise RuntimeError("The interpolated pressure was NaN!")
+            else:
+                self.logger.warning("The interpolation error was ignored!")
 
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")

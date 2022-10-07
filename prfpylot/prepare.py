@@ -71,7 +71,8 @@ class Preparation():
         "min_interferogram_size": 3.7,
         "tccon_mode": False,
         "ggg2020mapfiles": False,  # do not give in input file!
-        "ils_parameters": None
+        "ils_parameters": None,
+        "ignore_interpolation_error": None,
     }
 
     def __init__(self, input_file, logginglevel="info"):
