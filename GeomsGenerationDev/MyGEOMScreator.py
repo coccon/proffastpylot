@@ -130,17 +130,22 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
         df = self.get_invparms_content(day) # invparms file
 
       # After applying the quality filter for SZA and XAIR (see get_invparms_content),
-      # at least 12 remaining measurements per measurement day are required to generate an HDF5 file.
+      # at least 11 (or 12 ???) remaining measurements per measurement day are required to generate an HDF5 file.
 
-      # if df == -1:
-      #     print (df, type(df))
-      #     return
+      # print (df, type(df))
+        if df is None:
+            print ('HDF file generation stopped while reading invparms file!')
+            return
 
       # Get additional information from the colsens, pT_fast_out, and VMR_fast_out PROFFAST output files.
 
         vmr = self.get_vmr_content(day)      # VMR file
         ptf = self.get_pt_content(day)       # pT file
         sen = self.get_colsens_int(df, day)  # col sens file (including a sza interpolation)
+
+        if (vmr is None) or (ptf is None) or (sen is None):
+            print ('HDF file generation stopped while reading VMR, pT, or colsens file!')
+            return
 
       # Write all variables for generating the GEOMS compliant HDF5 files.
 
@@ -288,12 +293,21 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
       # Each VMR file (i.e. VMR_fast_out.dat) contains:
       # 0: "Index", 1: "Altitude", 2: "H2O", 3: "HDO", 4: "CO2", 5: "CH4", 6: "N2O", 7: "CO", 8: "O2", 9: "HF"
 
-        vmr = pd.read_csv(self._get_pt_vmr_file(day, "VMR"), header=None, skipinitialspace=True, \
-            usecols=[0,1,2,3,4,5,6,7,8,9], \
-            names=['Index','Altitude','H2O','HDO','CO2','CH4','N2O','CO','O2','HF'], \
-            sep=' ', engine='python')
+        try:
+            vmr = pd.read_csv(self._get_pt_vmr_file(day, "VMR"), header=None, skipinitialspace=True, \
+                usecols=[0,1,2,3,4,5,6,7,8,9], \
+                names=['Index','Altitude','H2O','HDO','CO2','CH4','N2O','CO','O2','HF'], \
+                sep=' ', engine='python')
 
-        return vmr
+            return vmr
+        except:
+            print ("Error: Reading VMR file!")
+            print (self._get_pt_vmr_file(day, "VMR"))
+            return None
+      # else:
+      #     print ("Failure: Reading VMR file!")
+      #     print (self._get_pt_vmr_file(day, "VMR"))
+      #     return None
 
 
     def get_pt_content(self, day):
@@ -302,11 +316,20 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
       # Each pT file (i.e. pT_fast_out.dat) contains:
       # 0: "Index", 1: "Altitude", 2: "Temperature", 3: "Pressure", 4: "DryAirColumn", 5: "H2O", 6: "HDO"
 
-        ptf = pd.read_csv(self._get_pt_vmr_file(day, "pT"), header=0, skipinitialspace=True, \
-            usecols=[0,1,2,3,4,5,6], names=['Index','Altitude','Tem','Pre','DAC','H2O','HDO'], \
-            sep=' ', engine='python')
+        try:
+            ptf = pd.read_csv(self._get_pt_vmr_file(day, "pT"), header=0, skipinitialspace=True, \
+                usecols=[0,1,2,3,4,5,6], names=['Index','Altitude','Tem','Pre','DAC','H2O','HDO'], \
+                sep=' ', engine='python')
 
-        return ptf
+            return ptf
+        except:
+            print ("Error: Reading pT file!")
+            print (self._get_pt_vmr_file(day, "pT"))
+            return None
+      # else:
+      #     print ("Failure: Reading PT file!")
+      #     print (self._get_pt_vmr_file(day, "pT"))
+      #     return None
 
 
     def get_invparms_content(self, day):
@@ -331,50 +354,68 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
 
       # Check if the second CO channel exists.
 
-        with open(path,'r') as file:
-            header = file.readline().split('\t') # skip header line
-            for line in file:
-                line = re.sub(' +', ' ', line)
-                line = line.split(' ')
-              # line = line.split('\t')
-                if line[21] == 'NaN': continue # incomplete line
-                CO_avg += float(line[21])
-                CO_lnr += 1.0
+        try:
+            with open(path,'r') as file:
+                header = file.readline().split('\t') # skip header line
+                for line in file:
+                    line = re.sub(' +', ' ', line)
+                    line = line.split(' ')
+                  # line = line.split('\t')
+                    if line[21] == 'NaN': continue # incomplete line
+                    CO_avg += float(line[21])
+                    CO_lnr += 1.0
 
-            CO_avg = CO_avg / CO_lnr
+                CO_avg = CO_avg / CO_lnr
 
-            file.close
+                file.close
+        except:
+            print ("Error: Open invparms file! (1)")
+            print (path)
+            return None
+      # else:
+      #     print ("Failure: Open invparms file! (1)")
+      #     print (path)
+      #     return None
 
       # Apply several quality checks on the data set (e.g. XAIR, SZA, XCO, etc.).
 
-        with open(path,'r') as file:
-            header = file.readline() # read header line
-            header = re.sub(' +', ' ', header)
-            header = header.split(' ')
+        try:
+            with open(path,'r') as file:
+                header = file.readline() # read header line
+                header = re.sub(' +', ' ', header)
+                header = header.split(' ')
 
-            for line in file:
-                line = re.sub(' +', ' ', line)
-                line = line.split(' ')
+                for line in file:
+                    line = re.sub(' +', ' ', line)
+                    line = line.split(' ')
 
-                if float(line[8])  > self.input_args['QUALITY_FILTER_SZA']:      continue # data filter for SZA greater than 75 deg
-                if float(line[12]) < self.input_args['QUALITY_FILTER_XAIR_MIN']: continue # data filter for XAIR smaller than 0.98
-                if float(line[12]) > self.input_args['QUALITY_FILTER_XAIR_MAX']: continue # data filter for XAIR greater than 1.02
+                    if float(line[8])  > self.input_args['QUALITY_FILTER_SZA']:      continue # data filter for SZA greater than 75 deg
+                    if float(line[12]) < self.input_args['QUALITY_FILTER_XAIR_MIN']: continue # data filter for XAIR smaller than 0.98
+                    if float(line[12]) > self.input_args['QUALITY_FILTER_XAIR_MAX']: continue # data filter for XAIR greater than 1.02
 
-                if line[10] == 'NaN': continue # incomplete line XH2O
-                if line[14] == 'NaN': continue # incomplete line XCO2
-                if line[17] == 'NaN': continue # incomplete line XCH4
-                if line[21] == 'NaN': continue # incomplete line XCO
+                    if line[10] == 'NaN': continue # incomplete line XH2O
+                    if line[14] == 'NaN': continue # incomplete line XCO2
+                    if line[17] == 'NaN': continue # incomplete line XCH4
+                    if line[21] == 'NaN': continue # incomplete line XCO
 
-                if float(line[10]) == 0.0: continue # data filter for XH2O equal zero
-                if float(line[14]) == 0.0: continue # data filter for XCO2 equal zero
-                if float(line[17]) == 0.0: continue # data filter for XCH4 equal zero
-              # if float(line[21]) == 0.0: continue # data filter for XCO equal zero (instrument with second channel)
-                if (CO_avg >  0.0) and (float(line[21]) == 0.0): continue               # data filter for XCO equal zero (instrument with second channel)
-                if (CO_avg == 0.0) and (float(line[21]) == 0.0): line[21] = '-900000.0' # data filter for XCO equal zero (instrument without second channel, fill value -900000.0)
+                    if float(line[10]) == 0.0: continue # data filter for XH2O equal zero
+                    if float(line[14]) == 0.0: continue # data filter for XCO2 equal zero
+                    if float(line[17]) == 0.0: continue # data filter for XCH4 equal zero
+                  # if float(line[21]) == 0.0: continue # data filter for XCO equal zero (instrument with second channel)
+                    if (CO_avg >  0.0) and (float(line[21]) == 0.0): continue               # data filter for XCO equal zero (instrument with second channel)
+                    if (CO_avg == 0.0) and (float(line[21]) == 0.0): line[21] = '-900000.0' # data filter for XCO equal zero (instrument without second channel, fill value -900000.0)
 
-                lines.append(line)
+                    lines.append(line)
 
-            file.close
+                file.close
+        except:
+            print ("Error: Open invparms file! (2)")
+            print (path)
+            return None
+      # else:
+      #     print ("Failure: Open invparms file! (2)")
+      #     print (path)
+      #     return None
 
       # Extract the required information from the data set
       # and apply the correction factors
@@ -455,14 +496,15 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
 
         df = pd.DataFrame(data)
 
-      # At least 12 remaining measurements per measurement day are required
+      # At least 11 (or 12 ???) remaining measurements per measurement day are required
       # to calculate the uncertainty using the moving average.
 
-        if (len(lines) < 12):
-            print ('file_len: ', len(lines), ' (data filter applied)')
-            return -1 # test file lenght
+        if (len(lines) < 11): # 11 or 12 ???
+            print ('Data filter applied... ', 'file_len: ', len(lines), ' < 11 !!!')
+            print (path)
+            return None # test file lenght
         else:
-            print ('file_len: ', len(lines), ' (data filter applied)')
+            print ('Data filter applied... ', 'file_len: ', len(lines))
             return df
 
 
@@ -485,35 +527,44 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
 
       # Read pressure and sensitivities as function of the altitude and SZA.
 
-        with open(path,'r') as file:
+        try:
+            with open(path,'r') as file:
 
-            for i in range(8): # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
-                sza.append([])
-                alt.append([])
-                pre.append([])
-                sen.append([])
+                for i in range(8): # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
+                    sza.append([])
+                    alt.append([])
+                    pre.append([])
+                    sen.append([])
 
-                for j in range(6): # 6 header lines for each species
-                    header = file.readline() # skip header line
-                    if j == 3: # read SZA [rad] values in the third line
-                        header = re.sub(' +', '\t', header)
-                        header = header.split('\t') # tab separator
-                        sza[i] = np.array(header[3:])  # SZA header/columns
-                        sza[i] = sza[i].astype(float)  # string to float
+                    for j in range(6): # 6 header lines for each species
+                        header = file.readline() # skip header line
+                        if j == 3: # read SZA [rad] values in the third line
+                            header = re.sub(' +', '\t', header)
+                            header = header.split('\t') # tab separator
+                            sza[i] = np.array(header[3:])  # SZA header/columns
+                            sza[i] = sza[i].astype(float)  # string to float
 
-                for j in range(49): # number of altitude levels
-                    line = file.readline()[1:-1]   # skip first empty space and carriage return character at the end
-                    line = re.sub(' +', ',', line) # replace empty spaces by a comma
-                    line = line.split(',')         # split line into columns
+                    for j in range(49): # number of altitude levels
+                        line = file.readline()[1:-1]   # skip first empty space and carriage return character at the end
+                        line = re.sub(' +', ',', line) # replace empty spaces by a comma
+                        line = line.split(',')         # split line into columns
 
-                    alt[i].append(line[0])         # altitude (first column)
-                    pre[i].append(line[1])         # pressure (second column)
+                        alt[i].append(line[0])         # altitude (first column)
+                        pre[i].append(line[1])         # pressure (second column)
 
-                    sen[i].append([])
-                    for k in range(2,len(line)):   # SZA (third column upwards, total 15 columns)
-                        sen[i][j].append(float(line[k]))
+                        sen[i].append([])
+                        for k in range(2,len(line)):   # SZA (third column upwards, total 15 columns)
+                            sen[i][j].append(float(line[k]))
 
-        file.close()
+            file.close()
+        except:
+            print ('Error: Open colsens file!')
+            print (path)
+            return None, None, None, None
+      # else:
+      #     print ('Failure: Open colsens file!')
+      #     print (path)
+      #     return None, None, None, None
 
         sza = np.array(sza,dtype=float) # SZA [deg]
         alt = np.array(alt,dtype=float) # altitude [km]
@@ -530,6 +581,9 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
       # Then, the gas sensitivities are calculated using the interpolated SZA values.
 
         sza, alt, pre, sen = self.get_colsens_sza(day)
+
+        if (sza is None) or (alt is None) or (pre is None) or (sen is None):
+            return None
 
         appSZA = df["appSZA"].to_numpy()
 
@@ -1103,7 +1157,7 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
-        print (cont, dataset_name)
+      # print (cont, dataset_name)
 
       # Convert data to numpy array.
         if cont == "H2O_COL":   # "H2O_COL": "H2O.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR"
