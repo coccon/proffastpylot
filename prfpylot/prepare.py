@@ -62,17 +62,20 @@ class Preparation():
     ]
 
     defaults = {
-        "note": "",
+        "ggg2020mapfiles": False,  # do not give in input file!
+        "coords": {"lat": None, "lon": None, "alt": None},
+        "coord_file": None,
         "utc_offset": 0.0,
+        "min_interferogram_size": 3.7,
         "start_with_spectra": False,
+        "note": None,
         "delete_abscosbin_files": False,
         "delete_input_files": False,
-        "backup_results": True,
-        "min_interferogram_size": 3.7,
         "tccon_mode": False,
         "ggg2020mapfiles": False,  # do not give in input file!
         "ils_parameters": None,
         "ignore_interpolation_error": None,
+        "backup_results": True,
     }
 
     def __init__(self, input_file, logginglevel="info"):
@@ -126,8 +129,8 @@ class Preparation():
 
         # list of dates
         self.dates = self.get_dates(
-                start_date=args["start_date"],
-                end_date=args["end_date"]
+                start_date=args.get("start_date"),
+                end_date=args.get("end_date")
             )
 
         # make relative paths absolute
@@ -139,7 +142,7 @@ class Preparation():
             self.__dict__[path] = os.path.abspath(self.__dict__[path])
 
         # coordinates
-        self.coords = self.get_coords(args)
+        self.coords = self.get_coords()
 
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')
@@ -159,7 +162,6 @@ class Preparation():
 
         # check if tccon mode is activated. Raise warning if it is activated
         if self.tccon_mode is True:
-            self.tccon_mode = True
             self._tccon_mode_warning()
             if args.get("tccon_setting") is None:
                 self.logger.critical("Give TCCON setting in TCCON mode!")
@@ -271,19 +273,20 @@ class Preparation():
 
         return dates
 
-    def get_coords(self, args):
+    def get_coords(self):
         """Return dict of coords.
 
-        Params:
-            args: all arguments that have been read from the input file.
+        If coords were not given or contain None for at least one coordinate,
+        the coord_file will be read.
+        If the coord_file was also not given, operation will be terminated.
         """
         coord_error = (
             "Give the coordinates in the input file or specify a "
             "coordinate file!"
             )
-        coords = args["coords"]
-        if None in args["coords"].values():
-            if args.get("coord_file") is None:
+        coords = self.coords
+        if None in coords.values():
+            if self.coord_file is None:
                 self.logger.critical(coord_error)
                 sys.exit()
             coords = self.get_coords_from_file(self.dates[0])
