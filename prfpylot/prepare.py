@@ -127,9 +127,15 @@ class Preparation():
             sys.exit()
 
         # list of dates
+        start_date = args.get("start_date")
+        end_date = args.get("end_date")
+        if isinstance(start_date, str):
+            start_date = dt.strptime(start_date, "%Y-%m-%d").date()
+        if isinstance(end_date, str):
+            end_date = dt.strptime(end_date, "%Y-%m-%d").date()
         self.dates = self.get_dates(
-                start_date=args.get("start_date"),
-                end_date=args.get("end_date")
+                start_date=start_date,
+                end_date=end_date
             )
 
         # make relative paths absolute
