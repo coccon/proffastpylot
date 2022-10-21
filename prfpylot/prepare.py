@@ -72,7 +72,6 @@ class Preparation():
         "delete_abscosbin_files": False,
         "delete_input_files": False,
         "tccon_mode": False,
-        "ggg2020mapfiles": False,  # do not give in input file!
         "ils_parameters": None,
         "ignore_interpolation_error": None,
         "backup_results": True,
