@@ -62,6 +62,7 @@ class PressureHandler():
         self.dates = dates
         self.logger = logger
         self.pressure_path = pressure_path
+        self.interpolation_failed_at = []
 
         with open(pressure_type_file, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
@@ -151,16 +152,6 @@ class PressureHandler():
                 self.logger.warning(
                     f"No pressure data available for {timestamp}."
                     "Pressure data will be linear extrapolated!")
-                # print("==============")
-                # print("IN GET PRESSURE: USING DATAFRAME:", self.p_df)
-                # print(f"timestamp: {timestamp}")
-                # print(self.p_df.loc[i1-1:i2+1])
-                # print(f"i1: {i1}, i2: {i2}")
-                # print(f"t1: {t1}, t2: {t2}")
-                # print(
-                #   f"p1: {self.p_df.loc[i1][pkey]},"
-                #   f"p2: {self.p_df.loc[i2][pkey]}")
-                # print("===============")
             else:
                 # for not equistant data this case can happen
                 if t2 < timestamp:
@@ -177,22 +168,13 @@ class PressureHandler():
                 f"for date {timestamp}. This might give wrong results!"
                 "Please check the input data for this day."
             )
-        if (t2 - t1).total_seconds() == 0:
-            self.logger.warning(
-                "Encountered duplicate times! Please check if\n"
-                "a) the time is parsed correctly (look for the pressure "
-                "DataFrame printout in the debug mode) and\n"
-                "b) if there are duplicate times in your pressure file."
-                )
+
         m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
             / abs((t2 - t1).total_seconds())
 
         if np.isnan(m):
             m = 0
-            self.logger.warning(
-                f"The interpolated pressure at {timestamp} is NaN! "
-                "Take the non interpolated nearest neighbor instead."
-            )
+            self.interpolation_failed_at.append(timestamp)
 
         p = m * \
             (timestamp - t1).total_seconds()\
@@ -219,7 +201,7 @@ class PressureHandler():
                 daily_df = pd.concat([daily_df, temp])
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
-        
+
         self.p_df.reset_index(drop=True, inplace=True)
         self._parse_pressure()
 
