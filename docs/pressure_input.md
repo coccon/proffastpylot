@@ -69,6 +69,7 @@ filename = "".join(
 df = pd.read_csv(filename, **csv_kwargs)
 ```
 For the date- and timestamp the datetime can be constructed from two separate columns (time_key and date_key) or one column (datetime_key). It will be parsed with the corresponding format string.
+In addition to the formats supported by the datetime package (see below) the key `POSIX-timestamp` can be used. This assumes the datetime column to be in seconds passed since the 1979-01-01 in UTC.
 `df[pressure_key]` should contain the corresponding pressure values.
 
 For more information you can look at the pandas [documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) of `read_csv()` and the [datetime package](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).

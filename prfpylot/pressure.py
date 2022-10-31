@@ -344,12 +344,19 @@ class PressureHandler():
         else:
             # seems that a datetime column is available:
             try:
-                df[self.parsed_dtcol] = pd.to_datetime(
-                    df[dt_key], format=dt_fmt)
+                if dt_fmt == "POSIX-timestamp":
+                    df[self.parsed_dtcol] = df[dt_key].apply(
+                        lambda x: dt.datetime.utcfromtimestamp(x))
+                else:
+                    df[self.parsed_dtcol] = pd.to_datetime(
+                        df[dt_key], format=dt_fmt)
             except KeyError:
                 self.logger.critical(
-                    f"Could not fine key {dt_key} in "
-                    "pressure data. Exit Program.")
+                    f"Could not find key {dt_key} in "
+                    "pressure data."
+                    f"Pressure data are:\n{df}\n."
+                    f"Pressure folder is: {self.pressure_path}\n"
+                    "Exit Program.")
                 exit()
 
         return df
