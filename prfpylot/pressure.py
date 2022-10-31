@@ -84,6 +84,15 @@ class PressureHandler():
                     f" file {pressure_type_file}!")
                 sys.exit()
 
+        # For a later read in of the pressure data frame it makes sense to only
+        # read in the columns needed. In case of large meteo files, this can
+        # save a lot of RAM and processing time.
+        self.cols_to_use = []
+        for key in ["pressure_key", "time_key", "date_key", "datetime_key"]:
+            val = self.dataframe_parameters[key]
+            if (val is not None) and (val != ""):
+                self.cols_to_use.append(val)
+
         self.p_df = pd.DataFrame()
 
     def prepare_pressure_df(self):
@@ -198,6 +207,7 @@ class PressureHandler():
                 # print(f"Read in file {file}")
                 temp = pd.read_csv(
                     file,
+                    usecols=self.cols_to_use,
                     **(self.dataframe_parameters["csv_kwargs"]))
                 daily_df = pd.concat([daily_df, temp])
             daily_df = self._parse_datetime_col(daily_df, day)
@@ -229,6 +239,7 @@ class PressureHandler():
                 raise RuntimeError("Could not find a pressure file")
             temp = pd.read_csv(
                 fileList[0],
+                usecols=self.cols_to_use,
                 **(self.dataframe_parameters["csv_kwargs"]))
             df = pd.concat([df, temp])
         df = self._parse_datetime_col(df)
@@ -244,7 +255,9 @@ class PressureHandler():
         df = pd.DataFrame()
         for file in file_list:
             temp = pd.read_csv(
-                file, **(self.dataframe_parameters["csv_kwargs"]))
+                file,
+                usecols=self.cols_to_use,
+                **(self.dataframe_parameters["csv_kwargs"]))
             df = pd.concat([df, temp])
         df = self._parse_datetime_col(df)
         self.p_df = df
