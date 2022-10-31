@@ -42,7 +42,8 @@ class PressureHandler():
 
     default_options = {
         "utc_offset": 0.0,
-        "pressure_factor": 1.0
+        "pressure_factor": 1.0,
+        "pressure_offset": 0.0
     }
 
     parsed_dtcol = "parsed_datetime"
@@ -116,7 +117,7 @@ class PressureHandler():
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
 
-        self._multiply_pressure_factor()
+        self._apply_pressure_offset_and_factor()
         # Reset index to let in be unique
         self.p_df.reset_index(drop=True, inplace=True)
 
@@ -270,10 +271,11 @@ class PressureHandler():
             self.p_df[p_key] < minVal, replace_val, self.p_df[p_key])
         self.p_df = self.p_df.dropna(subset=[p_key])
 
-    def _multiply_pressure_factor(self):
+    def _apply_pressure_offset_and_factor(self):
         """Multiply the pressure column with the pressure factor."""
         pressure_key = self.dataframe_parameters["pressure_key"]
         self.p_df[pressure_key] *= self.pressure_factor
+        self.p_df[pressure_key] += self.pressure_offset
 
     def _parse_datetime_col(self, df, date=None):
         """
