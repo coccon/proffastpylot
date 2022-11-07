@@ -75,6 +75,7 @@ class Preparation():
         "ils_parameters": None,
         "ignore_interpolation_error": None,
         "backup_results": True,
+        "igram_pattern": "*.*"
     }
 
     def __init__(self, input_file, logginglevel="info"):
@@ -269,6 +270,9 @@ class Preparation():
         print_date_str = ", ".join(print_date_list)
 
         # print run information
+        self.logger.debug(f"start_date is {self.start_date}")
+        self.logger.debug(f"end_date is {self.end_date}")
+
         self.logger.info(
             "Run information:\n"
             f"Retrieval for Instrument {self.instrument_number} "
@@ -448,7 +452,9 @@ class Preparation():
     def get_igrams(self, date):
         """Search for interferograms on disk and return a list of files."""
         date_str = date.strftime("%y%m%d")
-        igrams = glob(os.path.join(self.interferogram_path, date_str, "*.*"))
+        igrams = glob(os.path.join(
+            self.interferogram_path, date_str,
+            self.igram_pattern))
 
         # skip all interferograms smaller than given limit
         temp_list = igrams[:]
