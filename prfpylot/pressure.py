@@ -128,19 +128,16 @@ class PressureHandler():
         frequency = self.frequency
 
         # Create the p_df for different file frequencies
-        if frequency == "subdaily":
+        if frequency in ["subdaily", "daily"]:
             self._read_subdaily_files()
-        elif frequency == "daily":
-            self._read_subdaily_files()
-        elif frequency == "weekly":
-            raise NotImplementedError(
-                f"{frequency} frequency not implemented yet.")
-        elif frequency == "monthly":
-            raise NotImplementedError(
-                f"{frequency} frequency not implemented yet.")
         elif frequency == "yearly":
             self._read_yearly_files()
         elif frequency == "unregular":
+            self._read_unregular_files()
+        elif frequency in ["monthly", "weekly"]:
+            self.logger.warning(
+                "Using 'unregular' frequency, weekly and monthly are not yet "
+                "implemented seperately.")
             self._read_unregular_files()
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
