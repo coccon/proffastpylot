@@ -44,7 +44,8 @@ class PressureHandler():
     default_options = {
         "utc_offset": 0.0,
         "pressure_factor": 1.0,
-        "pressure_offset": 0.0
+        "pressure_offset": 0.0,
+        "data_parameters": {}
     }
 
     parsed_dtcol = "parsed_datetime"
@@ -79,14 +80,14 @@ class PressureHandler():
             if self.__dict__.get(option) is None:
                 self.__dict__[option] = default
                 self.logger.debug(
-                    f"The optional option {option} was set to the default "
+                    f"The pressure parameter {option} was set to the default "
                     f"value: {default}.")
 
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
                 self.logger.critical(
-                    f"Mandatory option {option} not given in the pressure type"
-                    f" file {pressure_type_file}!")
+                    f"Mandatory pressure parameter {option} not given in the "
+                    f"pressure type file {pressure_type_file}!")
                 sys.exit()
             else:
                 # fill defaults and check for missing values inside the dicts
@@ -220,7 +221,8 @@ class PressureHandler():
             dataloggerFileList.sort()
             # get all files of one day and concat them:
             for file in dataloggerFileList:
-                # print(f"Read in file {file}")
+                self.logger.debug(f"Read in file {file}")
+                print(self.cols_to_use, self.dataframe_parameters["csv_kwargs"])
                 temp = pd.read_csv(
                     file,
                     usecols=self.cols_to_use,
@@ -414,9 +416,9 @@ class PressureHandler():
             "date_fmt": "",
             "datetime_key": "",
             "datetime_fmt": "",
-            "csv_kwargs": "",
+            "csv_kwargs": {},
         }
-        defaults["data_parameters"] = {
+        defaults["filename_parameters"] = {
             "basename": "",
             "time_format": "",
             "ending": ""
@@ -428,6 +430,9 @@ class PressureHandler():
         for k, v in defaults[option].items():
             if d.get(k) is None:
                 d[k] = v
+                self.logger.debug(
+                    f"The pressure parameter {option}:{k} was set to "
+                    f"default value: {v}.")
         return d
 
     def _check_mandatory(self):
@@ -460,13 +465,13 @@ class PressureHandler():
                 + general_instruction)
 
         # filename not empty
-        joined_filename = "".join(
+        joined_filename = "".join([
             self.filename_parameters["basename"],
             self.filename_parameters["time_format"],
             self.filename_parameters["ending"]
-        )
+        ])
         if joined_filename == "":
             raise RuntimeError(
-                "No filename is given! Give the start, (optional) time and "
-                "ending of your filename as filename_parameters: basename, "
-                "time_format and ending.")
+                "No filename is given! Give the start, time format (optional) "
+                "and ending of your filename as filename_parameters: "
+                "basename, time_format and ending.")
