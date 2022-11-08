@@ -1,5 +1,6 @@
-# PROFFASTpylot Documentation
+# Documentation
 
+## Table of Contents
 This is a short overview about the content of this documentation.
 
 1. Getting Started  
