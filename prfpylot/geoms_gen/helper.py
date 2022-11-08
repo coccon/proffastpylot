@@ -13,15 +13,15 @@ import pandas as pd
 from prfpylot.prepare import Preparation
 
 
-class Geoms_Helper(Preparation):
-    def __init__(self, GEOMS_input_file):
-        super(Geoms_Helper, self).__init__(GEOMS_input_file)
+class GeomsGenHelper(Preparation):
+    def __init__(self, geomsgen_inputfile, prfpylot_inputfile):
+        super(GeomsGenHelper, self).__init__(prfpylot_inputfile)
 
         # Read the input file.
         # Contains additional information to create the geoms file
-        with open(GEOMS_input_file, "r") as f:
+        with open(geomsgen_inputfile, "r") as f:
             self.input_args = yaml.load(f, Loader=yaml.FullLoader)
-        self.input_file = GEOMS_input_file
+        self.input_file = geomsgen_inputfile
         
         # Path of output files:
         self.geoms_out_filename = "_".join(

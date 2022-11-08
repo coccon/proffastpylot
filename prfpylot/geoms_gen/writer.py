@@ -5,10 +5,10 @@ import math
 import datetime as dt
 import numpy as np
 import pandas as pd
-from GeomsHelperClass import Geoms_Helper
+from prfpylot.geoms_gen.helper import GeomsGenHelper
 
 
-class PROFFAST_GEOMS_creator(Geoms_Helper):
+class GeomsGenWriter(GeomsGenHelper):
     def __init__(self, GEOMS_input_file):
 
         """
@@ -19,7 +19,7 @@ class PROFFAST_GEOMS_creator(Geoms_Helper):
       # Call the init method of the `Preparation` class.
       # This provides some usefull data within this class.
 
-        super(PROFFAST_GEOMS_creator, self).__init__(GEOMS_input_file)
+        super(GeomsGenWriter, self).__init__(GEOMS_input_file)
 
       # List of all variables for the GEOMS compliant HDF5 files.
       # For further information, see document "geoms-1.0.pdf":
@@ -1611,7 +1611,7 @@ if __name__ == "__main__":
   # input_file = "input_sodankyla_GEOMS_Extention.yml"
     input_file = "input_karlsruhe_GEOMS_Extention.yml"
 
-    MyCreator = PROFFAST_GEOMS_creator(input_file)
+    MyCreator = GeomsGenWriter(input_file)
 
   # MyTestDay = dt.datetime.strptime("2017-06-09", "%Y-%m-%d")
     MyTestDay = dt.datetime.strptime("2021-05-31", "%Y-%m-%d")
