@@ -22,10 +22,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import prfpylot
+from prfpylot.pressure import PressureHandler
 import os
 import sys
 import yaml
 from datetime import datetime as dt
+from datetime import timedelta
 import pandas as pd
 from glob import glob
 import logging
@@ -33,6 +35,8 @@ from timezonefinder import TimezoneFinder
 import pytz
 import fortranformat
 import inspect
+import codecs
+from random import randint
 
 
 class Preparation():
@@ -45,35 +49,74 @@ class Preparation():
         "pcxs": "pcxs20"
     }
 
-    # in 'pylot.run_pcxs_at' it is tested if ggg2014 or ggg2020 map files are
-    # used
-    ggg2020mapfiles = False
+    mandatory_options = [
+        "instrument_number",
+        "site_name",
+        "site_abbrev",
+        "map_path",
+        "pressure_path",
+        "pressure_type_file",
+        "interferogram_path",
+        "analysis_path",
+        "result_path",
+    ]
+
+    defaults = {
+        "ggg2020mapfiles": False,  # do not give in input file!
+        "coords": {"lat": None, "lon": None, "alt": None},
+        "coord_file": None,
+        "utc_offset": 0.0,
+        "min_interferogram_size": 3.7,
+        "start_with_spectra": False,
+        "note": None,
+        "delete_abscosbin_files": False,
+        "delete_input_files": False,
+        "tccon_mode": False,
+        "ils_parameters": None,
+        "ignore_interpolation_error": None,
+        "backup_results": True,
+        "igram_pattern": "*.*"
+    }
 
     def __init__(self, input_file, logginglevel="info"):
+        self.logger = self.get_logger(logginglevel=logginglevel)
+        self.logger.info(
+            "++++ Welcome to PROFFASTpylot ++++")
+        self.logger.debug("Start reading input file...")
+
         # read input file
         with open(input_file, "r") as f:
             args = yaml.load(f, Loader=yaml.FullLoader)
+
+        for option, value in args.items():
+            self.__dict__[option] = value
+
+        for option in self.mandatory_options:
+            if self.__dict__.get(option) is None:
+                self.logger.critical(
+                    f"Mandatory option {option} not given in the input file"
+                    f" file {input_file}!")
+                sys.exit()
+
+        for option, value in self.defaults.items():
+            if args.get(option) is None:
+                self.__dict__[option] = value
+                self.logger.debug(
+                    f"{option} was set to default value: {value}."
+                    )
+
         self.input_file = input_file
 
-        # now, the logfile can be created:
-        self.logger = self.get_logger(logginglevel=logginglevel)
-        self.logger.info(
-            "++++ Welcome to PROFFASTpylot ++++\n")
-        self.logger.debug("Start reading input file...")
-
-        # set parameters from input file
-        self.instrument_number = args["instrument_number"]
-        self.site_name = args["site_name"]
-        self.site_abbrev = args["site_abbrev"]
-        self.note = args["note"]
-
-        # TODO: This is a temporary solution! Think about if this is needed
-        #       for future versions.
         # inspect.getsourcefile needes __init__.py!
         self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
+
+        # define full path <analysis>/<site>_<instrument_nr>
+        self.analysis_instrument_path = os.path.join(
+                    self.analysis_path,
+                    f"{self.site_name}_{self.instrument_number}")
+
         # path to the PROFFAST executables
-        self.proffast_path = args["proffast_path"]
-        if self.proffast_path is None:
+        if args.get("proffast_path") is None:
             head, _ = os.path.split(self.prfpylot_path)
             self.proffast_path = os.path.join(head, "prf")
         if not os.path.exists(self.proffast_path):
@@ -84,129 +127,88 @@ class Preparation():
                     "where it is located.")
             sys.exit()
 
+        # list of dates
+        start_date = args.get("start_date")
+        end_date = args.get("end_date")
+        if isinstance(start_date, str):
+            start_date = dt.strptime(start_date, "%Y-%m-%d").date()
+        if isinstance(end_date, str):
+            end_date = dt.strptime(end_date, "%Y-%m-%d").date()
+        self.dates = self.get_dates(
+                start_date=start_date,
+                end_date=end_date
+            )
+
+        # make relative paths absolute
+        paths = [
+            "map_path", "pressure_path", "pressure_type_file",
+            "interferogram_path", "analysis_path", "result_path",
+            "analysis_instrument_path"]
+        for path in paths:
+            self.__dict__[path] = os.path.abspath(self.__dict__[path])
+
         # coordinates
-        if None not in args["coords"].values():
-            self.coords = args["coords"]
-            self.coord_file = None  # to avoid overriding given coords
-            self.use_coordfile = False
-        else:
-            if args["coord_file"] is not None:
-                self.coords = {}
-                self.coord_file = args["coord_file"]
-                self.use_coordfile = True
-                # self.coords = {}
-            else:
-                self.logger.error("coord_file is not specified!")
-                sys.exit()
-
-        # utc time shift of the recorded data
-        if args["utc_offset"] is None:
-            self.utc_offset = 0.0
-        else:
-            self.utc_offset = args["utc_gap"]
-
-        # additional paths
-        self.map_path = args["map_path"]
-        if self.map_path is None:
-            self.logger.error("map_path is not specified!")
-            sys.exit()
-
-        # TODO: Change to pressure_path
-        self.pressure_path = args["pressure_path"]
-        if self.pressure_path is None:
-            self.logger.error("pressure_path is not specified!")
-            sys.exit()
-
-        self.pressure_type = args["pressure_type"]
+        self.coords = self.get_coords()
 
         # ILS-File is hardcoded since it will be released with prfpylot
         self.ils_file = os.path.join(self.prfpylot_path, 'ILSList.csv')
 
-        # igram path:
-        self.igram_path = args["interferogram_path"]
-        if self.igram_path is None:
-            self.logger.error("interferogram_path is not specified!")
-            sys.exit()
-
-        # spectra path, i.e. output of preprocess:
-        self.analysis_path = args["analysis_path"]
-        if self.analysis_path is None:
-            self.logger.error("analysis_path is not specified!")
-            sys.exit()
-        self.analysis_instrument_path = os.path.join(
-                    self.analysis_path,
-                    f"{self.site_name}_{self.instrument_number}")
-
-        # record some notes about the behaviour of the pylot:
-
-        if args["start_with_spectra"] is not None:
-            self.start_with_spectra = args["start_with_spectra"]
-        else:
-            self.logger.error("start_with_spectra not specified!")
-            sys.exit()
-
-        if args["delete_abscosbin_files"] is not None:
-            self.delete_abscosbin = args["delete_abscosbin_files"]
-        else:
-            self.logger.error("delete_abscosbin_files not specified!")
-            sys.exit()
-
-        if args["delete_input_files"] is not None:
-            self.bool_delete_input_files = args["delete_input_files"]
-        else:
-            self.bool_delete_input_files = False
-
-        # file size limit of igrams:
-        if args["igram_size_filter"] is not None:
-            self.igram_filter_size = args["igram_size_filter"]
-        else:
-            self.logger.error("igram_size_filter is not given!")
-            sys.exit()
+        # ILS parameters; if set in input file
+        if self.ils_parameters is not None:
+            self.ils_parameters = tuple(self.ils_parameters)
+            # check for correct length
+            if len(self.ils_parameters) != 4:
+                raise ValueError(
+                    "You must either give all 4 ILS Parameters, or None."
+                    f"Given ILS Parameters were {self.ils_parameters}.")
+            self.logger.warning(
+                "Individual ILS Parameters were used, the parameters were not "
+                "taken from the official COCCON ILS list!\n"
+                f"Used ILS Parameters: {self.ils_parameters}.")
 
         # check if tccon mode is activated. Raise warning if it is activated
-        if args["tccon_mode"]:
-            self.tccon_mode = True
-            self.tccon_setting = args["tccon_setting"]
+        if self.tccon_mode is True:
             self._tccon_mode_warning()
-        else:
-            self.tccon_mode = False
-            self.tccon_setting = args["tccon_setting"]
+            if args.get("tccon_setting") is None:
+                self.logger.critical("Give TCCON setting in TCCON mode!")
+                sys.exit()
 
-        # list of dates
-        self.dates = self.get_dates(
-                start_date=args["start_date"],
-                end_date=args["end_date"]
-            )
-
-        # only the base where the result folder is to be safed
-        # is given. The final folder is created every runtime.
-        self.result_path = args["result_path"]
-        if self.result_path is None:
-            self.logger.error("result_path is not specified!")
-            sys.exit()
-        dtfs = "%Y%m%d"  # dtformatstring
-        result_foldername = "{}_{}_{}_{}".format(self.site_name,
-                                                 self.instrument_number,
-                                                 self.dates[0].strftime(dtfs),
-                                                 self.dates[-1].strftime(dtfs))
+        dt_format = "%y%m%d"
+        result_foldername = "{}_{}_{}-{}".format(
+            self.site_name,
+            self.instrument_number,
+            self.dates[0].strftime(dt_format),
+            self.dates[-1].strftime(dt_format))
         self.result_folder = os.path.join(self.result_path, result_foldername)
 
         # log of the processes
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
 
-        self.logger.debug("... read in finished!")
+        # calculate the _localtime_offset
+        self._localtime_offset = self._get_localtime_offset()
+
+        # initialise pressure handler
+        self.pressure_handler = PressureHandler(
+            self.pressure_type_file, self.pressure_path,
+            self.dates, self.logger)
+
+        # collect all generated input files to move in FileMover
+        self.global_inputfile_list = []
+
+        self.logger.debug("Finished reading of input file.")
 
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
-        logger = logging.getLogger('prfpylot')
+        r = str(randint(10000, 99999))
+        logger = logging.getLogger(r)
         # set logging to debug to record everything in the first place
         logger.setLevel(logging.DEBUG)
         StreamHandler = logging.StreamHandler()
         cwd = os.getcwd()
-        self.generalLogfile = os.path.join(cwd, "GeneralLogfile.log")
-        logfile = os.path.join("GeneralLogfile.log")
-        FHandler = logging.FileHandler(logfile, mode='w')
+        logfile_name = f"pylot_{r}.log"
+        self.pylot_log = os.path.join(cwd, logfile_name)
+        FHandler = logging.FileHandler(logfile_name, mode='w')
 
         if logginglevel == "debug":
             StreamHandler.setLevel(logging.DEBUG)
@@ -225,6 +227,8 @@ class Preparation():
             style='{')
         StreamHandler.setFormatter(StreamFormat)
         FHandler.setFormatter(StreamFormat)
+
+        logger.debug(f"Initialized logger with random number {r}.")
         return logger
 
     def get_dates(self, start_date=None, end_date=None):
@@ -235,11 +239,11 @@ class Preparation():
             start_date (dt.date): optional start date
             end_date (dt.date): optional end date
         """
-        if not self.start_with_spectra:
+        if self.start_with_spectra is False:
             self.logger.debug(
                 "Searching for all interferogram folders ...")
-            datapath = os.path.join(self.igram_path, "*")
-        else:
+            datapath = os.path.join(self.interferogram_path, "*")
+        elif self.start_with_spectra is True:
             self.logger.debug(
                 "Searching for all spectra folders ...")
             datapath = os.path.join(self.analysis_instrument_path, "*")
@@ -247,12 +251,12 @@ class Preparation():
         dates = self._create_datelist(datapath)
         if len(dates) == 0:
             self.logger.critical(
-                f"No interferograms were found at {self.igram_path}!")
+                f"No interferograms were found at {self.interferogram_path}!")
             sys.exit()
 
         date_str_list = [date.strftime("%y-%m-%d") for date in dates]
-        self.logger.info(
-            f"The following dates were found at {self.igram_path}: "
+        self.logger.debug(
+            f"The following dates were found at {datapath[:-2]}: "
             f"{', '.join(date_str_list)}")
 
         if start_date is not None:
@@ -262,7 +266,53 @@ class Preparation():
             i = self._get_end_date_pos(end_date, dates)
             dates = dates[:i]
 
+        print_date_list = [d.strftime("%Y-%m-%d") for d in dates]
+        print_date_str = ", ".join(print_date_list)
+
+        # print run information
+        self.logger.debug(f"start_date is {self.start_date}")
+        self.logger.debug(f"end_date is {self.end_date}")
+
+        self.logger.info(
+            "Run information:\n"
+            f"Retrieval for Instrument {self.instrument_number} "
+            f"at {self.site_name} with time offset {self.utc_offset}.\n"
+            "The following dates will be processed:\n"
+            f"{print_date_str}.\n")
+
         return dates
+
+    def get_coords(self):
+        """Return dict of coords.
+
+        If coords were not given or contain None for at least one coordinate,
+        the coord_file will be read.
+        If the coord_file was also not given, operation will be terminated.
+        """
+        coord_error = (
+            "Give the coordinates in the input file or specify a "
+            "coordinate file!"
+            )
+        coords = self.coords
+        if None in coords.values():
+            if self.coord_file is None:
+                self.logger.critical(coord_error)
+                sys.exit()
+            coords = self.get_coords_from_file(self.dates[0])
+            # check for consistent coordinates in measurement period
+            last_coords = self.get_coords_from_file(self.dates[-1])
+            if last_coords != coords:
+                self.logger.critical(
+                    f"Coordinates at the start date {coords} do not match "
+                    f"the coordinates at the end date {last_coords}!"
+                    "PROFFASTpylot can not preprocess data from different "
+                    "sites in one run! Please adapt the start and end date.")
+                sys.exit()
+        if None in coords.values():
+            self.logger.critical(coord_error)
+            sys.exit()
+
+        return coords
 
     def _create_datelist(self, path):
         """Create datelist of given path.
@@ -339,7 +389,7 @@ class Preparation():
 
         return map_file
 
-    def generate_prf_input(self, template_type, date, mlogger=None):
+    def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
 
         Calling the corresponding collect parameters function
@@ -347,73 +397,167 @@ class Preparation():
 
         params:
             template_type (str): Can be "prep", "tccon", "pt", "inv" or "pcxc"
+
+        Return:
+            prf_input_file(s) (str, list of str or None):
+                In case of inverse multiple input
+                files are created if spectra of one measurement day belong to
+                different map files. If no spectra are, return None
         """
-        if mlogger is None:
-            mlogger = self.logger
+        # the name of the input file to be generated
+        prf_input_file = self.get_prf_input_path(template_type, date)
+
         if date is not None:
             date_str = dt.strftime(date, "%y%m%d")
-        foundData = True
+
         if template_type == "prep":
-            mlogger.debug(
+            self.logger.debug(
                 f"Generating preprocess inp file for {date_str}..")
-            parameters = self.get_prep_parameters(date, mlogger)
+            parameters = self.get_prep_parameters(date)
             if parameters["igrams"] == "":
-                foundData = False
+                return None
+
         elif template_type == "tccon":
             parameters = {"tccon_setting": self.tccon_setting}
-        else:
-            mlogger.debug(
+
+        elif template_type == "pcxs":
+            parameters = self.get_pcxs_parameters(date)
+            self.logger.debug(
                 f"Generating {self.template_types[template_type]}"
                 f" inp file for {date_str}..")
-            parameters = self.get_pcxs_and_inv_parameters(
-                date, mlogger=mlogger)
-            if parameters["SPECTRA_LIST"] == "":
-                foundData = False
 
-        self.replace_params_in_template(parameters, template_type, date,
-                                        mlogger)
-        return foundData
+        elif template_type == "inv":
+            self.logger.debug(
+                f"Generating {self.template_types[template_type]}"
+                f" inp file for {date_str}..")
+            parameters = self.get_inv_parameters(date)
+            prf_input_files = []
+            for parameter_i in parameters:
+                suffix = parameter_i["SUFFIX"]
+                prf_input_files.append(prf_input_file[:-4] + f"_{suffix}.inp")
+                self.replace_params_in_template(
+                    parameter_i, template_type, prf_input_files[-1])
+            # safe inputfiles in global list to move/delete them later
+            self.global_inputfile_list.extend(prf_input_files)
+            # return several input files hence do it already here:
+            return prf_input_files
+        else:
+            raise ValueError(f"Unknown template_type {template_type}")
 
-    def get_igrams(self, date, mlogger=None):
-        """Search for interferograms disk and return a list of files."""
-        if mlogger is None:
-            mlogger = self.logger
+        self.replace_params_in_template(
+            parameters, template_type, prf_input_file)
+        self.global_inputfile_list.append(prf_input_file)
+        return prf_input_file
+
+    def get_igrams(self, date):
+        """Search for interferograms on disk and return a list of files."""
         date_str = date.strftime("%y%m%d")
-        igrams = glob(os.path.join(self.igram_path, date_str, "*.*"))
-        # check for filesize: if smaller than a certain limit the file is
-        # must be corrupt
+        igrams = glob(os.path.join(
+            self.interferogram_path, date_str,
+            self.igram_pattern))
+
+        # skip all interferograms smaller than given limit
         temp_list = igrams[:]
+        skipped_interferograms = False
         for igram in temp_list:
             filesize = os.path.getsize(igram) / (1024 * 1024)  # in MB
-            mlogger.debug(f"Check filesize of igram {igram}...")
-            # print(f"Filesize of {igram} is : {filesize}")
-            if filesize < self.igram_filter_size:
+            if filesize < self.min_interferogram_size:
                 igrams.remove(igram)
-                mlogger.warning(f"Interferogram {igram} has size "
-                                f"{filesize} < {self.igram_filter_size} MB."
-                                " Skip it!")
-            else:
-                mlogger.debug("... all good!")
+                self.logger.warning(
+                    f"Interferogram {igram} has size "
+                    f"{filesize} < {self.min_interferogram_size} MB "
+                    "and will be skipped.")
+                skipped_interferograms = True
+        if skipped_interferograms is False:
+            self.logger.debug(
+                "No interferogram was skipped because of its filesize "
+                f"at {date.date()}.")
+
         if igrams == []:
-            mlogger.debug(f"No suitable Interferogram at day {date_str} "
-                          "found in get_igrams().")
+            self.logger.debug(f"No suitable Interferogram at day {date_str} "
+                              "found in get_igrams().")
         return igrams
 
-    def replace_params_in_template(self, parameters, template_type, date,
-                                   mlogger=None):
+    def get_localdate_spectra(self):
+        """Return dict linking all spectra to local dates.
+        returns:
+            {local_date: ["YYMMDD_HHMMSSSN.BIN", ...]}
         """
-        Generate a site specific input file by using a template.
+        all_spectra = []
+        for date in self.dates:
+            searchpath = os.path.join(
+                self.analysis_instrument_path,
+                date.strftime("%y%m%d"),
+                "cal",
+                "*SN.BIN")
+            all_spectra.extend(glob(searchpath))
+        all_spectra.sort()
+        localdate_spectra = {}
+        for spectrum in all_spectra:
+            spectrum_name = os.path.basename(spectrum)
+            meas_time, local_time, utc_time = self.get_times_of(
+                spectrum=spectrum)
+            local_date = local_time.date()
+            if local_date in localdate_spectra.keys():
+                localdate_spectra[local_date].append(spectrum_name)
+            else:
+                localdate_spectra[local_date] = [spectrum_name]
+        return localdate_spectra
+
+    def get_times_of(self, spectrum):
+        """Read measurement time from filename, calculate local and utc time.
+        Check if UTC time is consistent in the spectra header.
+
+        Params:
+            spectrum (str): full path to a spectrum
+
+        Return:
+            meas_time (dt.DateTime): time parsed from the filename
+            local_time (dt.DateTime): calculated local time
+            utc_time (dt.DateTime): read from spectra header
+        """
+        spectrum_name = os.path.basename(spectrum)
+        meas_time = dt.strptime(spectrum_name, "%y%m%d_%H%M%SSN.BIN")
+        local_time = meas_time + timedelta(hours=self._localtime_offset)
+
+        # read UTC time from header
+        with codecs.open(
+                spectrum, "r", encoding="utf-8", errors="ignore") as f:
+            header = f.readlines(1)[:24]
+        UTh = float(header[13].strip())
+        UT_date = header[12].strip()
+        utc_time = dt.strptime(UT_date, "%y%m%d") + timedelta(hours=UTh)
+
+        # check if times are consistent
+        total_offset = self._localtime_offset + self.utc_offset
+        pylot_utc_time = local_time - timedelta(hours=total_offset)
+
+        # utc_time is shifted by half of the measurement time
+        time_difference = (pylot_utc_time - utc_time).total_seconds()
+        if abs(time_difference) > 300:  # not greater than 5 min
+            self.logger.critical(
+                f"Inconsistent times in spectrum {spectrum}!\n"
+                f"UTC time of spectrum: {utc_time},\n"
+                f"measurement time of spectrum: {meas_time},\n"
+                f"local time of spectrum: {local_time}.\n"
+                "Check if you entered the correct utc_offset or if there are "
+                "files from another processing in the analysis folder!"
+                )
+            sys.exit()
+        return meas_time, local_time, utc_time
+
+    def replace_params_in_template(
+            self, parameters, template_type, prf_input_file):
+        """Generate a site specific input file by using a template.
         params:
             parameters(dict): containing keys which match the variable
                               names in the template file. They are replaced by
                               the entries.
 
             template_type(str): Can be "prep", "pt", "inv" or "pcxc"
+            prf_input_file(str): the filename of the input file
         """
-        if mlogger is None:
-            mlogger = self.logger
         templ_file = self.get_template_path(template_type)
-        prf_input_file = self.get_prf_input_path(template_type, date)
         templ_stream = open(templ_file, 'r')
         prf_input_stream = open(prf_input_file, 'w')
         for line in templ_stream:
@@ -429,35 +573,23 @@ class Preparation():
         if template_type == "tccon":
             self.tccon_file = prf_input_file
 
-    def get_prep_parameters(self, date, mlogger=None):
-        '''
-        Return Parameters to be replaced in the pereprocess input file.
-        '''
-        if mlogger is None:
-            mlogger = self.logger
-        # get ILS for Channel 1 and 2 for a specific date
-        ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
-        # if coordfile is used, check for the corred coords for each day.
-        # otherwise use the same for all days
-        if self.use_coordfile:
-            self.get_coords_from_file(date)
-        lat = self.coords.get("lat", -1.)
-        lon = self.coords.get("lon", -1.)
-        alt = self.coords.get("alt", -1.)
-
-        if lat == -1. or lon == -1. or alt == -1.:
-            mlogger.critical("Could not determine coodinates. Exit!")
-            sys.exit()
-
-        # TODO: Add to comment things like version of Profast, PrfPylot, ...
+    def get_prep_parameters(self, date):
+        """Return Parameters to be replaced in the pereprocess input file."""
+        if self.ils_parameters is None:
+            ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
+        else:
+            ME1, PE1, ME2, PE2 = self.ils_parameters
+        lat = self.coords["lat"]
+        lon = self.coords["lon"]
+        alt = self.coords["alt"]
         comment = (
             "This spectrum is generated using preprocess4, a part of "
-            "PROFAST controlled by PROFFASTpylot.")
+            "PROFFAST controlled by PROFFASTpylot.")
         if self.note is not None:
             comment = " ".join([comment, self.note])
-        # get all good igrams. If no good igrams is found the day is put in
-        # the badDayQueue
-        igrams = self.get_igrams(date, mlogger)
+
+        # get all good igrams
+        igrams = self.get_igrams(date)
         igrams = "\n".join(igrams)
         # generate path to outputfolder for this date:
         datestring = date.strftime("%y%m%d")
@@ -484,53 +616,124 @@ class Preparation():
                      }
         return parameters
 
-    def get_pcxs_and_inv_parameters(self, date, mlogger=None):
-        """Return Parameters to replace in the pcxs10.inp
-        or invers10.inp files."""
-        if mlogger is None:
-            mlogger = self.logger
-        mlogger.debug("Create pcxs and inv input parameters ...")
-        if self.use_coordfile:
-            self.get_coords_from_file(date)
-        lat = self.coords.get("lat", -1.)
-        lon = self.coords.get("lon", -1.)
-        alt = self.coords.get("alt", -1.)
-        if lat == -1. or lon == -1. or alt == -1.:
-            mlogger.critical("Could not determine coodinates. Exit!")
-            sys.exit()
+    def get_pcxs_parameters(self, date):
+        """Return parameters to replace in the pcxs20.inp file."""
 
-        spectra_list = self._get_spectra_list(date, mlogger)
+        self.logger.debug("Create pcxs input parameters ...")
+
+        lat = self.coords["lat"]
+        lon = self.coords["lon"]
+        alt = self.coords["alt"]
+
         parameters = {
             "ALT": alt,
             "LAT": lat,
             "LON": lon,
-            "INSTRUMENT": self.instrument_number,
-            "SITE": self.site_name,
-            "DATE": date.strftime("%y%m%d"),
-            "DATE_LONG": date.strftime("%Y%m%d"),
-            "SITE_ABBREV": self.site_abbrev,
             "DATAPATH": self.analysis_instrument_path,
+            "DATE": date.strftime("%y%m%d"),
+            "SITE": self.site_name,
             "MAPPATH": self.map_path,
-            "SPECTRA_LIST": "\n".join(spectra_list)
+            "SITE_ABBREV": self.site_abbrev,
+            "DATE_LONG": date.strftime("%Y%m%d"),
         }
-        # in case of pcxs20 the parameter %WET_VMR% is needed in addition:
 
+        # set %WET_VMR% parameter
+        #   GGG2014 map files: dry air (False)
+        #   GGG2020 map files: wet air (True)
         if self.ggg2020mapfiles:
-            # in case of GGG2014 map files it is dry air (False)
-            # in case of GGG2020 map files it is wet air. (True)
             parameters["WET_VMR"] = True
         else:
             parameters["WET_VMR"] = False
         return parameters
 
+    def get_inv_parameters(self, date):
+        """Return Parameters to replace in the invers20.inp file.
+        Returns:
+            parameters(list): contains one or two dict depending on measurement
+                              time. See get_spectra_pT_input docstring.
+        """
+        spectra_pT_input = self.get_spectra_pT_input(date)
+        parameters = []
+        charlist = ["a", "b", "c", "d", "e"]
+        for i, sub_pT_input in enumerate(spectra_pT_input):
+            measurement_date = sub_pT_input[0][0:6]
+            temp_parameters = {
+                "DATAPATH": self.analysis_instrument_path,
+                "MEASUREMENT_DATE": measurement_date,
+                "LOCAL_DATE": date.strftime("%y%m%d"),
+                "SITE": self.site_name,
+                "SUFFIX": charlist[i],
+                "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
+            }
+            parameters.append(temp_parameters)
+        return parameters
+
+    def get_spectra_pT_input(self, date):
+        """Return a list of list of strings containing spectra and pT infos.
+        If two UTC-Dates are found inside of one local day, spectra_pT_input
+        contains two lists.
+
+        YYMMDD_HHMMSSSN.BIN, pressure, T_PBL
+
+        This function replaces the pt_intraday.inp file!
+        Note that T_PBL is currently set to 0.0.
+
+        params:
+            (date): dt.Datetime, measurement time in local time or UTC time
+        """
+        spectra_list = self.localdate_spectra[date]
+        spectra_list.sort()
+
+        # in case of two UTC days in a local day list, split them up:
+        spectra1 = []
+        spectra2 = []
+        first_date = dt.strptime(spectra_list[0][:6], "%y%m%d")
+        spectra1.append(spectra_list[0])
+        for spectrum in spectra_list[1:]:
+            current_date = dt.strptime(spectrum[:6], "%y%m%d")
+            if current_date != first_date:
+                spectra2.append(spectrum)
+            else:
+                spectra1.append(spectrum)
+        if len(spectra2) == 0:
+            assert spectra_list == spectra1
+            spectra_list = [spectra1]
+        else:
+            spectra_list = [spectra1, spectra2]
+
+        spectra_pT_input = []
+        for sublist in spectra_list:
+            temp_pT_input = []
+            for s in sublist:
+                # get timestamp of spectrum
+                # can be UTC or local time depending on measurement time
+                timestamp = dt.strptime(s, "%y%m%d_%H%M%SSN.BIN")
+                # apply a possible offset of the pressure data
+                time_offset_p_igram = \
+                    self.pressure_handler.utc_offset - self.utc_offset
+                timestamp += timedelta(hours=time_offset_p_igram)
+                # get pressure from mapfile
+                p = self.pressure_handler.get_pressure_at(timestamp)
+
+                temp_pT_input.append(f"{s}, {p}, 0.0")
+            spectra_pT_input.append(temp_pT_input)
+
+        return spectra_pT_input
+
     def get_ils_from_file(self, date):
+        """Read the ILS parameters form the given file.
+
+        Parameters:
+            date (dt.datetime): If multiple ILS Parameters are given in the
+                list, get the newest ILS parameters, that are already valid
+                at date.
+
+        Returns:
+            ils_parameters (tuple): MEChan1, PEChan1, MEChan2, PEChan2
         """
-        This methods reads the ILS from the Instrument_list.
-        If return_string=True, it returns a string which is already
-        preformatted such that it can be inserted into the template file
-        directly.
-        """
-        # TODO: when getting the ILS check for the date.
+        if self.tccon_mode:
+            return (0.983, 0., 0.983, 0.)
+
         ils_df = pd.read_csv(self.ils_file, skipinitialspace=True)
         ils_df["ValidSince"] = pd.to_datetime(ils_df["ValidSince"])
         ils_df = ils_df.set_index("Instrument")
@@ -540,7 +743,8 @@ class Preparation():
         except KeyError:
             self.logger.critical(
                 f"{self.instrument_number} is not in ILS-file.\n"
-                "Please ensure you downloaded the newest version from GitLab\n"
+                "Please ensure you are using the newest version of "
+                "PROFFASTpylot.\n"
                 )
             sys.exit()
         if isinstance(ils_df, pd.Series):
@@ -557,8 +761,9 @@ class Preparation():
             PEChan1 = row["Channel1PE"].iloc[-1]
             PEChan2 = row["Channel2PE"].iloc[-1]
         else:
-            self.logger.critical("An unknown error occured while reading the "
-                                 "ILS-list. Please contact the support!")
+            self.logger.critical(
+                "An unknown error occured while reading the "
+                "ILS-list.")
             sys.exit()
 
         return (MEChan1, PEChan1, MEChan2, PEChan2)
@@ -573,17 +778,24 @@ class Preparation():
         except KeyError:
             self.logger.critical(f"{self.site_name} is not in coord.csv!")
             sys.exit()
+
+        coords = {
+            "lat": None,
+            "lon": None,
+            "alt": None
+        }
         if isinstance(coord_df, pd.Series):
             # this is the case, if only one entry per site is available
-            self.coords["lon"] = coord_df["Longitude"]
-            self.coords["lat"] = coord_df["Latitude"]
-            self.coords["alt"] = coord_df["Altitude_kmasl"]
+            coords["lon"] = coord_df["Longitude"]
+            coords["lat"] = coord_df["Latitude"]
+            coords["alt"] = coord_df["Altitude_kmasl"]
         elif isinstance(coord_df, pd.DataFrame):
             coord_df = coord_df.loc[coord_df["Starttime"] <= date]
             row = coord_df.sort_values(by=["Starttime"])
-            self.coords["lon"] = row["Longitude"].iloc[-1]
-            self.coords["lat"] = row["Latitude"].iloc[-1]
-            self.coords["alt"] = row["Altitude_kmasl"].iloc[-1]
+            coords["lon"] = row["Longitude"].iloc[-1]
+            coords["lat"] = row["Latitude"].iloc[-1]
+            coords["alt"] = row["Altitude_kmasl"].iloc[-1]
+        return coords
 
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""
@@ -596,8 +808,9 @@ class Preparation():
                 "interferogram on disk. Terminating program.")
             quit()
         else:
-            i = self._find_closest("after", start_date, dates)
-        return i
+            for i, date in enumerate(dates):
+                if date >= start_date:
+                    return i
 
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
@@ -610,39 +823,10 @@ class Preparation():
                 "interferogram on disk. Terminating program.")
             quit()
         else:
-            i = self._find_closest("before", end_date, dates)
-        return i
-
-    def _find_closest(self, when, date, datelist):
-        """Find the closest entry in a date list.
-        Before or after a given date.
-
-        Params:
-            when (str): 'before' or 'after'
-            date: date to slice the list
-            datelist (list): list of all dates
-        """
-        self.logger.debug(
-            "Finding the closest date in datelist "
-            f"{when} {date.strftime('%y-%m-%d')}")
-
-        if when == "after":  # in case of finding the start date
-            assert date <= datelist[-1]
-            if datelist[0] >= date:
-                return 0
-        if when == "before":  # in case of finding the end date
-            assert date >= datelist[0]
-            if datelist[-1] <= date:
-                return len(datelist)
-
-        for i, date_i in enumerate(datelist):
-            if date_i == date:
-                return i
-            if date_i > date:
-                assert datelist[i-1] < date
-                if when == "before":
-                    return i-1
-                if when == "after":
+            for i, date in enumerate(dates):
+                if date == end_date:
+                    return i+1
+                if date > end_date:
                     return i
 
     def _replace_backslash(self, line):
@@ -651,92 +835,119 @@ class Preparation():
             return line.replace("\\", "/")
         return line
 
-    def _get_spectra_list(self, date, mlogger):
-        """Return list of spectra files generated by preprocess."""
-        date_str = date.strftime("%y%m%d")
-        spectra_search_str = os.path.join(
-            self.analysis_instrument_path, date_str, "cal", "*SN.BIN")
-        spectra_list = glob(spectra_search_str)
-        spectra_list = [os.path.basename(spectra) for spectra in spectra_list]
-        if len(spectra_list) == 0:
-            mlogger.debug(f"No spectra were found at {spectra_search_str}")
-        return spectra_list
+    def prepare_map_file(self, date):
+        """Generate map file if GGG2020 map file.
+        Returns True if map files where found and created, False if no files
+        where found.
+        """
+        # search for GGG2020 map files:
+        srchstrg = f"{self.site_abbrev}_*_*Z.map"
+        mapfiles = glob(os.path.join(self.map_path, srchstrg))
+        if len(mapfiles) != 0:
+            self.logger.debug("Detected GGG2020 map files!")
+            # GGG2020map files found!
+            self.ggg2020mapfiles = True
+            self._interpolate_map_files(date)
+        else:
+            srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            mapfiles = glob(os.path.join(self.map_path, srchstrg))
+            if len(mapfiles) == 1:
+                self.logger.warning(
+                    "Detected GGG2014 map file, this is not recommended! "
+                    "PROFFASTpylot is calibrated using GGG2020 map files, "
+                    "please use GGG2014 only for comparison purposes!")
+                self.ggg2020mapfiles = False
+            else:
+                self.logger.warning(
+                    "No suitable map file found at "
+                    f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
+                return False
+        return True
 
     def _interpolate_map_files(self, date):
-        """
-        interpolates the new map files to genereate a map
-        file at 12:00 local time
-        """
-        # print("Interpolate map files to local noon for date ", date)
-        # First find out, at which timezone the current files are recorded:
-        if self.use_coordfile:
-            self.get_coords_from_file(self.dates[0])
-        tf = TimezoneFinder()
-        # get timezone as a string:
-        local_tz_name = tf.timezone_at(
-            lat=self.coords["lat"],
-            lng=self.coords["lon"])
-        # convert string to pytz object:
-        local_tz = pytz.timezone(local_tz_name)
-        utc_tz = pytz.utc
-        # create a timestamp of local noon:
-        noon_local = date.replace(hour=12, minute=0, second=0)
-        # only for developement: add 1 h 30 min
-        # TODO: Delete after developement!
-        # noon_local = noon_local + timedelta(hours=1, minutes=30)
+        """Interpolate GGG2020 map files.
+        Genereate a map file at 12:00 local time.
+        This method is only called for mapfiles of type GGG2020.
 
-        # convert this to a localized timestamp using localize of pytz.
-        # this is neccesary since there is a bug in using the tzinfo of the
-        # datetime module:
-        tz_diff = utc_tz.localize(noon_local).astimezone(local_tz) \
-            - local_tz.localize(noon_local)
-        noon_utc = noon_local - tz_diff
+        params:
+            date (dt.datetime): datetime in local time (is called with
+                elements of the localdate_spectra)
+        """
+        # create a timestamp of local noon
+        noon_local = dt(
+            year=date.year, month=date.month, day=date.day, hour=12)
 
-        # next get a list of all *.map files of the needed date:
-        # TODO: Here we could check fo the correct lat and long as well!
-        srchstrg = f"{self.site_abbrev}_*_"\
-                   + f"{noon_utc.strftime('%Y%m%d')}*Z.map"
-        mapfiles = glob(os.path.join(self.map_path, srchstrg))
-        # find the right map files: bevore and after the hour of noon_utc:
-        ind = 0
+        total_localtime_utc_offset = timedelta(
+            hours=(self.utc_offset + self._localtime_offset))
+        noon_utc = noon_local - total_localtime_utc_offset
+
+        # List of all *.map files of the needed date
+        search_str = (
+            f"{self.site_abbrev}_*_"
+            f"{noon_utc.strftime('%Y%m%d')}*Z.map")
+        mapfiles = glob(os.path.join(self.map_path, search_str))
+        # add files of the following day
+        # in case of interpolation between 21:00 and 00:00
+        next_day = noon_utc + timedelta(hours=24)
+        search_str = (
+            f"{self.site_abbrev}_*_"
+            f"{next_day.strftime('%Y%m%d')}*Z.map")
+        mapfiles.extend(
+             glob(os.path.join(self.map_path, search_str)))
+        mapfiles.sort()
+
+        # find the correct map files: bevore and after the hour of noon_utc
+        i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
         for i, file in enumerate(mapfiles):
             hour_file = int(file[-7:-5])
             if hour_file > noon_hour:
-                ind = i
+                i_noon = i
                 break
-        file1 = pd.read_csv(mapfiles[ind-1],
-                            skipinitialspace=True, header=11)
+        if i_noon in [None, 0]:
+            self.logger.critical(
+                f"Could not calculate mapfile for {noon_utc} UTC "
+                "from the following files:\n"
+                f"{' '.join(mapfiles)}"
+                )
+            sys.exit()
+
+        file1 = pd.read_csv(
+            mapfiles[i_noon-1],
+            skipinitialspace=True,
+            header=11)
         file1 = file1.to_numpy().transpose()
-        file2 = pd.read_csv(mapfiles[ind],
-                            skipinitialspace=True, header=11)
+        file2 = pd.read_csv(
+            mapfiles[i_noon],
+            skipinitialspace=True,
+            header=11)
         file2 = file2.to_numpy().transpose()
-        # interpolate between the files:
-        # since the difference between two file is allways 3 hours this can be
-        # hardcoded:
+
+        # interpolate between the files
+        # difference between two file is allways 3 hours
         tdiff = 3 * 60 * 60   # seconds
-        # furthermore we need the date of file 1 for the requested time diff.
+        # date of file 1 for the requested time diff
         date_file1 = dt.strptime(
-                    (os.path.basename(mapfiles[ind-1])[12:22]), "%Y%m%d%H"
-                                )
+                    os.path.basename(mapfiles[i_noon-1])[12:22], "%Y%m%d%H")
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
                 * (noon_utc - date_file1).total_seconds()
 
-        current_mapfile = \
+        output_mapfile = \
             f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
-        current_mapfile = os.path.join(self.map_path, current_mapfile)
+        output_mapfile = os.path.join(self.map_path, output_mapfile)
 
-        # Now after interpolation is done, read in Header:
+        # write header
         with open(mapfiles[0], "r") as f:
             header = f.readlines()[:12]
-        # write header
-        with open(current_mapfile, "w") as f:
+        self._check_mapfile_coordinates(header)
+        with open(output_mapfile, "w") as f:
             for line in header:
                 f.write(line)
+
         # write the rest of the file
-        with open(current_mapfile, "a") as f:
+        with open(output_mapfile, "a") as f:
             frw = fortranformat.FortranRecordWriter(
                 "(2(f8.3,','),4(e10.3,','),1x,(f7.3,','),1x,(f7.3,','),"
                 "(e10.3,','),1x,(f6.1,','),(f8.3,','),1x,(f6.4,','),1x,"
@@ -745,9 +956,55 @@ class Preparation():
             for line in file1:
                 f.write(frw.write(line) + "\n")
 
+    def _check_mapfile_coordinates(self, header):
+        """Check if the coordinates of the mapfile are consistent.
+        Print a warning if not.
+
+        params:
+            header (list of lines): originating from a GGG20 mapfile
+        """
+        line = header[1]
+        lat_map = float(line[3:5])
+        if line[5] == "S":
+            lat_map *= -1
+        lon_map = float(line[7:10])
+        if line[10] == "W":
+            lon_map *= -1
+
+        lat = self.coords["lat"]
+        lon = self.coords["lon"]
+
+        if round(lat, 0) != lat_map:
+            self.logger.warning(
+                f"The Latitude of the map file ({lat_map}) "
+                f"does not match the Latitude given to PROFFASTpylot ({lat})!")
+        if round(lon, 0) != lon_map:
+            self.logger.warning(
+                f"The Longitude of the map file ({lon_map}) "
+                f"Does not match the Latitude given to PROFFASTpylot ({lon})!")
+
     def _tccon_mode_warning(self):
-        """ Print warning if TCCON mode is activated """
+        """Print warning if TCCON mode is activated """
         self.logger.warning(
             "TCCON Mode is activated!\nThis will not work with standard"
             " EM27/SUN interferograms.\nOnly continue if this setting"
             " was choosen by purpose. Otherwise break the execution!")
+
+    def _get_localtime_offset(self):
+        """Return offset between measurement time and local time.
+
+        utc_offset + localtime_offset = total offset beteen Localtime and UTC.
+        and thus
+        localtime_offset = total_localtime_utc_offset - utc_offset
+        """
+        tf = TimezoneFinder()
+        local_tz_name = tf.timezone_at(
+            lat=self.coords["lat"],
+            lng=self.coords["lon"])
+        local_tz = pytz.timezone(local_tz_name)
+        # Allways use winter time
+        date_winter = dt.strptime("2000-01-01", "%Y-%m-%d")
+        localtime_utc_timedelta = local_tz.utcoffset(date_winter)
+        localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
+        localtime_offset = localtime_utc_offset - self.utc_offset
+        return localtime_offset
