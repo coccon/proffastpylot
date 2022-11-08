@@ -2,10 +2,10 @@
 
 The example input file [input_sodankyla_example.yml](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/input_sodankyla_example.yml)
 contains the most relevant input parameters to run the PROFFASTpylot.
-However, there are several more paramerters which can be used optionally.
+However, there are several more parameters which can be used optionally.
 In this file ALL parameters are given and explained:
 
-## Site informations
+## Site information
 - instrument_number: The serial number of your EM27/SUN.
                      (Or any other number you want to give to your instrument.)
 
@@ -21,8 +21,8 @@ In this file ALL parameters are given and explained:
     - lon: The longitude
     - alt: The altitude in km over sea level.
 
-- coord_file: Alternative way of giving the coodinates:
-  A comma seperated file. 
+- coord_file: Alternative way of giving the coordinates:
+  A comma separated file. 
 
 - utc_offset: The UTC-offset of your measurements. This can either be due to
               the measurement in a different time zone or due to an error in
@@ -31,15 +31,15 @@ In this file ALL parameters are given and explained:
 - note: Optional comment included in bin-files by PREPROCESS.
         Leave empty for adding no comment
 
-## Steering of the beaviour:
+## Steering of the behavior:
 
-- min_interferogram_size: A File size filter for igrams: all igrams with a
-                          filesize less than the value specified here are
-                          assumed to be corrupt. Filesize in MegaBytes
+- min_interferogram_size: A file size filter for interferograms: all interferograms with a
+                          file size less than the value specified here are
+                          assumed to be corrupt. File size in MegaBytes
 
 - igram_pattern: The pattern used to look for interferograms.
                  This parameter can be used to select only files from
-                 within the iterferogram folder matching with the given
+                 within the interferogram folder matching with the given
                  pattern.
                  The default value is `*.*` which means that all files in the
                  interferogram folders are used for processing.
@@ -96,7 +96,7 @@ In this file ALL parameters are given and explained:
                  written to. We recommend to call it analysis.
                  Within this folder the PROFFASTpylot will create a folder
                  structure like `analysis/SiteName_InstrumentNumber/YYMMDD.`
-- result_path: The merged results, the logfiles and optionally the inputfiles
+- result_path: The merged results, the log files and optionally the input files
                are written to the result path.
                Within it, PROFFASTpylot will create a folder named
                `SiteName_InstrumentNumber_StartDate-EndDate`.
