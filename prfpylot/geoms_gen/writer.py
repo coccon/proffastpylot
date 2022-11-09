@@ -16,14 +16,14 @@ class GeomsGenWriter(GeomsGenHelper):
         of the Proffastpylot. for now it is kept for developement.
         """
 
-      # Call the init method of the `Preparation` class.
-      # This provides some usefull data within this class.
+        # Call the init method of the `Preparation` class.
+        # This provides some usefull data within this class.
 
         super(GeomsGenWriter, self).__init__(geomsgen_inputfile, prfpylot_inputfile)
 
-      # List of all variables for the GEOMS compliant HDF5 files.
-      # For further information, see document "geoms-1.0.pdf":
-      # https://avdc.gsfc.nasa.gov/PDF/GEOMS/geoms-1.0.pdf
+        # List of all variables for the GEOMS compliant HDF5 files.
+        # For further information, see document "geoms-1.0.pdf":
+        # https://avdc.gsfc.nasa.gov/PDF/GEOMS/geoms-1.0.pdf
 
         self.hdf5_vars = {
           "SRC_PRO": "SOURCE.PRODUCT",
@@ -65,8 +65,8 @@ class GeomsGenWriter(GeomsGenHelper):
           "CO_AVK": "CO.COLUMN_ABSORPTION.SOLAR_AVK"
         }
 
-      # List of common attributes for the variables of the GEOMS compliant HDF5 files.
-      # This list is not used for the source variables.
+        # List of common attributes for the variables of the GEOMS compliant HDF5 files.
+        # This list is not used for the source variables.
 
         self.hdf5_atts = {
             "VAR_DATA_TYPE": "",
@@ -82,10 +82,10 @@ class GeomsGenWriter(GeomsGenHelper):
             "VAR_VALID_MIN": 0,
             "_FillValue": -900000.0,
             "units": "",
-            "valid_range": [0,0]
+            "valid_range": [0, 0]
         }
 
-      # List of common attributes for the source variables of the GEOMS compliant HDF5 files.
+        # List of common attributes for the source variables of the GEOMS compliant HDF5 files.
 
         self.hdf5_atts_src = {
             "VAR_DATA_TYPE": "",
@@ -105,7 +105,6 @@ class GeomsGenWriter(GeomsGenHelper):
         self.file_name = ''
         self.variables = []
 
-
     def generate_GEOMS_at(self, day):
 
         """ create a GEOMS file for a specific day """
@@ -113,41 +112,41 @@ class GeomsGenWriter(GeomsGenHelper):
         if not isinstance(day, dt.datetime):
             self.logger.error
 
-      # Create path and preliminary name for the output HDF5 file.
+        # Create path and preliminary name for the output HDF5 file.
 
         self.geoms_out = "_".join([self.site_name, self.instrument_number,
                                    'GEOMS_OUT.h5'])
 
         geoms_file = os.path.join(self.geoms_out_path, 'GEOMS_OUT.h5')
 
-      # Create GEOMS output file.
+        # Create GEOMS output file.
 
         self.MyHDF5 = h5py.File(geoms_file, 'w')
 
-      # Get data from the PROFFAST inparms output files
+        # Get data from the PROFFAST inparms output files
 
-      # df = self.get_data_content(day)     # PROFFAST output (df pandas data frame)
-        df = self.get_invparms_content(day) # invparms file
+        # df = self.get_data_content(day)     # PROFFAST output (df pandas data frame)
+        df = self.get_invparms_content(day)  # invparms file
 
-      # After applying the quality filter for SZA and XAIR (see get_invparms_content),
-      # at least 11 (or 12 ???) remaining measurements per measurement day are required to generate an HDF5 file.
+        # After applying the quality filter for SZA and XAIR (see get_invparms_content),
+        # at least 11 (or 12 ???) remaining measurements per measurement day are required to generate an HDF5 file.
 
-      # print (df, type(df))
+        # print(df, type(df))
         if df is None:
-            print ('HDF file generation stopped while reading invparms file!')
+            print('HDF file generation stopped while reading invparms file!')
             return
 
-      # Get additional information from the colsens, pT_fast_out, and VMR_fast_out PROFFAST output files.
+        # Get additional information from the colsens, pT_fast_out, and VMR_fast_out PROFFAST output files.
 
         vmr = self.get_vmr_content(day)      # VMR file
         ptf = self.get_pt_content(day)       # pT file
         sen = self.get_colsens_int(df, day)  # col sens file (including a sza interpolation)
 
         if (vmr is None) or (ptf is None) or (sen is None):
-            print ('HDF file generation stopped while reading VMR, pT, or colsens file!')
+            print('HDF file generation stopped while reading VMR, pT, or colsens file!')
             return
 
-      # Write all variables for generating the GEOMS compliant HDF5 files.
+        # Write all variables for generating the GEOMS compliant HDF5 files.
 
         self.write_source('SRC_PRO')                   # "SOURCE.PRODUCT"
 
@@ -193,50 +192,48 @@ class GeomsGenWriter(GeomsGenHelper):
         self.write_air_density(df, ptf, "AIR_DEN")     # "DRY.AIR.NUMBER.DENSITY_INDEPENDENT"
         self.write_air_density_src(df, "AIR_SRC")      # "DRY.AIR.NUMBER.DENSITY_INDEPENDENT_SOURCE"
 
-      # Write meta information for the variables stored in the HDF5 files.
+        # Write meta information for the variables stored in the HDF5 files.
 
         self.write_metadata(day, df)
         geoms_file_name = os.path.join(self.geoms_out_path, self.file_name)
 
-      # close file and write to hard disk.
+        # close file and write to hard disk.
 
         self.MyHDF5.close()
 
-      # Remove existing file and rename preliminary file name.
+        # Remove existing file and rename preliminary file name.
 
         if os.path.exists(geoms_file_name):
             os.remove(geoms_file_name) # delete file in case the file already exits
         os.rename(geoms_file, geoms_file_name)
 
-
     def get_start_stop_date_time(self, day, df):
 
-      # Get date and time of the first and last measurement of the measurement day.
+        # Get date and time of the first and last measurement of the measurement day.
 
         data = df["JulianDate"]
 
-      # Possible problems with the subsequent quality checks of the HDF5 files can be fixed here.
+        # Possible problems with the subsequent quality checks of the HDF5 files can be fixed here.
 
         data = pd.DataFrame(data)
-      # data = self._GEOMStoDateTime((data['JulianDate'] - 2451544.5) * 86400.0)
+        # data = self._GEOMStoDateTime((data['JulianDate'] - 2451544.5) * 86400.0)
         data = self._GEOMStoDateTime(np.round((data['JulianDate'] - 2451544.5) * 86400.0)) # ???
 
         start_date = str(day)[0:10]
         start_date = start_date + 'T'
         start_date = start_date + str(data[0].time())
         start_date = start_date + 'Z'
-        start_date = start_date.replace('-','')
-        start_date = start_date.replace(':','')
+        start_date = start_date.replace('-', '')
+        start_date = start_date.replace(':', '')
 
         stop_date = str(day)[0:10]
         stop_date = stop_date + 'T'
         stop_date = stop_date + str(data[-1].time())
         stop_date = stop_date + 'Z'
-        stop_date = stop_date.replace('-','')
-        stop_date = stop_date.replace(':','')
+        stop_date = stop_date.replace('-', '')
+        stop_date = stop_date.replace(':', '')
 
         return (start_date, stop_date)
-
 
     def get_start_stop_date_time_csv(self, day):
 
@@ -244,40 +241,39 @@ class GeomsGenWriter(GeomsGenHelper):
 
         df = pd.read_csv(self._find_csv_file(day), skipinitialspace=True)
         df["UTC"] = pd.to_datetime(df["UTC"])
-      # df["LocalTime"] = pd.to_datetime(df["LocalTime"])
+        # df["LocalTime"] = pd.to_datetime(df["LocalTime"])
         starttime = day.replace(hour=0, minute=0, second=0)
         endtime = day.replace(hour=23, minute=59, second=59)
-        datetime_mask = (df["UTC"] > starttime) & (df["UTC"]< endtime)
-      # datetime_mask = (df["LocalTime"] > starttime) & (df["LocalTime"]< endtime)
+        datetime_mask = (df["UTC"] > starttime) & (df["UTC"] < endtime)
+        # datetime_mask = (df["LocalTime"] > starttime) & (df["LocalTime"]< endtime)
 
         df = df.loc[datetime_mask]
         data = df["UTC"].to_numpy()
-      # data = df["LocalTime"].to_numpy()
+        # data = df["LocalTime"].to_numpy()
 
         start_date = str(data[0])
-        start_date = start_date.replace('-','')
-        start_date = start_date.replace(':','')
-        start_date = start_date.replace('.000000000','')
+        start_date = start_date.replace('-', '')
+        start_date = start_date.replace(':', '')
+        start_date = start_date.replace('.000000000', '')
         start_date = start_date+'Z'
 
         stop_date = str(data[-1])
-        stop_date = stop_date.replace('-','')
-        stop_date = stop_date.replace(':','')
-        stop_date = stop_date.replace('.000000000','')
+        stop_date = stop_date.replace('-', '')
+        stop_date = stop_date.replace(':', '')
+        stop_date = stop_date.replace('.000000000', '')
         stop_date = stop_date+'Z'
 
         return (start_date, stop_date)
 
-
     def get_data_content(self, day):
 
-      # Here, the data are obtained from the file that summarizes all the measurement days.
-      # The data can be retrieved directly from ivparms.dat file instead.
+        # Here, the data are obtained from the file that summarizes all the measurement days.
+        # The data can be retrieved directly from ivparms.dat file instead.
 
         df = pd.read_csv(self._find_csv_file(day), skipinitialspace=True)
         df["UTC"] = pd.to_datetime(df["UTC"])
 
-      # Get the data only for the current day.
+        # Get the data only for the current day.
 
         starttime = day.replace(hour=0, minute=0, second=0)
         endtime = day.replace(hour=23, minute=59, second=59)
@@ -286,49 +282,43 @@ class GeomsGenWriter(GeomsGenHelper):
 
         return df
 
-
     def get_vmr_content(self, day):
 
-      # The content of the output VMR file is read separately for each measurement day.
-      # Each VMR file (i.e. VMR_fast_out.dat) contains:
-      # 0: "Index", 1: "Altitude", 2: "H2O", 3: "HDO", 4: "CO2", 5: "CH4", 6: "N2O", 7: "CO", 8: "O2", 9: "HF"
+        # The content of the output VMR file is read separately for each measurement day.
+        # Each VMR file (i.e. VMR_fast_out.dat) contains:
+        # 0: "Index", 1: "Altitude", 2: "H2O", 3: "HDO", 4: "CO2", 5: "CH4", 6: "N2O", 7: "CO", 8: "O2", 9: "HF"
 
-        try:
-            vmr = pd.read_csv(self._get_pt_vmr_file(day, "VMR"), header=None, skipinitialspace=True, \
-                usecols=[0,1,2,3,4,5,6,7,8,9], \
-                names=['Index','Altitude','H2O','HDO','CO2','CH4','N2O','CO','O2','HF'], \
-                sep=' ', engine='python')
+        vmr = pd.read_csv(
+            self._get_pt_vmr_file(day, "VMR"),
+            header=None, skipinitialspace=True,
+            usecols=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            names=['Index', 'Altitude', 'H2O', 'HDO', 'CO2', 'CH4', 'N2O', 'CO', 'O2', 'HF'],
+            sep=' ', engine='python')
 
-            return vmr
-        except:
-            print ("Error: Reading VMR file!")
-            print (self._get_pt_vmr_file(day, "VMR"))
-            return None
-      # else:
-      #     print ("Failure: Reading VMR file!")
-      #     print (self._get_pt_vmr_file(day, "VMR"))
-      #     return None
-
+        return vmr
 
     def get_pt_content(self, day):
 
-      # The content of the pT output file is read separately for each measurement day.
-      # Each pT file (i.e. pT_fast_out.dat) contains:
-      # 0: "Index", 1: "Altitude", 2: "Temperature", 3: "Pressure", 4: "DryAirColumn", 5: "H2O", 6: "HDO"
+        # The content of the pT output file is read separately for each measurement day.
+        # Each pT file (i.e. pT_fast_out.dat) contains:
+        # 0: "Index", 1: "Altitude", 2: "Temperature", 3: "Pressure", 4: "DryAirColumn", 5: "H2O", 6: "HDO"
 
         try:
-            ptf = pd.read_csv(self._get_pt_vmr_file(day, "pT"), header=0, skipinitialspace=True, \
-                usecols=[0,1,2,3,4,5,6], names=['Index','Altitude','Tem','Pre','DAC','H2O','HDO'], \
+            ptf = pd.read_csv(
+                self._get_pt_vmr_file(day, "pT"),
+                header=0, skipinitialspace=True,
+                usecols=[0, 1, 2, 3, 4, 5, 6], 
+                names=['Index', 'Altitude', 'Tem', 'Pre', 'DAC', 'H2O', 'HDO'],
                 sep=' ', engine='python')
 
             return ptf
         except:
-            print ("Error: Reading pT file!")
-            print (self._get_pt_vmr_file(day, "pT"))
+            print("Error: Reading pT file!")
+            print(self._get_pt_vmr_file(day, "pT"))
             return None
         # else:
-        #     print ("Failure: Reading PT file!")
-        #     print (self._get_pt_vmr_file(day, "pT"))
+        #     print("Failure: Reading PT file!")
+        #     print(self._get_pt_vmr_file(day, "pT"))
         #     return None
 
     def get_invparms_content(self, day):
@@ -435,77 +425,68 @@ class GeomsGenWriter(GeomsGenHelper):
 
     def get_colsens_sza(self, day):
 
-      # The column sensivity file (i.e. *colsens.dat") contains the vertical profile of the pressure and
-      # the sensitivities for each species (these are H2O, HDO, CO2, CH4, N2O, CO, O2, HF) as function of the SZA.
-      # alt [km], p [mbar], SZA [rad]:
-      # 0.000E+00, 3.965E-01, 5.607E-01, 6.867E-01, 7.930E-01, 8.866E-01, 9.712E-01, 1.049E+00,
-      # 1.121E+00, 1.189E+00, 1.254E+00, 1.315E+00, 1.373E+00, 1.430E+00, 1.484E+00
+        # The column sensivity file (i.e. *colsens.dat") contains the vertical profile of the pressure and
+        # the sensitivities for each species (these are H2O, HDO, CO2, CH4, N2O, CO, O2, HF) as function of the SZA.
+        # alt [km], p [mbar], SZA [rad]:
+        # 0.000E+00, 3.965E-01, 5.607E-01, 6.867E-01, 7.930E-01, 8.866E-01, 9.712E-01, 1.049E+00,
+        # 1.121E+00, 1.189E+00, 1.254E+00, 1.315E+00, 1.373E+00, 1.430E+00, 1.484E+00
 
         sza = []
         alt = []
         pre = []
         sen = []
 
-      # Get path and name for the column sensitivity file of a certain day.
+        # Get path and name for the column sensitivity file of a certain day.
 
         day_str = day.strftime("%y%m%d")
         colsens_filename = f"{self.site_name}{day_str}-colsens.dat"
         path = os.path.join(self.result_folder, colsens_filename)
 
-      # Read pressure and sensitivities as function of the altitude and SZA.
+        # Read pressure and sensitivities as function of the altitude and SZA.
 
-        try:
-            with open(path,'r') as file:
+        with open(path, 'r') as file:
 
-                for i in range(8): # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
-                    sza.append([])
-                    alt.append([])
-                    pre.append([])
-                    sen.append([])
+            for i in range(8):  # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
+                sza.append([])
+                alt.append([])
+                pre.append([])
+                sen.append([])
 
-                    for j in range(6): # 6 header lines for each species
-                        header = file.readline() # skip header line
-                        if j == 3: # read SZA [rad] values in the third line
-                            header = re.sub(' +', '\t', header)
-                            header = header.split('\t') # tab separator
-                            sza[i] = np.array(header[3:])  # SZA header/columns
-                            sza[i] = sza[i].astype(float)  # string to float
+                for j in range(6):  # 6 header lines for each species
+                    header = file.readline()  # skip header line
+                    if j == 3:  # read SZA [rad] values in the third line
+                        header = re.sub(' +', '\t', header)
+                        header = header.split('\t')  # tab separator
+                        sza[i] = np.array(header[3:])  # SZA header/columns
+                        sza[i] = sza[i].astype(float)  # string to float
 
-                    for j in range(49): # number of altitude levels
-                        line = file.readline()[1:-1]   # skip first empty space and carriage return character at the end
-                        line = re.sub(' +', ',', line) # replace empty spaces by a comma
-                        line = line.split(',')         # split line into columns
+                for j in range(49):  # number of altitude levels
+                    line = file.readline()[1:-1]   # skip first empty space and carriage return character at the end
+                    line = re.sub(' +', ',', line)  # replace empty spaces by a comma
+                    line = line.split(',')         # split line into columns
 
-                        alt[i].append(line[0])         # altitude (first column)
-                        pre[i].append(line[1])         # pressure (second column)
+                    alt[i].append(line[0])         # altitude (first column)
+                    pre[i].append(line[1])         # pressure (second column)
 
-                        sen[i].append([])
-                        for k in range(2,len(line)):   # SZA (third column upwards, total 15 columns)
-                            sen[i][j].append(float(line[k]))
+                    sen[i].append([])
+                    for k in range(2, len(line)):   # SZA (third column upwards, total 15 columns)
+                        sen[i][j].append(float(line[k]))
 
-            file.close()
-        except:
-            print ('Error: Open colsens file!')
-            print (path)
-            return None, None, None, None
-      # else:
-      #     print ('Failure: Open colsens file!')
-      #     print (path)
-      #     return None, None, None, None
+        file.close()
 
-        sza = np.array(sza,dtype=float) # SZA [deg]
-        alt = np.array(alt,dtype=float) # altitude [km]
-        pre = np.array(pre,dtype=float) # pressure [mbar]
-        sen = np.array(sen,dtype=float) # sensitivity
+        sza = np.array(sza, dtype=float)  # SZA [deg]
+        alt = np.array(alt, dtype=float)  # altitude [km]
+        pre = np.array(pre, dtype=float)  # pressure [mbar]
+        sen = np.array(sen, dtype=float)  # sensitivity
 
         return sza, alt, pre, sen
 
-
     def get_colsens_int(self, df, day):
 
-      # Here, the interpolation of SZA is calculated to be consistent
-      # with the a-priori altitude levels of the map-files.
-      # Then, the gas sensitivities are calculated using the interpolated SZA values.
+        # Here, the interpolation of SZA is calculated to be consistent
+        # with the a-priori altitude levels of the map-files.
+        # Then, the gas sensitivities are calculated using the
+        # interpolated SZA values.
 
         sza, alt, pre, sen = self.get_colsens_sza(day)
 
@@ -516,7 +497,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         gas_sens = []
 
-        for k in range(8): # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
+        for k in range(8):  # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
 
             gas_sens.append([])
 
@@ -563,125 +544,135 @@ class GeomsGenWriter(GeomsGenHelper):
 
                             b_gas = gas_1 - m_rad * SZA_sen_rad_1
 
-                            gas_int = m_rad * SZA_app_rad + b_gas # gas extrapolation
+                            gas_int = m_rad * SZA_app_rad + b_gas  # gas extrapolation
                             gas_sens[k][i].append(gas_int)
         return gas_sens
 
-
     def get_col_unc(self, df):
 
-      # The error calculation (uncertainty) is performed
-      # by using the column mixing ratios and dry air mole fraction.
+        # The error calculation (uncertainty) is performed
+        # by using the column mixing ratios and dry air mole fraction.
 
         XH2O = df["XH2O"].to_numpy()
         XCO2 = df["XCO2"].to_numpy()
         XCH4 = df["XCH4"].to_numpy()
-        XCO  = df["XCO"].to_numpy()
+        XCO = df["XCO"].to_numpy()
 
         AvgNr = 11           # number of moving mean values
-        ErrNr = int(AvgNr/2) # number of moving mean values divided by two
+        ErrNr = int(AvgNr/2)  # number of moving mean values divided by two
         MeaNr = len(XH2O)    # number of measurements
 
-      # Calculation of the moving mean for each species with 11 data points.
+        # Calculation of the moving mean for each species with 11 data points.
 
         XH2O_mean = np.zeros(df['JulianDate'].shape)
         XCO2_mean = np.zeros(df['JulianDate'].shape)
         XCH4_mean = np.zeros(df['JulianDate'].shape)
-        XCO_mean  = np.zeros(df['JulianDate'].shape)
+        XCO_mean = np.zeros(df['JulianDate'].shape)
 
-        for i in range(MeaNr-AvgNr+1): # moving mean calculation
+        for i in range(MeaNr-AvgNr+1):  # moving mean calculation
             XH2O_mean_tmp = 0.0
             XCO2_mean_tmp = 0.0
             XCH4_mean_tmp = 0.0
-            XCO_mean_tmp  = 0.0
+            XCO_mean_tmp = 0.0
 
             for j in range(AvgNr):
                 XH2O_mean_tmp += XH2O[i+j]
                 XCO2_mean_tmp += XCO2[i+j]
                 XCH4_mean_tmp += XCH4[i+j]
-                XCO_mean_tmp  += XCO[i+j]
+                XCO_mean_tmp += XCO[i+j]
 
             XH2O_mean[i+ErrNr] = XH2O_mean_tmp / float(AvgNr)
             XCO2_mean[i+ErrNr] = XCO2_mean_tmp / float(AvgNr)
             XCH4_mean[i+ErrNr] = XCH4_mean_tmp / float(AvgNr)
-            XCO_mean[i+ErrNr]  = XCO_mean_tmp / float(AvgNr)
+            XCO_mean[i+ErrNr] = XCO_mean_tmp / float(AvgNr)
 
-        for i in range(ErrNr): # first entries const
+        for i in range(ErrNr):  # first entries const
             XH2O_mean[i] = XH2O_mean[ErrNr]
             XCO2_mean[i] = XCO2_mean[ErrNr]
             XCH4_mean[i] = XCH4_mean[ErrNr]
-            XCO_mean[i]  = XCO_mean[ErrNr]
+            XCO_mean[i] = XCO_mean[ErrNr]
 
-        for i in range(ErrNr): # last entries const
+        for i in range(ErrNr):  # last entries const
             XH2O_mean[MeaNr-i-1] = XH2O_mean[MeaNr-ErrNr-1]
             XCO2_mean[MeaNr-i-1] = XCO2_mean[MeaNr-ErrNr-1]
             XCH4_mean[MeaNr-i-1] = XCH4_mean[MeaNr-ErrNr-1]
-            XCO_mean[MeaNr-i-1]  = XCO_mean[MeaNr-ErrNr-1]
+            XCO_mean[MeaNr-i-1] = XCO_mean[MeaNr-ErrNr-1]
 
-      # The error calculation is based on the difference between the column mixing ratios
-      # and the the moving mean value for each trace gas.
-      # Therefore, it corresponds to a standard deviation with respect to the moving mean.
+        # The error calculation is based on the difference between the column mixing ratios
+        # and the the moving mean value for each trace gas.
+        # Therefore, it corresponds to a standard deviation with respect to the moving mean.
 
         XH2O_err = np.zeros(MeaNr)
         XCO2_err = np.zeros(MeaNr)
         XCH4_err = np.zeros(MeaNr)
-        XCO_err  = np.zeros(MeaNr)
+        XCO_err = np.zeros(MeaNr)
 
         for i in range(MeaNr-AvgNr+1):
             XH2O_err_tmp = 0.0
             XCO2_err_tmp = 0.0
             XCH4_err_tmp = 0.0
-            XCO_err_tmp  = 0.0
+            XCO_err_tmp = 0.0
 
             for j in range(AvgNr):
 
                 XH2O_err_tmp += np.power(XH2O[i+j] - XH2O_mean[i+j], 2)
                 XCO2_err_tmp += np.power(XCO2[i+j] - XCO2_mean[i+j], 2)
                 XCH4_err_tmp += np.power(XCH4[i+j] - XCH4_mean[i+j], 2)
-                XCO_err_tmp  += np.power(XCO[i+j]  - XCO_mean[i+j], 2)
+                XCO_err_tmp += np.power(XCO[i+j] - XCO_mean[i+j], 2)
 
             XH2O_err[i+ErrNr] = np.sqrt(XH2O_err_tmp / float(AvgNr-1))
             XCO2_err[i+ErrNr] = np.sqrt(XCO2_err_tmp / float(AvgNr-1))
             XCH4_err[i+ErrNr] = np.sqrt(XCH4_err_tmp / float(AvgNr-1))
-            XCO_err[i+ErrNr]  = np.sqrt(XCO_err_tmp / float(AvgNr-1)) * 1000.0
+            XCO_err[i+ErrNr] = np.sqrt(XCO_err_tmp / float(AvgNr-1)) * 1000.0
 
-            if XH2O[i+ErrNr] == -900000.0: XH2O_err[i+ErrNr] = -900000.0
-            if XCO2[i+ErrNr] == -900000.0: XCO2_err[i+ErrNr] = -900000.0
-            if XCH4[i+ErrNr] == -900000.0: XCH4_err[i+ErrNr] = -900000.0
-            if XCO[i+ErrNr]  == -900000.0: XCO_err[i+ErrNr]  = -900000.0
+            if XH2O[i+ErrNr] == -900000.0:
+                XH2O_err[i+ErrNr] = -900000.0
+            if XCO2[i+ErrNr] == -900000.0:
+                XCO2_err[i+ErrNr] = -900000.0
+            if XCH4[i+ErrNr] == -900000.0:
+                XCH4_err[i+ErrNr] = -900000.0
+            if XCO[i+ErrNr] == -900000.0:
+                XCO_err[i+ErrNr] = -900000.0
 
-      # The uncertainty for the first and last entries is constant.
+        # The uncertainty for the first and last entries is constant.
 
         for i in range(ErrNr):
 
             XH2O_err[i] = XH2O_err[ErrNr]
             XCO2_err[i] = XCO2_err[ErrNr]
             XCH4_err[i] = XCH4_err[ErrNr]
-            XCO_err[i]  = XCO_err[ErrNr]
+            XCO_err[i] = XCO_err[ErrNr]
 
-            if XH2O[i] == -900000.0: XH2O_err[i] = -900000.0
-            if XCO2[i] == -900000.0: XCO2_err[i] = -900000.0
-            if XCH4[i] == -900000.0: XCH4_err[i] = -900000.0
-            if XCO[i]  == -900000.0: XCO_err[i]  = -900000.0
+            if XH2O[i] == -900000.0:
+                XH2O_err[i] = -900000.0
+            if XCO2[i] == -900000.0:
+                XCO2_err[i] = -900000.0
+            if XCH4[i] == -900000.0:
+                XCH4_err[i] = -900000.0
+            if XCO[i] == -900000.0:
+                XCO_err[i] = -900000.0
 
         for i in range(ErrNr):
 
             XH2O_err[MeaNr-i-1] = XH2O_err[MeaNr-ErrNr-1]
             XCO2_err[MeaNr-i-1] = XCO2_err[MeaNr-ErrNr-1]
             XCH4_err[MeaNr-i-1] = XCH4_err[MeaNr-ErrNr-1]
-            XCO_err[MeaNr-i-1]  = XCO_err[MeaNr-ErrNr-1]
+            XCO_err[MeaNr-i-1] = XCO_err[MeaNr-ErrNr-1]
 
-            if XH2O[MeaNr-i-1] == -900000.0: XH2O_err[MeaNr-i-1] = -900000.0
-            if XCO2[MeaNr-i-1] == -900000.0: XCO2_err[MeaNr-i-1] = -900000.0
-            if XCH4[MeaNr-i-1] == -900000.0: XCH4_err[MeaNr-i-1] = -900000.0
-            if XCO[MeaNr-i-1]  == -900000.0: XCO_err[MeaNr-i-1]  = -900000.0
+            if XH2O[MeaNr-i-1] == -900000.0:
+                XH2O_err[MeaNr-i-1] = -900000.0
+            if XCO2[MeaNr-i-1] == -900000.0:
+                XCO2_err[MeaNr-i-1] = -900000.0
+            if XCH4[MeaNr-i-1] == -900000.0:
+                XCH4_err[MeaNr-i-1] = -900000.0
+            if XCO[MeaNr-i-1] == -900000.0:
+                XCO_err[MeaNr-i-1] = -900000.0
 
         return XH2O_err, XCO2_err, XCH4_err, XCO_err
 
+    def write_source(self, cont):  # "SRC_PRO": "SOURCE.PRODUCT"
 
-    def write_source(self, cont): # "SRC_PRO": "SOURCE.PRODUCT"
-
-      # Write information to the HDF5 file which is relevant to the source history.
+        # Write information to the HDF5 file which is relevant to the source history.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -696,15 +687,14 @@ class GeomsGenWriter(GeomsGenHelper):
             "Original_Archive;Original_Filename;" \
             "Original_File_Generation_Date"
         self.hdf5_atts_src["VAR_NAME"] = dataset_name
-      # self.hdf5_atts_src["VAR_NOTES"] = ""
+        # self.hdf5_atts_src["VAR_NOTES"] = ""
         self.hdf5_atts_src["VAR_SIZE"] = "1"
 
         self.SRC_dtst = self._write_dataset_src(data, dataset_name, self.hdf5_atts_src)
 
+    def write_datetime(self, df, cont):  # "DAT_TIM": "DATETIME"
 
-    def write_datetime(self, df, cont): # "DAT_TIM": "DATETIME"
-
-      # Write DateTime to the HDF5 file (MJD2K is 0.0 on January 1, 2000 at 00:00:00 UTC).
+        # Write DateTime to the HDF5 file (MJD2K is 0.0 on January 1, 2000 at 00:00:00 UTC).
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -712,7 +702,7 @@ class GeomsGenWriter(GeomsGenHelper):
         data = df["JulianDate"].to_numpy()
 
         data = self._GEOMStoDateTime((data - 2451544.5) * 86400.0)
-      # data = self._GEOMStoDateTime(np.round((data - 2451544.5) * 86400.0)) # ???
+        # data = self._GEOMStoDateTime(np.round((data - 2451544.5) * 86400.0)) # ???
         data = self._DateTimeToGEOMS(data) / 86400.0
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "DOUBLE"
@@ -720,7 +710,7 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_DESCRIPTION"] = "MJD2K is 0.0 on January 1, 2000 at 00:00:00 UTC"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;86400.0;s"
         self.hdf5_atts["VAR_UNITS"] = "MJD2K"
@@ -732,10 +722,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.SRC_dtst = self._write_dataset_dt(data, dataset_name, self.hdf5_atts)
 
+    def write_altitude(self, df, ptf, cont):  # "ALT": "ALTITUDE"
 
-    def write_altitude(self, df, ptf, cont): # "ALT": "ALTITUDE"
-
-      # Write altitude information used in the a-priori profile matrix.
+        # Write altitude information used in the a-priori profile matrix.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -744,7 +733,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         for i in range(df['JulianDate'].shape[0]):
             for j in range(ptf['Altitude'].shape[0]):
-                data[i][j] = ptf['Altitude'][j] / 1000.0 # in km
+                data[i][j] = ptf['Altitude'][j] / 1000.0  # in km
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME;ALTITUDE"
@@ -753,23 +742,22 @@ class GeomsGenWriter(GeomsGenHelper):
             "are monotonically increasing"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
-      # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
+        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str, list(data.shape)))))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E3;m"
         self.hdf5_atts["VAR_UNITS"] = "km"
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "km"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_solar_angle_zenith(self, df, cont):  # "SOL_ZEN": "ANGLE.SOLAR_ZENITH.ASTRONOMICAL"
 
-    def write_solar_angle_zenith(self, df, cont): # "SOL_ZEN": "ANGLE.SOLAR_ZENITH.ASTRONOMICAL"
-
-      # Write solar zenith angle to the HDF5 file (solar astronomical zenith angle).
+        # Write solar zenith angle to the HDF5 file (solar astronomical zenith angle).
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -783,7 +771,7 @@ class GeomsGenWriter(GeomsGenHelper):
             "the measurement was taken"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.74533E-2;rad"
         self.hdf5_atts["VAR_UNITS"] = "deg"
@@ -795,21 +783,21 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-
     def write_solar_angle_azimuth(self, df, cont): # "SOL_AZI": "ANGLE.SOLAR_AZIMUTH"
 
-      # Write solar azimuth angle to the HDF5 file.
+        # Write solar azimuth angle to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
 
         data = df["azimuth"].to_numpy() + 180.0
 
-      # To avoid values lower than 0.0° or higher than 360.0° causing an error message
-      # in the quality checks of the HDF5 files, a small numer is added or subtracted.
+        # To avoid values lower than 0.0° or higher than 360.0° causing an error message
+        # in the quality checks of the HDF5 files, a small numer is added or subtracted.
 
         for i in range(len(data)):
-            if data[i] <= 0.0 + 1.E-5 or data[i] >= 360.0 - 1.E-5: data[i] = 0.0 + 1.E-5
+            if data[i] <= 0.0 + 1.E-5 or data[i] >= 360.0 - 1.E-5:
+                data[i] = 0.0 + 1.E-5
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME"
@@ -819,7 +807,7 @@ class GeomsGenWriter(GeomsGenHelper):
             "clockwise (0 for north 90 for east and so on)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.74533E-2;rad"
         self.hdf5_atts["VAR_UNITS"] = "deg"
@@ -827,14 +815,13 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "deg"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_instr_latitude(self, df, cont):  # "INST_LAT": "LATITUDE.INSTRUMENT"
 
-    def write_instr_latitude(self, df, cont): # "INST_LAT": "LATITUDE.INSTRUMENT"
-
-      # Write the instrument's latitude to the HDF5 file (i.e. the geolocation with + for north and - for south).
+        # Write the instrument's latitude to the HDF5 file (i.e. the geolocation with + for north and - for south).
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -847,7 +834,7 @@ class GeomsGenWriter(GeomsGenHelper):
             "Instrument geolocation (+ for north; - for south)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.74533E-2;rad"
         self.hdf5_atts["VAR_UNITS"] = "deg"
@@ -855,14 +842,13 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "deg"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-
     def write_instr_longitude(self, df, cont): # "INST_LON": "LONGITUDE.INSTRUMENT"
 
-      # Write the instrument's longitude to the HDF5 file (i.e. the geolocation with + for east and - for west).
+        # Write the instrument's longitude to the HDF5 file (i.e. the geolocation with + for east and - for west).
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -875,7 +861,7 @@ class GeomsGenWriter(GeomsGenHelper):
             "Instrument geolocation (+ for east; - for west)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.74533E-2;rad"
         self.hdf5_atts["VAR_UNITS"] = "deg"
@@ -883,14 +869,13 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "deg"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_instr_altitude(self, df, cont):  # "INST_ALT": "ALTITUDE.INSTRUMENT"
 
-    def write_instr_altitude(self, df, cont): # "INST_ALT": "ALTITUDE.INSTRUMENT"
-
-      # Write the instrument's altitude to the HDF5 file (i.e. the geolocation).
+        # Write the instrument's altitude to the HDF5 file (i.e. the geolocation).
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -903,7 +888,7 @@ class GeomsGenWriter(GeomsGenHelper):
             "Instrument geolocation"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E3;m"
         self.hdf5_atts["VAR_UNITS"] = "km"
@@ -911,14 +896,13 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "km"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_surface_pressure(self, df, cont):  # "SUR_IND": "SURFACE.PRESSURE_INDEPENDENT"
 
-    def write_surface_pressure(self, df, cont): # "SUR_IND": "SURFACE.PRESSURE_INDEPENDENT"
-
-      #  Write the surface pressure (i.e. the ground pressure) to the HDF5 file.
+        #  Write the surface pressure (i.e. the ground pressure) to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -931,7 +915,7 @@ class GeomsGenWriter(GeomsGenHelper):
             "Surface/ground pressure"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E2;kg m-1 s-2"
         self.hdf5_atts["VAR_UNITS"] = "hPa"
@@ -939,14 +923,13 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "hPa"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
  
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_surface_pressure_src(self, df, cont):  # "SUR_SRC": "SURFACE.PRESSURE_INDEPENDENT_SOURCE"
 
-    def write_surface_pressure_src(self, df, cont): # "SUR_SRC": "SURFACE.PRESSURE_INDEPENDENT_SOURCE"
-
-      # Write the source of the surface pressure (i.e. the ground pressure) to the HDF5 file.
+        # Write the source of the surface pressure (i.e. the ground pressure) to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -960,15 +943,14 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts_src["VAR_DESCRIPTION"] = \
             "Surface pressure profile source (e.g. Mercury barometer etc.)"
         self.hdf5_atts_src["VAR_NAME"] = dataset_name
-      # self.hdf5_atts_src["VAR_NOTES"] = ""
+        # self.hdf5_atts_src["VAR_NOTES"] = ""
         self.hdf5_atts_src["VAR_SIZE"] = str(np.size(data))
  
         self.SRC_dtst = self._write_dataset_src(data_src, dataset_name, self.hdf5_atts_src)
 
+    def write_pressure(self, df, ptf, cont):  # "PRE_IND": "PRESSURE_INDEPENDENT"
 
-    def write_pressure(self, df, ptf, cont): # "PRE_IND": "PRESSURE_INDEPENDENT"
-
-      # Write the effective air pressure at each altitude level to the HDF5 file.
+        # Write the effective air pressure at each altitude level to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -977,7 +959,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         for i in range(df['JulianDate'].shape[0]):
             for j in range(ptf['Altitude'].shape[0]):
-                data[i][j] = ptf['Pre'][j] / 100.0 # hPa
+                data[i][j] = ptf['Pre'][j] / 100.0  # hPa
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME;ALTITUDE"
@@ -985,9 +967,9 @@ class GeomsGenWriter(GeomsGenHelper):
             "Effective air pressure at each altitude"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
-      # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
+        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str, list(data.shape)))))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E2;kg m-1 s-2"
         self.hdf5_atts["VAR_UNITS"] = "hPa"
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
@@ -998,10 +980,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-
     def write_pressure_src(self, df, cont): # "PRE_SRC": "PRESSURE_INDEPENDENT_SOURCE"
 
-      # Write the source of the effective air pressure for each altitude to the HDf5 file.
+        # Write the source of the effective air pressure for each altitude to the HDf5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -1016,15 +997,14 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts_src["VAR_DESCRIPTION"] = \
             "Pressure profile source (hydrostatic)"
         self.hdf5_atts_src["VAR_NAME"] = dataset_name
-      # self.hdf5_atts_src["VAR_NOTES"] = ""
+        # self.hdf5_atts_src["VAR_NOTES"] = ""
         self.hdf5_atts_src["VAR_SIZE"] = str(np.size(data_src))
 
         self.SRC_dtst = self._write_dataset_src(data_src, dataset_name, self.hdf5_atts_src)
 
+    def write_temperature(self, df, ptf, cont):  # "TEM_IND": "TEMPERATURE_INDEPENDENT"
 
-    def write_temperature(self, df, ptf, cont): # "TEM_IND": "TEMPERATURE_INDEPENDENT"
-
-      # Write the effective air temperature at each altitude to the HDF5 file.
+        # Write the effective air temperature at each altitude to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -1041,23 +1021,22 @@ class GeomsGenWriter(GeomsGenHelper):
             "Effective air temperature at each altitude"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
-      # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
+        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str, list(data.shape)))))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0;K"
         self.hdf5_atts["VAR_UNITS"] = "K"
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "K"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_temperature_src(self, df, cont):  # "TEM_SRC": "TEMPERATURE_INDEPENDENT_SOURCE"
 
-    def write_temperature_src(self, df, cont): # "TEM_SRC": "TEMPERATURE_INDEPENDENT_SOURCE"
-
-      # Write the source of the effective air pressure for each altitude to the HDF5 file.
+        # Write the source of the effective air pressure for each altitude to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -1072,21 +1051,20 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts_src["VAR_DESCRIPTION"] = \
             "Temperature profile source (e.g. Lidar NCEP Sonde ECMWF etc.)"
         self.hdf5_atts_src["VAR_NAME"] = dataset_name
-      # self.hdf5_atts_src["VAR_NOTES"] = ""
+        # self.hdf5_atts_src["VAR_NOTES"] = ""
         self.hdf5_atts_src["VAR_SIZE"] = str(np.size(data_src))
 
         self.SRC_dtst = self._write_dataset_src(data_src, dataset_name, self.hdf5_atts_src)
 
+    def write_col(self, df, cont):  # "XXX_COL": "XXX.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR"
 
-    def write_col(self, df, cont): # "XXX_COL": "XXX.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR"
-
-      # Write column average dry air mole fractions for each trace gas to HDF5 file.
+        # Write column average dry air mole fractions for each trace gas to HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
-      # print (cont, dataset_name)
+        # print(cont, dataset_name)
 
-      # Convert data to numpy array.
+        # Convert data to numpy array.
         if cont == "H2O_COL":   # "H2O_COL": "H2O.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR"
             data = df["XH2O"].to_numpy()
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
@@ -1103,7 +1081,7 @@ class GeomsGenWriter(GeomsGenHelper):
             self.hdf5_atts["VAR_UNITS"] = "ppmv"
             self.hdf5_atts["units"] = "ppmv"
         elif cont == "CO_COL":  # "CO_COL":  "CO.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR"
-            data = df["XCO"].to_numpy() * 1000.0 # in ppbv
+            data = df["XCO"].to_numpy() * 1000.0  # in ppbv
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-9;1"
             self.hdf5_atts["VAR_UNITS"] = "ppbv"
             self.hdf5_atts["units"] = "ppbv"
@@ -1113,20 +1091,19 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_DESCRIPTION"] = "Column average dry air mole fraction"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-      # self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
+        # self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-
     def write_col_unc(self, df, cont): # "XXX_UNC": "XXX.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR_UNCERTAINTY.RANDOM.STANDARD"
 
-      # Write uncertainty on the retrieved total column for each trace gas to HDF5 file.
+        # Write uncertainty on the retrieved total column for each trace gas to HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -1136,22 +1113,22 @@ class GeomsGenWriter(GeomsGenHelper):
         h2o_unc, co2_unc, ch4_unc, co_unc = self.get_col_unc(df)
 
         if cont == "H2O_UNC":   # "H2O_UNC": "H2O.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR_UNCERTAINTY.RANDOM.STANDARD"
-            data = h2o_unc # uncertainty for H2O
+            data = h2o_unc  # uncertainty for H2O
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
             self.hdf5_atts["VAR_UNITS"] = "ppmv"
             self.hdf5_atts["units"] = "ppmv"
-        elif cont == "CO2_UNC": # "CO2_UNC": "CO2.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR_UNCERTAINTY.RANDOM.STANDARD"
-            data = co2_unc # uncertainty for CO2
+        elif cont == "CO2_UNC":  # "CO2_UNC": "CO2.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR_UNCERTAINTY.RANDOM.STANDARD"
+            data = co2_unc  # uncertainty for CO2
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
             self.hdf5_atts["VAR_UNITS"] = "ppmv"
             self.hdf5_atts["units"] = "ppmv"
-        elif cont == "CH4_UNC": # "CH4_UNC": "CH4.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR_UNCERTAINTY.RANDOM.STANDARD"
-            data = ch4_unc # uncertainty for CH4
+        elif cont == "CH4_UNC":  # "CH4_UNC": "CH4.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR_UNCERTAINTY.RANDOM.STANDARD"
+            data = ch4_unc  # uncertainty for CH4
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
             self.hdf5_atts["VAR_UNITS"] = "ppmv"
             self.hdf5_atts["units"] = "ppmv"
         elif cont == "CO_UNC":  # "CO_UNC":  "CO.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR_UNCERTAINTY.RANDOM.STANDARD"
-            data = co_unc # uncertainty for CO
+            data = co_unc  # uncertainty for CO
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-9;1"
             self.hdf5_atts["VAR_UNITS"] = "ppbv"
             self.hdf5_atts["units"] = "ppbv"
@@ -1163,55 +1140,54 @@ class GeomsGenWriter(GeomsGenHelper):
             (expressed in same units as the column)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_NOTES"] = ""
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-      # self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-
     def write_apr(self, df, ptf, vmr, cont): # "XXX_APR": "XXX.MIXING.RATIO.VOLUME.DRY_APRIORI"
 
-      # Write a-prior total vertical column for each trace gas to the HDF5 file.
+        # Write a-prior total vertical column for each trace gas to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
 
         data = np.zeros(df['JulianDate'].shape+ptf['Altitude'].shape)
 
-        if cont == "H2O_APR": # "H2O_APR": "H2O.MIXING.RATIO.VOLUME.DRY_APRIORI"
-            H2O_prior = ptf["H2O"] # VMR prior for H2O
+        if cont == "H2O_APR":  # "H2O_APR": "H2O.MIXING.RATIO.VOLUME.DRY_APRIORI"
+            H2O_prior = ptf["H2O"]  # VMR prior for H2O
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = H2O_prior[j] # in ppm
+                    data[i][j] = H2O_prior[j]  # in ppm
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
             self.hdf5_atts["VAR_UNITS"] = "ppmv"
             self.hdf5_atts["units"] = "ppmv"
-        elif cont == "CO2_APR": # "CO2_APR": "CO2.MIXING.RATIO.VOLUME.DRY_APRIORI"
-            CO2_prior = vmr["CO2"] # VMR prior for CO2
+        elif cont == "CO2_APR":  # "CO2_APR": "CO2.MIXING.RATIO.VOLUME.DRY_APRIORI"
+            CO2_prior = vmr["CO2"]  # VMR prior for CO2
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = CO2_prior[j] # in ppm
+                    data[i][j] = CO2_prior[j]  # in ppm
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-6;1"
             self.hdf5_atts["VAR_UNITS"] = "ppmv"
             self.hdf5_atts["units"] = "ppmv"
-        elif cont == "CH4_APR": # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIOR"
-            CH4_prior = vmr["CH4"] * 1000.0 # VMR prior for CH4
+        elif cont == "CH4_APR":  # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIOR"
+            CH4_prior = vmr["CH4"] * 1000.0  # VMR prior for CH4
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = CH4_prior[j] # in ppb
+                    data[i][j] = CH4_prior[j]  # in ppb
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-9;1"
             self.hdf5_atts["VAR_UNITS"] = "ppbv"
             self.hdf5_atts["units"] = "ppbv"
-        elif cont == "CO_APR": # "CO_APR": "CO.MIXING.RATIO.VOLUME.DRY_APRIORI"
-            CO_prior = vmr["CO"] * 1000.0 # VMR prior for CO
+        elif cont == "CO_APR":  # "CO_APR": "CO.MIXING.RATIO.VOLUME.DRY_APRIORI"
+            CO_prior = vmr["CO"] * 1000.0  # VMR prior for CO
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = CO_prior[j] # in ppb
+                    data[i][j] = CO_prior[j]  # in ppb
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-9;1"
             self.hdf5_atts["VAR_UNITS"] = "ppbv"
             self.hdf5_atts["units"] = "ppbv"
@@ -1222,9 +1198,9 @@ class GeomsGenWriter(GeomsGenHelper):
             "A-priori total vertical column of target gas"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
-      # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
+        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str, list(data.shape)))))
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
@@ -1232,10 +1208,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_apr_src(self, df, cont):  # "XXX_SRC": "XXX.MIXING.RATIO.VOLUME.DRY_APRIORI.SOURCE"
 
-    def write_apr_src(self, df, cont): # "XXX_SRC": "XXX.MIXING.RATIO.VOLUME.DRY_APRIORI.SOURCE"
-
-      # Write source of the a-prior total vertical column for each trace gas to the HDF5 file.
+        # Write source of the a-prior total vertical column for each trace gas to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -1257,38 +1232,37 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts_src["VAR_DESCRIPTION"] = \
             "Source of the vertical profile of a-priori per layer"
         self.hdf5_atts_src["VAR_NAME"] = dataset_name
-      # self.hdf5_atts_src["VAR_NOTES"] = ""
+        # self.hdf5_atts_src["VAR_NOTES"] = ""
         self.hdf5_atts_src["VAR_SIZE"] = str(np.size(data_src))
 
         self.SRC_dtst = self._write_dataset_src(data_src, dataset_name, self.hdf5_atts_src)
 
-
     def write_avk(self, df, ptf, sen, cont): # "XXX_AVK": "XXX.COLUMN_ABSORPTION.SOLAR_AVK"
 
-      # Write column sensitivities assosiated with the total vertical column
-      # for each trace gas to the HDF5 file.
+        # Write column sensitivities assosiated with the total vertical column
+        # for each trace gas to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
 
         data = np.zeros(df['JulianDate'].shape+ptf['Altitude'].shape)
 
-        if cont == "H2O_AVK": # "H2O_APR": "H2O.MIXING.RATIO.VOLUME.DRY_APRIORI"
+        if cont == "H2O_AVK":  # "H2O_APR": "H2O.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[0][i][j] # 0: "CO2_int"
-        elif cont == "CO2_AVK": # "CO2_APR": "CO2.MIXING.RATIO.VOLUME.DRY_APRIORI"
+                    data[i][j] = sen[0][i][j]  # 0: "CO2_int"
+        elif cont == "CO2_AVK":  # "CO2_APR": "CO2.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[2][i][j] # 1: "CH4_int"
-        elif cont == "CH4_AVK": # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIOR"
+                    data[i][j] = sen[2][i][j]  # 1: "CH4_int"
+        elif cont == "CH4_AVK":  # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIOR"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[3][i][j] # 2: "CO_int"
-        elif cont == "CO_AVK": # "CO_APR": "CO.MIXING.RATIO.VOLUME.DRY_APRIORI"
+                    data[i][j] = sen[3][i][j]  # 2: "CO_int"
+        elif cont == "CO_AVK":  # "CO_APR": "CO.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[5][i][j] # 3: "H2O_int"
+                    data[i][j] = sen[5][i][j]  # 3: "H2O_int"
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME;ALTITUDE"
@@ -1296,26 +1270,25 @@ class GeomsGenWriter(GeomsGenHelper):
             "Column sensitivity associated with the total vertical column of the target gas"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
-      # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
+        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str, list(data.shape)))))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0;1"
         self.hdf5_atts["VAR_UNITS"] = "1"
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "1"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-
     def write_air_partial(self, df, ptf, cont): # "AIR_COL": "DRY.AIR.COLUMN.PARTIAL_INDEPENDENT"
 
-      # Write vertical profile of partial columns of air number densities
-      # (for conversion between VMR and partial column profile).
-      # 0: "Index", 1: "Altitude", 2: "Tem", 3: "Pre", 4: "DAC", 5: "H2O", 6: "HDO"
-      # 0: "Index", 1: "Altitude", 2: "Temperature", 3: "Pressure", 4: "Column", 5: "H2O", 6: "HDO"
+        # Write vertical profile of partial columns of air number densities
+        # (for conversion between VMR and partial column profile).
+        # 0: "Index", 1: "Altitude", 2: "Tem", 3: "Pre", 4: "DAC", 5: "H2O", 6: "HDO"
+        # 0: "Index", 1: "Altitude", 2: "Temperature", 3: "Pressure", 4: "Column", 5: "H2O", 6: "HDO"
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -1324,15 +1297,15 @@ class GeomsGenWriter(GeomsGenHelper):
 
         k_B = 1.3807e-23 # 1.380649E-23 # k_boltz = 1.3807e-23
 
-        T_prior   = ptf["Tem"]
-        P_prior   = ptf["Pre"] / 100.0 # conversion Pa to hPa
-        H2O_prior = ptf["H2O"] # / 10000.0 ???
+        T_prior = ptf["Tem"]
+        P_prior = ptf["Pre"] / 100.0  # conversion Pa to hPa
+        H2O_prior = ptf["H2O"]  # / 10000.0 ???
 
-        p_dry = P_prior * 1.0 / (1.0 + 1.0E-6 * H2O_prior) # / 100.0 for conversion Pa to hPa
+        p_dry = P_prior * 1.0 / (1.0 + 1.0E-6 * H2O_prior)  # / 100.0 for conversion Pa to hPa
         n_dry = p_dry / (k_B * T_prior)
 
-      # Calcualtion of the vertical profile, i.e. the partial columns of air number densities.
-      # Each layer is obtained by an integration between two boundary layers.
+        # Calcualtion of the vertical profile, i.e. the partial columns of air number densities.
+        # Each layer is obtained by an integration between two boundary layers.
 
         for i in range(df['JulianDate'].shape[0]):
             sum1 = 0.0
@@ -1341,8 +1314,8 @@ class GeomsGenWriter(GeomsGenHelper):
             for j in range(ptf['Altitude'].shape[0]):
                 if j < len(ptf['Altitude'])-1:
 
-                    h1 = float(ptf['Altitude'][j]) # * 1000.0 for conversion km to m
-                    h2 = float(ptf['Altitude'][j+1]) # * 1000.0 for conversion km to m
+                    h1 = float(ptf['Altitude'][j])  # * 1000.0 for conversion km to m
+                    h2 = float(ptf['Altitude'][j+1])  # * 1000.0 for conversion km to m
 
                     n1_dry = float(n_dry[j])
                     n2_dry = float(n_dry[j+1])
@@ -1353,17 +1326,17 @@ class GeomsGenWriter(GeomsGenHelper):
                     Col2 = n0_dry * sc_dry * math.exp(-(h2/sc_dry))
 
                     data[i][j] = 100.0 * (Col1 - Col2)
-                  # data[i][H_len-j] = 100.0 * (Col1 - Col2)
+                    # data[i][H_len-j] = 100.0 * (Col1 - Col2)
 
                     sum1 += data[i][j]
-                  # sum1 += data[i][H_len-j]
+                    # sum1 += data[i][H_len-j]
                     sum2 += float(ptf['DAC'][j])
 
                 else:
                     data[i][j] = 0
-                  # data[i][H_len-j] = 0
+                    # data[i][H_len-j] = 0
                     sum1 += data[i][j]
-                  # sum1 += data[i][H_len-j]
+                    # sum1 += data[i][H_len-j]
                     sum2 += float(ptf['DAC'][j])
 
         data = data / 1.0E25
@@ -1375,40 +1348,39 @@ class GeomsGenWriter(GeomsGenHelper):
             (for conversion between VMR and partial column profile)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
-      # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
+        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str, list(data.shape)))))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.66054E1;mol m-2"
         self.hdf5_atts["VAR_UNITS"] = "Zmolec cm-2"
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "Zmolec cm-2"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_air_density(self, df, ptf, cont):  # "AIR_DEN": "DRY.AIR.NUMBER.DENSITY_INDEPENDENT"
 
-    def write_air_density(self, df, ptf, cont): # "AIR_DEN": "DRY.AIR.NUMBER.DENSITY_INDEPENDENT"
-
-      # Write the dry air number density profile to the HDF5 file.
-      # 0: "Index", 1: "Altitude", 2: "Tem", 3: "Pre", 4: "DAC", 5: "H2O", 6: "HDO"
-      # 0: "Index", 1: "Altitude", 2: "Temperature", 3: "Pressure", 4: "Column", 5: "H2O", 6: "HDO"
+        # Write the dry air number density profile to the HDF5 file.
+        # 0: "Index", 1: "Altitude", 2: "Tem", 3: "Pre", 4: "DAC", 5: "H2O", 6: "HDO"
+        # 0: "Index", 1: "Altitude", 2: "Temperature", 3: "Pressure", 4: "Column", 5: "H2O", 6: "HDO"
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
 
         data = np.zeros(df['JulianDate'].shape+ptf['Altitude'].shape)
 
-        k_B = 1.3807e-23 # 1.380649E-23 # k_boltz = 1.3807e-23
+        k_B = 1.3807e-23  # 1.380649E-23 # k_boltz = 1.3807e-23
 
-        T_prior   = ptf["Tem"]
-        P_prior   = ptf["Pre"] / 100.0 # conversion to hPa
-        H2O_prior = ptf["H2O"] # / 10000.0 ???
+        T_prior = ptf["Tem"]
+        P_prior = ptf["Pre"] / 100.0  # conversion to hPa
+        H2O_prior = ptf["H2O"]  # / 10000.0 ???
 
-      # Calculation of the dry air number density profile.
+        # Calculation of the dry air number density profile.
 
-        p_dry = P_prior * 1.0 / (1.0 + 1.0E-6 * H2O_prior) # / 100.0 for conversion Pa to hPa
+        p_dry = P_prior * 1.0 / (1.0 + 1.0E-6 * H2O_prior)  # / 100.0 for conversion Pa to hPa
         n_dry = p_dry / (k_B * T_prior)
 
         for i in range(df['JulianDate'].shape[0]):
@@ -1421,23 +1393,22 @@ class GeomsGenWriter(GeomsGenHelper):
             "Dry air number density profile"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-      # self.hdf5_atts["VAR_NOTES"] = ""
-      # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
-        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str,list(data.shape)))))
+        # self.hdf5_atts["VAR_NOTES"] = ""
+        # self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
+        self.hdf5_atts["VAR_SIZE"] = str(np.array(';'.join(map(str, list(data.shape)))))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.66054E-18;mol m-3"
         self.hdf5_atts["VAR_UNITS"] = "molec cm-3"
         self.hdf5_atts["VAR_VALID_MAX"] = np.amax(data)
         self.hdf5_atts["VAR_VALID_MIN"] = np.amin(data)
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "molec cm-3"
-        self.hdf5_atts["valid_range"] = [np.amin(data),np.amax(data)]
+        self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
+    def write_air_density_src(self, df, cont):  # "AIR_SRC": "DRY.AIR.NUMBER.DENSITY_INDEPENDENT_SOURCE"
 
-    def write_air_density_src(self, df, cont): # "AIR_SRC": "DRY.AIR.NUMBER.DENSITY_INDEPENDENT_SOURCE"
-
-      # Write source of the dry air number density profile (hydrostatic) to the HDF5 file.
+        # Write source of the dry air number density profile (hydrostatic) to the HDF5 file.
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
@@ -1452,17 +1423,16 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts_src["VAR_DESCRIPTION"] = \
             "Dry air number density profile source (hydrostatic)"
         self.hdf5_atts_src["VAR_NAME"] = dataset_name
-      # self.hdf5_atts_src["VAR_NOTES"] = ""
+        # self.hdf5_atts_src["VAR_NOTES"] = ""
         self.hdf5_atts_src["VAR_SIZE"] = str(np.size(data_src))
 
         self.SRC_dtst = self._write_dataset_src(data_src, dataset_name, self.hdf5_atts_src)
-
 
     def write_metadata(self, day, df):
 
         """ Write metadata to the GEOMS file! """
 
-      # Attribut list, which contains the variables given in the input files.
+        # Attribut list, which contains the variables given in the input files.
 
         attribute_list =\
             ["DATA_FILE_VERSION", "DATA_LOCATION", "DATA_PROCESSOR",
@@ -1473,41 +1443,43 @@ class GeomsGenWriter(GeomsGenHelper):
              "DS_NAME", "DS_EMAIL", "DS_AFFILIATION", "DS_ADDRESS"]
 
         for attr in attribute_list:
-          # H5Py needs to store the strings using this numpy method:
-          # see: https://docs.h5py.org/en/2.3/strings.html
-          # Furhtermore they have to be in edged brackets to provide an array.
+            # H5Py needs to store the strings using this numpy method:
+            # see: https://docs.h5py.org/en/2.3/strings.html
+            # Furhtermore they have to be in edged brackets to provide an array.
             self.MyHDF5.attrs[attr] = np.string_(self.input_args[attr])
 
         self.MyHDF5.attrs['DATA_DESCRIPTION'] = \
-            np.string_(f"EM27/SUN ({self.instrument_number}) measurements"
-                     f" from {self.site_name}.")
+            np.string_(
+                f"EM27/SUN ({self.instrument_number}) measurements"
+                f" from {self.site_name}.")
 
         self.MyHDF5.attrs['DATA_DISCIPLINE'] = \
-             np.string_(f"ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED")
+            np.string_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED")
 
         self.MyHDF5.attrs['DATA_GROUP'] = \
-             np.string_(f"EXPERIMENTAL;PROFILE.STATIONARY")
+            np.string_("EXPERIMENTAL;PROFILE.STATIONARY")
 
-      # Get the ILS values from the ILSList.csv file.
+        # Get the ILS values from the ILSList.csv file.
 
         ME1, PE1, ME2, PE2 = self.get_ils_from_file(day)
 
-      # Get the correction factors from the Calibration_Parameters.csv file.
+        # Get the correction factors from the Calibration_Parameters.csv file.
 
         corr_fac = self._get_correction_factors()
 
         self.MyHDF5.attrs['DATA_MODIFICATIONS'] = \
-            np.string_("ILS parms applied: "
-                     f"{ME1} for ME, {PE1} for PE. "
-                     "Calibration factors applied:: "
-                     f"{corr_fac['XCO2_cal']} for XCO2, "
-                     f"{corr_fac['XCH4_cal']} for XCH4.")
+            np.string_(
+                "ILS parms applied: "
+                f"{ME1} for ME, {PE1} for PE. "
+                "Calibration factors applied:: "
+                f"{corr_fac['XCO2_cal']} for XCO2, "
+                f"{corr_fac['XCH4_cal']} for XCH4.")
 
-      # Get the start and stop datetime, that is also needed for the file name.
+        # Get the start and stop datetime, that is also needed for the file name.
 
-      # start, stop = self.get_start_stop_date_time(day)
+        # start, stop = self.get_start_stop_date_time(day)
         start, stop = self.get_start_stop_date_time(day, df)
-      # start, stop = self.get_start_stop_date_time_csv(day)
+        # start, stop = self.get_start_stop_date_time_csv(day)
         self.MyHDF5.attrs['DATA_START_DATE'] = np.string_(start)
         self.MyHDF5.attrs['DATA_STOP_DATE'] = np.string_(stop)
 
@@ -1519,9 +1491,10 @@ class GeomsGenWriter(GeomsGenHelper):
         self.MyHDF5.attrs['FILE_GENERATION_DATE'] = \
             np.string_(dt.datetime.now().strftime('%Y%m%dT%H%M%SZ'))
 
-      # Create the final file name of the GEOMS compliant HDF5 file.
+        # Create the final file name of the GEOMS compliant HDF5 file.
 
-        self.file_name = ("groundbased_"
+        self.file_name = (
+            "groundbased_"
             f"{self.input_args['DATA_SOURCE']}_"
             f"{self.input_args['DATA_LOCATION']}_"
             f"{start}_{stop}_"
