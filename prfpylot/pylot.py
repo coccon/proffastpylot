@@ -270,15 +270,8 @@ class Pylot(FileMover):
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
 
-        dt_format = "%y%m%d"
-        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
-            self.site_name,
-            self.instrument_number,
-            self.dates[0].strftime(dt_format),
-            self.dates[-1].strftime(dt_format)
-        )
-        combined_file = os.path.join(
-            self.result_folder, resultfile)
+        combined_file = self._comb_invparms_file()
+
         df["UTC"] = df["UTC"].apply(lambda x: x.strftime("%Y-%m-%d %X"))
         df["LocalTime"] = df["LocalTime"].apply(
             lambda x: x.strftime("%Y-%m-%d %X"))
@@ -308,6 +301,10 @@ class Pylot(FileMover):
             "%.5e",  # CH4
             "%.5e",  # CO
             "%.5e"  # CH4_S5P
+            "%.5e",  # H2O_rms
+            "%.5e",  # CO2_rms
+            "%.5e",  # CH4_rms
+            "%.5e",  # CO_rms
         ]
 
         header = ", ".join(df.columns)
@@ -321,6 +318,19 @@ class Pylot(FileMover):
         self.logger.info(
             "The combined results of PROFFAST were written "
             f"to {combined_file}.")
+
+    def _comb_invparms_file(self):
+        """Return the complete path to the combined invparms file."""
+        dt_format = "%y%m%d"
+        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
+            self.site_name,
+            self.instrument_number,
+            self.dates[0].strftime(dt_format),
+            self.dates[-1].strftime(dt_format)
+        )
+        combined_file = os.path.join(
+            self.result_folder, resultfile)
+        return combined_file
 
     def clean_files(self):
         """After execution clean up the files not needed anymore"""
@@ -435,7 +445,11 @@ class Pylot(FileMover):
             'job03_gas03': 'CO2',
             'job04_gas04': 'CH4',
             'job05_gas06': 'CO',
-            'job05_gas04': 'CH4_S5P'
+            'job05_gas04': 'CH4_S5P',
+            'job01_rms': 'H2O_rms',
+            'job03_rms': 'CO2_rms',
+            'job04_rms': 'CH4_rms',
+            'job05_rms': 'CO_rms' 
         }
         df = df.rename(columns=rename)
 
@@ -450,9 +464,12 @@ class Pylot(FileMover):
             "XCO", "XCH4_S5P",
             "H2O", "O2",
             "CO2", "CH4",
-            "CO", "CH4_S5P"
+            "CO", "CH4_S5P",
+            "H2O_rms", "CO2_rms",
+            "CH4_rms", "CO_rms",
         ]
-        df = df[[*sel_cols]]
+
+        df = df[sel_cols]
         return df
 
     def _get_executable(self, program):
