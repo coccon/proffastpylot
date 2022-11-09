@@ -1,11 +1,8 @@
-import h5py
 import yaml
 import sys
 import os
 import math
 import glob
-import inspect
-import collections as coll
 import datetime as dt
 import numpy as np
 import pandas as pd
@@ -31,25 +28,23 @@ class GeomsGenHelper(Preparation):
         else:
             self.geoms_out_path = os.getcwd()
 
-
     def _get_correction_factors(self):
         """Returns a dict containing the correction factors for the gases"""
-      # This dict is only a preliminary version.
-      # In the final version it is read in from a file.
+        # This dict is only a preliminary version.
+        # In the final version it is read in from a file.
         df = pd.read_csv(
             self.input_args["calibration_params_list"],
             skipinitialspace=True)
-      # Strip the whitespaces from the column names:
+        # Strip the whitespaces from the column names:
         newCols = {}
         for key in df.keys():
             newCols[key]= key.strip()
         df.rename(columns=newCols, inplace=True)
-      # Get the factors of the correct instrument
+        # Get the factors of the correct instrument
         df = df.loc[df["Instrument"] == self.instrument_number]
         return df.iloc[0].to_dict()
 
-
-  # def _write_dataset(self, data, dataset_name, attributes, dtype):
+    # def _write_dataset(self, data, dataset_name, attributes, dtype):
     def _write_dataset(self, data, dataset_name, attributes):
         """
         Helper method to write a dataset to the file.
@@ -59,13 +54,18 @@ class GeomsGenHelper(Preparation):
             attributes (dict): The attributes to be stored
         """
         dtst = self.MyHDF5.create_dataset(dataset_name, data=data, dtype='f')
+        keys = [
+            "VAR_FILL_VALUE",
+            "VAR_VALID_MAX",
+            "VAR_VALID_MIN",
+            "_FillValue",
+            "valid_range"]
         for key, value in attributes.items():
-            if key in ["VAR_FILL_VALUE","VAR_VALID_MAX","VAR_VALID_MIN","_FillValue","valid_range"]:
+            if key in keys:
                 dtst.attrs[key] = np.float32(value)
             else:
                 dtst.attrs[key] = np.string_(value)
         return dtst
-
 
     def _write_dataset_src(self, data, dataset_name, attributes):
         """
@@ -80,7 +80,6 @@ class GeomsGenHelper(Preparation):
             dtst.attrs[key] = np.string_(value)
         return dtst
 
-
     def _write_dataset_dt(self, data, dataset_name, attributes):
         """
         Helper method to write a dataset to the file.
@@ -90,13 +89,18 @@ class GeomsGenHelper(Preparation):
             attributes (dict): The attributes to be stored
         """
         dtst = self.MyHDF5.create_dataset(dataset_name, data=data, dtype='f8')
+        keys = [
+            "VAR_FILL_VALUE",
+            "VAR_VALID_MAX",
+            "VAR_VALID_MIN",
+            "_FillValue",
+            "valid_range"]
         for key, value in attributes.items():
-            if key in ["VAR_FILL_VALUE","VAR_VALID_MAX","VAR_VALID_MIN","_FillValue","valid_range"]:
+            if key in keys:
                 dtst.attrs[key] = np.float64(value)
             else:
                 dtst.attrs[key] = np.string_(value)
         return dtst
-
 
     def _find_csv_file(self, day):
         """
@@ -114,7 +118,6 @@ class GeomsGenHelper(Preparation):
             sys.exit(1)
         return csv_file[0]
 
-
     def _find_colsens_invparms_file(self, day, which):
         """
         Returns the path to the correct colsens/invparm file.
@@ -124,7 +127,7 @@ class GeomsGenHelper(Preparation):
             print("Give 'colsens' or 'invparms' for 'which'!")
             return ""
         target_folder = self._find_correct_folder(day)
-        filename = f"{self.site_name}{day.strftime('%y%m%d')}"+\
+        filename = f"{self.site_name}{day.strftime('%y%m%d')}" + \
                    f"-{which}_a.dat"
         return os.path.join(target_folder, filename)
 
@@ -177,9 +180,8 @@ class GeomsGenHelper(Preparation):
         datestr = day.strftime("%y%m%d")
         file = os.path.join(
             self.analysis_instrument_path, datestr,
-            "pT",f"{which}_fast_out.dat")
+            "pT", f"{which}_fast_out.dat")
         return file
-
 
     def _GEOMStoDateTime(self, times):
         """
@@ -188,7 +190,7 @@ class GeomsGenHelper(Preparation):
         """
         ntimes = []
         times = times / 86400.
-        t_ref = dt.date(2000,1,1).toordinal()
+        t_ref = dt.date(2000, 1, 1).toordinal()
 
         for t in times:
             t_tmp = dt.datetime.fromordinal(t_ref + int(t))
@@ -198,7 +200,6 @@ class GeomsGenHelper(Preparation):
 
         return np.array(ntimes)
 
-
     def _DateTimeToGEOMS(self, times):
         """
         Transforms dt.datetime instances to GEOMS DATETIME
@@ -206,16 +207,17 @@ class GeomsGenHelper(Preparation):
         """
         gtimes = []
 
-        t_ref = np.longdouble(dt.date(2000,1,1).toordinal())
+        t_ref = np.longdouble(dt.date(2000, 1, 1).toordinal())
 
         for t in times:
-            t_h  = np.longdouble(t.hour)
-            t_m  = np.longdouble(t.minute)
-            t_s  = np.longdouble(t.second)
+            t_h = np.longdouble(t.hour)
+            t_m = np.longdouble(t.minute)
+            t_s = np.longdouble(t.second)
             t_ms = np.longdouble(t.microsecond)
             t_ord = np.longdouble(t.toordinal())
 
-            gtime = t_ord + (t_h + (t_m + (t_s + t_ms/1.e6) / 60.) / 60.) / 24. - t_ref
+            gtime = t_ord + (t_h + (t_m + (t_s + t_ms/1.e6) / 60.) / 60.) \
+                / 24. - t_ref
 
             gtimes.append(gtime * 86400.)
 
