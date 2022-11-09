@@ -1,0 +1,56 @@
+calibration_params_list: ../prfpylot/geoms_gen/calibration_parameters.csv
+
+# output of the GEOMS-files:
+geoms_out_path: geomsgen_results
+
+
+
+
+# Additional Infos needed for GEOMS:
+# ----------------------------------
+# I do not know which of these parameters are needed. For no I wrote out all
+# given in COCCONHDFtoGEOMS.py
+# ???????
+
+DATA_FILE_VERSION: '001'
+DATA_SOURCE: FTIR.COCCON_KIT039
+DATA_LOCATION: 'SODANKYLA'
+DATA_PROCESSOR: 'PROFFAST Version 2.1.1'
+DATA_QUALITY: 'Station data.'
+DATA_TEMPLATE: 'GEOMS-TE-FTIR-COCCON-001'
+#DATA_TEMPLATE: 'GEOMS-TE-FTIR-COCCON-001.csv'
+
+FILE_DOI: 'https://doi.org/10.48477/coccon.pf10.sodankyla.R01'
+FILE_META_VERSION: '04R052;CUSTOM'
+
+# The PI_NAME needs to be given like `LastName;FirstName`
+# The PI_AFFILIATION needs to be given like `Long name of Institute;Abbreviation`
+PI_NAME: 'Dubravica;Darko'
+PI_AFFILIATION: 'Karlsruhe Institute of Technology;KIT'
+PI_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
+PI_EMAIL: 'darko.dubravica@kit.edu'
+
+# The PO_NAME ...
+DO_NAME: 'LastNameDS;FirstNameDS'
+DO_AFFILIATION: 'Karlsruhe Institute of Technology - Institute of Meteorology and Climate Research - Atmospheric Trace Gases and Remote Sensing;KIT.IMK.ASF'
+DO_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
+DO_EMAIL: 'FirstNameDO.LastNameDO@university.edu'
+
+# The DS_NAME ...
+DS_NAME: 'LastNameDS;FirstNameDS'
+DS_AFFILIATION: 'Karlsruhe Institute of Technology - Institute of Meteorology and Climate Research - Atmospheric Trace Gases and Remote Sensing;KIT.IMK.ASF'
+DS_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
+DS_EMAIL: 'FirstNameDS.LastNameDS@university.edu'
+
+
+QUALITY_FILTER_SZA: 75.0
+QUALITY_FILTER_XAIR_MIN: 0.98
+QUALITY_FILTER_XAIR_MAX: 1.02
+
+PRESSURE_SOURCE: 'Datalogger'
+# PRESSURE_SOURCE: 'Local meteo station (Thessaloniki, Greece)'   # Thessaloniki local meteo station
+# PRESSURE_SOURCE: 'Local meteo station (Yekaterinburg, Russia)'  # Yekaterinburg local meteo station
+# PRESSURE_SOURCE: 'Local meteo station (St. Petersburg, Russia)' # St. Petersburg local meteo station
+# PRESSURE_SOURCE: 'AWS meteo station (Sodankyla, Finland)'       # Sodankyla local meteo station
+# PRESSURE_SOURCE: 'BSRN meteo station (Gobabeb, Namibia)'        # Gobabeb local meteo station
+# PRESSURE_SOURCE: 'DWD meteo station (Rheinstetten, Germany)'    # Karlsruhe local meteo station
