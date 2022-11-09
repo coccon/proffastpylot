@@ -143,7 +143,8 @@ class GeomsGenWriter(GeomsGenHelper):
 
         # df = self.get_data_content(day)     
         # PROFFAST output (df pandas data frame)
-        df = self.get_invparms_content(day)  # invparms file
+        self.create_invparms_content(day)  # invparms file
+        df = self.df
 
         # After applying the quality filter for SZA and XAIR 
         # (see get_invparms_content),
@@ -305,7 +306,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         """ Get start and stop time for each measurement day """
 
-        df = pd.read_csv(self._find_csv_file(day), skipinitialspace=True)
+        df = self.df
         df["UTC"] = pd.to_datetime(df["UTC"])
         # df["LocalTime"] = pd.to_datetime(df["LocalTime"])
         starttime = day.replace(hour=0, minute=0, second=0)
@@ -338,7 +339,7 @@ class GeomsGenWriter(GeomsGenHelper):
         # all the measurement days.
         # The data can be retrieved directly from ivparms.dat file instead.
 
-        df = pd.read_csv(self._find_csv_file(day), skipinitialspace=True)
+        df = self.df
         df["UTC"] = pd.to_datetime(df["UTC"])
 
         # Get the data only for the current day.
@@ -394,7 +395,8 @@ class GeomsGenWriter(GeomsGenHelper):
 
         return ptf
 
-    def get_invparms_content(self, day):
+    def create_invparms_content(self, day):
+        """Write or overwrite self.df"""
 
         # !! The following is outdated !!
         # The results of the PROFFAST evaluation are provided in the invparms
@@ -412,90 +414,8 @@ class GeomsGenWriter(GeomsGenHelper):
         # 25: "H2O", 40: "O2", 67: "CO2", 97: "CH4", 127: "CO", 125: "CH4_S5P",
         # 23: "job01_rms", 63: "job03_rms", 90: "job04_rms", 119: "job05_rms"
 
-        # Get path and name of the invparms file for the corresponding day.
-
-        invparms_file = self._comb_invparms_file()
-
-        cols = [
-            "JulianDate",
-            "gndP",
-            "gndT",
-            "latdeg",
-            "londeg",
-            "altim",
-            "appSZA",
-            "azimuth",
-            "XH2O",
-            "XAIR",
-            "XCO2",
-            "XCH4",
-            "XCH4_S5P",
-            "XCO",
-            "H2O",
-            "O2",
-            "CO2",
-            "CH4",
-            "CO",
-            "CH4_S5P",
-            "H2O_rms",
-            "CO2_rms",
-            "CH4_rms",
-            "CO_rms",
-        ]
-
-        df = pd.read_csv(
-            invparms_file, delimiter=",", skipinitialspace=True, 
-            )
-        df = df[cols]
-
-        # Check if the second CO channel exists.
-        CO_avg = df["XCO"].mean()
-        if CO_avg == 0.:
-            df["XCO"] = [-900000.]*len(df)
-
-        # quality checks
-        quality_check_passed = True
-        for index, row in df.iterrows():
-            if row["appSZA"] > self.input_args["QUALITY_FILTER_SZA"]:
-                quality_check_passed = False
-            if row["XAIR"] < self.input_args["QUALITY_FILTER_XAIR_MIN"]:
-                quality_check_passed = False
-            if row["XAIR"] > self.input_args["QUALITY_FILTER_XAIR_MAX"]:
-                quality_check_passed = False
-
-            for col in ["XH2O", "XCO2", "XCH4", "XCO"]:
-                if row[col] in [np.nan, 0.]:
-                    quality_check_passed = False
-
-            # remove row from df
-            if quality_check_passed is False:
-                df.drop(index=index)
-
-        # apply correction factors
-        corr_fac = self._get_correction_factors()
-        df["XCO2"] *= corr_fac["XCO2_cal"]
-        df["XCH4"] *= corr_fac["XCH4_cal"]
-        df["altim"] /= 1000.
-
-        # write fill value to values out of bounds
-        df["XH2O"].mask(df["XH2O"] <= 0., inplace=True)
-        df["XH2O"].mask(df["XH2O"] >= 10000., inplace=True)
-        df["XCO2"].mask(df["XCO2"] <= 0., inplace=True)
-        df["XCO2"].mask(df["XCO2"] >= 10000., inplace=True)
-        df["XCH4"].mask(df["XCH4"] <= 0., inplace=True)
-        df["XCH4"].mask(df["XCH4"] >= 10., inplace=True)
-        df["XCO"].mask(df["XCO"] <= 0., inplace=True)
-        df["XCO"].mask(df["XCO"] >= 10000., inplace=True)
-
-        fill_value = -900000.
-        df.replace(np.nan, fill_value, inplace=True)
-
-        # return none if less than 11 lines
-        if len(df) < 11:
-            raise RuntimeError("Less than 11 valid measurement points!")
-        else:
-            self.logger.debug('Data filter applied... ', 'file_len: ', len(df))
-            return df
+        df = self.get_comb_invparms_df(day)
+        self.df = df
 
     def get_colsens_sza(self, day):
 
