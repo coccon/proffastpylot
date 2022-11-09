@@ -23,8 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from prfpylot.filemover import FileMover
-from prfpylot.pressure import PressureParameters, \
-    read_pressure_from_file, generate_pt_intraday
 import pandas as pd
 from subprocess import Popen, PIPE
 import os
@@ -33,19 +31,21 @@ from glob import glob
 import multiprocessing
 from timezonefinder import TimezoneFinder
 import pytz
-import shutil
 import numpy as np
-import logging
-from logging.handlers import QueueHandler
 from functools import partial
+from copy import deepcopy
 
 
 class Pylot(FileMover):
-    """Start all Profast processes."""
+    """Start all PROFFAST processes."""
 
     def __init__(self, input_file, logginglevel="info"):
-        super(Pylot, self).__init__(input_file, logginglevel=logginglevel)
+        super(Pylot, self).__init__(
+            input_file, logginglevel=logginglevel)
         self.logger.debug('Initialized the FileMover')
+
+        # a queue to save all days where all interferograms are bad
+        self.bad_day_queue = multiprocessing.Manager().Queue()
 
     def run(self, n_processes=1):
         """Execute all processes of profast.
@@ -63,29 +63,61 @@ class Pylot(FileMover):
 
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""
+        if self.start_with_spectra is True:
+            self.logger.info(
+                "Running with option: 'start_with_spectra', "
+                "skipping preprocessing. ...\n")
+            return
+
         self.logger.info(
             f"Running preprocess with {n_processes} task(s) ...")
         # check if TCCON Mode is activated. If yes create the tccon input file
         if self.tccon_mode:
             self.logger.debug("...create tccon file...")
             self.generate_prf_input("tccon")
+        else:
+            # check if TCCON file is present by accident. If yes delete it
+            tccon_file = self.get_prf_input_path("tccon")
+            if os.path.exists(tccon_file):
+                os.remove(tccon_file)
+                self.logger.warning(
+                    "Found TCCON file, which was not expected."
+                    "Delete it for normal processing.")
+        # Create inputfiles. If None is returned no date was found for this
+        # specific day
+        all_inputfiles = []
+        temp = self.dates[:]
+        for date in temp:
+            inputfile = self.generate_prf_input("prep", date)
+            if inputfile is not None:
+                all_inputfiles.append(inputfile)
+            else:
+                self.logger.warning(
+                    f"No suitable iterferogram was found for day {date}!"
+                    "Skip processing of this day.")
+                self.dates.remove(date)
 
-        # a Queue to save all days where all interferograms are bad
-        m = multiprocessing.Manager()
-        self.badDayQ = m.Queue()
+        prep_exe = self._get_executable("prep")
+        # store the path to change the cwd for the popen commmand
+        exec_path = os.path.dirname(prep_exe)
 
         output = []
         if n_processes <= 1:
-            for date in self.dates:
-                tmp_out = self.run_preprocess_at(date, self.badDayQ)
+            for inputfile in all_inputfiles:
+                tmp_out = self.run_prf_with_inputfile(
+                    inputfile, prep_exe,
+                    popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
             self.logger.debug("...start parallel processing...")
-            tmp_out = self._run_parallel(self.run_preprocess_at, n_processes)
-            output = tmp_out
+            subs_method = partial(
+                self.run_prf_with_inputfile,
+                executable=prep_exe,
+                popen_kwargs={"cwd": exec_path}
+            )
+            pool = multiprocessing.Pool(processes=n_processes)
+            output = pool.map(subs_method, all_inputfiles)
         self._write_logfile("preprocess", output)
-
-        self._check_for_bad_days()
 
         if self.tccon_mode:
             # delete tccon input file:
@@ -94,27 +126,58 @@ class Pylot(FileMover):
         self.logger.info("Finished preprocessing.\n")
 
     def run_pcxs(self, n_processes=1):
-        """
-        Main method to run pxcs. If n_processes > 1, run_pcxs_at is
+        """Run pcxs.
+        If n_processes > 1, run_pcxs_at is
         called directly. Otherwise it is called via run_parallel
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
-        # ensure that the badDayQ is empty:
-        while not self.badDayQ.empty():
-            self.badDayQ.get()
-
         output = []
-        if n_processes <= 1:
-            for date in self.dates:
-                tmp_out = self.run_pcxs_at(date, badDayQ=self.badDayQ)
-                output.append(tmp_out)
+        self.logger.debug("Get localdate spectra...")
+        self.localdate_spectra = self.get_localdate_spectra()
+        wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
+        inputfile_list = []
+        temp = deepcopy(self.localdate_spectra)
+        for date, spectra in temp.items():
+            # Check if absos file is there, skip
+            srchstrg = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+            if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
+                message = (
+                    f"*.abscos.bin file for day {date} exists already."
+                    " Skip calculation..")
+                self.logger.info(message)
+                output.append(
+                    [message, "", "No return code", "No call String"])
+                continue
+            # Generate/find map files
+            success = self.prepare_map_file(date)
+            if not success:
+                self.logger.warning(
+                    f"Skip day {date} since no map file is present")
+                self.localdate_spectra.pop(date)
+                continue
+            # Generate input files:
+            inputfile = self.generate_prf_input("pcxs", date)
+            inputfile_list.append(inputfile)
 
+        pcxs_exe = self._get_executable("pcxs")
+        # store the path to change the cwd for the popen commmand
+        exec_path = os.path.dirname(pcxs_exe)
+
+        if n_processes <= 1:
+            for inputfile in inputfile_list:
+                tmp_out = self.run_prf_with_inputfile(
+                    inputfile, pcxs_exe, popen_kwargs={"cwd": exec_path})
+                output.append(tmp_out)
         else:
-            tmp_out = self._run_parallel(self.run_pcxs_at,
-                                         n_processes)
-            output = tmp_out
-        self._write_logfile("pcsx", output)
-        self._check_for_bad_days()
+            subs_method = partial(
+                self.run_prf_with_inputfile,
+                executable=pcxs_exe,
+                popen_kwargs={"cwd": exec_path}
+                )
+            pool = multiprocessing.Pool(processes=n_processes)
+            temp = pool.map(subs_method, inputfile_list)
+            output.extend(temp)
+        self._write_logfile("pcxs", output)
         self.logger.info("Finished pcxs.\n")
 
     def run_inv(self, n_processes=1):
@@ -123,178 +186,80 @@ class Pylot(FileMover):
         Otherwise it is called via run_parallel.
         """
         self.logger.info(f"Running invers with {n_processes} task(s) ...")
+        if not hasattr(self, "localdate_spectra"):
+            self.localdate_spectra = self.get_localdate_spectra()
         output = []
+
+        # the interpolated pressure is stored and can be
+        # accesed from self.pressure_handler
+        self.pressure_handler.prepare_pressure_df()
+
+        all_inputfiles = []
+        for date, spectra in self.localdate_spectra.items():
+            input_files = self.generate_prf_input("inv", date)
+            all_inputfiles.extend(input_files)
+
+        output = []
+        inv_exe = self._get_executable("inv")
+        # store the path to change the cwd for the popen commmand
+        exec_path = os.path.dirname(inv_exe)
+
         if n_processes <= 1:
-            for date in self.dates:
-                tmp_out = self.run_inv_at(date)
+            for inputfile in all_inputfiles:
+                tmp_out = self.run_prf_with_inputfile(
+                    inputfile, inv_exe, popen_kwargs={"cwd": exec_path})
                 output.append(tmp_out)
         else:
-            tmp_out = self._run_parallel(self.run_inv_at,
-                                         n_processes)
-            output = tmp_out
-        self._check_for_bad_days()
+            subs_method = partial(
+                self.run_prf_with_inputfile,
+                executable=inv_exe,
+                popen_kwargs={"cwd": exec_path})
+            pool = multiprocessing.Pool(processes=n_processes)
+            output = pool.map(subs_method, all_inputfiles)
+
+        # check for failed interpolation of pressure
+        interpolation_failed_at = self.pressure_handler.interpolation_failed_at
+        n_failed_interpolation = len(interpolation_failed_at)
+        if n_failed_interpolation > 0:
+            failed_list_print = " ".join(
+                [
+                    d.strftime("%Y-%m-%d %H:%M:%S")
+                    for d in interpolation_failed_at
+                    ]
+                )
+            self.logger.error(
+                "The interpolated pressure was NaN!\n"
+                f"This occured {n_failed_interpolation} times. Check if the "
+                "time is parsed correctly and if there are duplicates in the "
+                "pressure data. The interpolation failed at the following "
+                "times:\n"
+                f"{failed_list_print}.\n"
+                "If this is due to unaivaoidable overlap from different "
+                "pressure files and only occured in limited time ranges, "
+                "there is an option to continue execution. Set\n"
+                "ignore_interpolation_error: True\n"
+                "in the PROFFASTpylot input file."
+                )
+            if self.ignore_interpolation_error is not True:
+                raise RuntimeError("The interpolated pressure was NaN!")
+            else:
+                self.logger.warning("The interpolation error was ignored!")
+
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
 
-    def run_preprocess_at(self, date, badDayQ, loggingq=None):
-        """Run preprocess at date."""
-        # for multiprocessing create a new logger:
-        if loggingq is not None:
-            mlogger = logging.getLogger("mLogger")
-            mlogger.setLevel(logging.DEBUG)
-            q_handler = QueueHandler(loggingq)
-            q_handler.setLevel(level=logging.DEBUG)
-            mlogger.addHandler(q_handler)
-        else:
-            mlogger = self.logger
+    def run_prf_with_inputfile(
+            self, prf_inputfile, executable, popen_kwargs={}):
+        """Run PROFFAST with the given inputfile"""
+        prf_inputfile = os.path.basename(prf_inputfile)
 
-        mlogger.info("Running preprocess at "
-                     f"{date.strftime('%Y-%m-%d')} ...")
-        foundIgrams = self.generate_prf_input("prep", date, mlogger)
-        if not foundIgrams:
-            mlogger.warning(f"Do not execute preprocess at date {date} since"
-                            " no suitable interferograms where found!")
-            badDayQ.put(date)
-            output = [f"Do not execute preprocess at date {date}.",
-                      "No suitable iterferograms found",
-                      f"No call string for date {date}.\n"]
-            return output
+        out, err, return_val = self._call_external_program(
+            [executable, prf_inputfile], **popen_kwargs)
 
-        inputfile = os.path.basename(
-            self.get_prf_input_path("prep", date))
-
-        executable = self._get_executable("prep")
-        exec_path = os.path.dirname(executable)
-
-        outlist = ["only test mode here"]
-        out, err = self._call_external_program(
-            [executable, inputfile], mlogger, **{'cwd': exec_path})
-        outlist = out, err, " ".join([executable, inputfile])
+        outlist = \
+            out, err, str(return_val),\
+            " ".join([executable, prf_inputfile])
         return outlist
-
-    def run_pcxs_at(self, date, loggingq=None, badDayQ=None):
-        """ Run pcxs at date."""
-        # for multiprocessing create a new logger:
-        if loggingq is not None:
-            mlogger = logging.getLogger("mLogger")
-            mlogger.setLevel(logging.DEBUG)
-            q_handler = QueueHandler(loggingq)
-            q_handler.setLevel(level=logging.DEBUG)
-            mlogger.addHandler(q_handler)
-        else:
-            mlogger = self.logger
-        self.logger.info(f"Running pcxs at {date.strftime('%Y-%m-%d')} ...")
-
-        foundSpectra = self.generate_prf_input(
-            "pcxs", date, mlogger=mlogger)
-        if not foundSpectra:
-            mlogger.warning(f"Do not execute pcxs at date {date} since"
-                            " no suitable spectra where found!")
-            badDayQ.put(date)
-            output = [f"Do not execute pcxs at date {date}.",
-                      "No suitable spectra found",
-                      f"No call string for date {date}.\n"]
-            return output
-
-        # search for GGG2020 map files:
-        srchstrg = f"{self.site_abbrev}_*_*Z.map"
-        mapfiles = glob(os.path.join(self.map_path, srchstrg))
-        if len(mapfiles) != 0:
-            self.logger.debug("Detected GGG2020 map files!")
-            # GGG2020map files found!
-            self.ggg2020mapfiles = True
-            self._interpolate_map_files(date)
-        else:
-            srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
-            mapfiles = glob(os.path.join(self.map_path, srchstrg))
-            if len(mapfiles) == 1:
-                self.logger.debug("Detected GGG2014 map file!")
-                self.ggg2020mapfiles = False
-            else:
-                self.logger.critical(
-                    "No suitable map file found at "
-                    f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
-                sys.exit()
-
-        prf_input_path = os.path.basename(
-            self.get_prf_input_path("pcxs", date))
-
-        executable = self._get_executable("pcxs")
-        out, err = self._call_external_program(
-            [executable, prf_input_path], **{'cwd': self.proffast_path})
-
-        outlist = out, err, " ".join([executable, prf_input_path])
-        return outlist
-
-    def run_inv_at(self, date, loggingq=None, badDayQ=None):
-        # for multiprocessing create a new logger:
-        if loggingq is not None:
-            mlogger = logging.getLogger("mLogger")
-            mlogger.setLevel(logging.DEBUG)
-            q_handler = QueueHandler(loggingq)
-            q_handler.setLevel(level=logging.DEBUG)
-            mlogger.addHandler(q_handler)
-        else:
-            mlogger = self.logger
-        self.logger.debug(f"Run inv at date {date.isoformat()}")
-
-        foundSpectra = self.generate_prf_input(
-            "inv", date, mlogger=mlogger)
-        if not foundSpectra:
-            mlogger.warning(f"Do not execute inv at date {date} since"
-                            " no spectra where found!")
-            badDayQ.put(date)
-            output = [f"Do not execute inv at date {date}.",
-                      "No suitable spectra found",
-                      f"No call string for date {date}.\n"]
-            return output
-
-        self.prepare_pressure_at(date, mlogger)
-        prf_input_path = os.path.basename(
-            self.get_prf_input_path("inv", date))
-        executable = self._get_executable("inv")
-        out, err = self._call_external_program(
-                    [executable, prf_input_path],
-                    **{'cwd': self.proffast_path})
-        outlist = out, err, " ".join([executable, prf_input_path])
-        return outlist
-
-    def prepare_pressure_at(self, date, mlogger=None):
-        """Perpare the pressure input data for a date.
-
-        Depending on the options the pt_intraday file is either generated
-        or copied to its destination for each day.
-        """
-        # extra logger for case of multiprocessing:
-        if mlogger is None:
-            mlogger = self.logger
-        mlogger.debug("Call 'prepare_pressure_at'")
-        date_str = date.strftime("%y%m%d")
-        pt_folder = os.path.join(self.analysis_instrument_path, date_str, "pT")
-        intraday_file = os.path.join(pt_folder, "pT_intraday.inp")
-
-        if self.pressure_type == "original":
-            filename = "{}_{}.inp".format(
-                self.site_abbrev, date.strftime("%y-%m-%d"))
-            src_intraday_file = os.path.join(
-                self.intraday_path, filename)
-            shutil.copy(src_intraday_file, intraday_file)
-            return
-
-        params = PressureParameters.dataframe_parameters[self.pressure_type]
-        filename = self._get_pressure_file_at(date)
-        pt_input_file = os.path.join(self.pressure_path, filename)
-        p_list = read_pressure_from_file(
-            file=pt_input_file,
-            **params)
-
-        template_path = os.path.join(
-            self.prfpylot_path, "templates", "template_pt_intraday.inp"
-            )
-        pt_intraday = generate_pt_intraday(p_list, template_path)
-
-        with open(intraday_file, "w") as f:
-            f.write(pt_intraday)
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
@@ -305,11 +270,13 @@ class Pylot(FileMover):
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
 
-        resultfile = "combined_invparms_{}_{}-{}.csv".format(
-                            self.site_name,
-                            self.dates[0].strftime("%Y%m%d"),
-                            self.dates[-1].strftime("%Y%m%d")
-                            )
+        dt_format = "%y%m%d"
+        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
+            self.site_name,
+            self.instrument_number,
+            self.dates[0].strftime(dt_format),
+            self.dates[-1].strftime(dt_format)
+        )
         combined_file = os.path.join(
             self.result_folder, resultfile)
         df["UTC"] = df["UTC"].apply(lambda x: x.strftime("%Y-%m-%d %X"))
@@ -317,12 +284,39 @@ class Pylot(FileMover):
             lambda x: x.strftime("%Y-%m-%d %X"))
 
         format_list = [
-            "%s", "%s", "%11.4f", "%6.1f", "%5.2f", "%5.2f", "%7.5f", "%7.5f",
-            "%4.2f", "%5.2f", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e",
-            "%.5e", "%.5e", "%.5e", "%.5e", "%.5e", "%.5e"
-                      ]
-        np.savetxt(combined_file, df.values, fmt=format_list,
-                   delimiter=', ', header=', '.join(df.columns), comments='')
+            "%s",  # UTC
+            "%s",  # LocalTime
+            "%s",  # spectrum
+            "%12.5f",  # JulianDate
+            "%6.1f",  # UTtimeh
+            "%5.2f",  # gndP
+            "%5.2f",  # gndT
+            "%7.5f",  # latdeg
+            "%7.5f",  # londeg
+            "%7.3f",  # altim
+            "%4.2f",  # appSZA
+            "%5.2f",  # azimuth
+            "%.5e",  # XH20
+            "%.5e",  # XAIR
+            "%.5e",  # XCO2
+            "%.5e",  # XCH4
+            "%.5e",  # XCO
+            "%.5e",  # XCH4_S5P
+            "%.5e",  # H20
+            "%.5e",  # O2
+            "%.5e",  # CO2
+            "%.5e",  # CH4
+            "%.5e",  # CO
+            "%.5e"  # CH4_S5P
+        ]
+
+        header = ", ".join(df.columns)
+        np.savetxt(
+            combined_file, df.values,
+            header=header,
+            fmt=format_list,
+            delimiter=', ',
+            comments='')
 
         self.logger.info(
             "The combined results of PROFFAST were written "
@@ -333,18 +327,24 @@ class Pylot(FileMover):
         self.logger.info("Removing temporary files ...")
 
         # handling abscosbin
-        if self.delete_abscosbin:
+        if self.delete_abscosbin_files:
             self.logger.debug("Deleting abscos.bin files ...")
             self.delete_abscos_files()
+            self.logger.debug("Deleting pT and VMR files...")
+            self.delete_pT_VMR_files()
         else:
             self.logger.info(
                 "Keeping abscos.bin files ...\n"
                 "They are located in "
                 f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
             self.check_abscosbin_summed_size()
+            self.logger.info(
+                "Keeping pT and VMR files...\n"
+                "They are located in "
+                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
 
         # handling input files
-        if self.bool_delete_input_files:
+        if self.delete_input_files:
             self.logger.debug("Deleting input files ...")
             self.delete_input_files()
         else:
@@ -353,60 +353,35 @@ class Pylot(FileMover):
 
         self._move_generallogfile_to_logdir()
         self._move_prf_config_file()
-        self.logger.info("Done.")
+        self.logger.info("Done.\n")
 
-    def _call_external_program(self, command_list, mlogger=None, **kwargs):
-        """
-        This method calls a external program and returns the output and the
-        error
-        """
-        joined_commands = " ".join(command_list)
-        if mlogger is None:
-            mlogger = self.logger
-        mlogger.debug("Command List: " + joined_commands)
+    def _call_external_program(self, command_list, **kwargs):
+        """Call a external program. Return output and error."""
         p = Popen(command_list, stdout=PIPE, stderr=PIPE, **kwargs)
         out, err = p.communicate()
         return_value = p.wait()
         out = out.decode("utf-8")
         err = err.decode("utf-8")
-
-        if return_value != 0:
-            mlogger.error(
-                f"Error while processesing {joined_commands}!\n"
-                f"PROFFAST error message: {err}")
-        return (out, err)
-
-    def _run_parallel(self, method, n_processes):
-        """Run method in parallel using python multiprocessing."""
-        pool = multiprocessing.Pool(processes=n_processes)
-
-        # create a queue for  multiprocessing logging:
-        m = multiprocessing.Manager()
-        logq = m.Queue(-1)
-        subs_method = partial(method, badDayQ=self.badDayQ, loggingq=logq)
-        output = pool.map(subs_method, self.dates)
-        while not logq.empty():
-            record = logq.get()
-            self.logger.log(record.levelno, record.msg)
-
-        return output
+        return (out, err, return_value)
 
     def _write_logfile(self, program_name, output):
-        """
-        Write the output of preprocess, pcxs and inv to a logfile.
-        """
+        """Write the output of preprocess, pcxs and inv to a logfile."""
         self.logger.debug(f"... Write logfile of {program_name} ...")
 
         file = os.path.join(self.logfile_path, f"{program_name}_output.log")
 
         logfile = open(file, "w")
         for i, entry in enumerate(output):
-            out, err, call_strg = entry
+            out, err, return_code, call_strg = entry
             logfile.write(f"\n================= Task {i} ================\n")
             logfile.write(call_strg)
+            logfile.write(f"\nReturn code: {return_code}\n")
             logfile.write("\nOutput:\n")
             logfile.write(out)
             logfile.write("\n\nErrors:\n")
+            # Write error to logging, too
+            if err != "":
+                self.logger.error(f"Error when running {call_strg}:\n{err}")
             logfile.write(err)
             logfile.write("============================================\n")
             logfile.write("============================================\n\n\n")
@@ -416,11 +391,14 @@ class Pylot(FileMover):
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""
         search_str = os.path.join(
-            self.result_folder, "*-invparms.dat")
+            self.result_folder, f"{self.site_name}*-invparms_?.dat")
         invparms_filelist = glob(search_str)
+        if len(invparms_filelist) == 0:
+            raise RuntimeError(
+                "Retrieval did not produce any *invparms*.dat files")
 
         df_list = [
-            pd.read_csv(file, delim_whitespace=True)
+            pd.read_csv(file, delimiter=",", skipinitialspace=True)
             for file in invparms_filelist]
         df = pd.concat(df_list)
 
@@ -428,14 +406,19 @@ class Pylot(FileMover):
 
     def _add_timezones_to(self, df):
         """Add UTC and local timezone at measurement location."""
-        df["JulianDate"] = df["JulianDate"]
+
+        # drop columns with JulianDate == 0
+        if 0. in df["JulianDate"].values:
+            spectrumList = df["spectrum"].loc[df["JulianDate"] == 0]
+            self.logger.warning(
+                "The following spectra in invparm.dat where skipped since "
+                "JulianDate equaled 0.0:\n" + "\n".join(spectrumList))
+        df["JulianDate"] = df["JulianDate"].replace(0., np.nan)
+        df.dropna(subset=["JulianDate"], inplace=True)
+
         df["UTC"] = pd.to_datetime(
             df["JulianDate"].values, origin="julian", unit="D", utc=True)
-        # This needs to be executed, since the calls bevore took place in a
-        # multiprocessing process, which is encapsulated and does not write to
-        # the current instance of the class.
-        if self.use_coordfile:
-            self.get_coords_from_file(self.dates[0])
+
         tf = TimezoneFinder()
         local_tz_name = tf.timezone_at(
             lat=self.coords["lat"],
@@ -457,10 +440,10 @@ class Pylot(FileMover):
         df = df.rename(columns=rename)
 
         sel_cols = [
-            "UTC", "LocalTime",
-            "JulianDate", "HHMMSS_ID",
+            "UTC", "LocalTime", "spectrum",
+            "JulianDate", "UTtimeh",
             "gndP", "gndT",
-            "latdeg", "londeg",
+            "latdeg", "londeg", "altim",
             "appSZA", "azimuth",
             "XH2O", "XAIR",
             "XCO2", "XCH4",
@@ -491,31 +474,3 @@ class Pylot(FileMover):
         if sys.platform == "win32":
             executable += ".exe"
         return executable
-
-    def _get_pressure_file_at(self, date):
-        """Return path to pressure file of given date."""
-        p_params = PressureParameters()
-        filename = p_params.get_filename(self.pressure_type, date)
-        search_string = os.path.join(self.pressure_path, filename)
-
-        pressure_file = glob(search_string)
-        if len(pressure_file) == 0:
-            self.logger.critical(
-                f"Could not find pressure file {search_string}")
-            raise RuntimeError("Could not find pressure file!")
-        elif len(pressure_file) > 1:
-            self.logger.critical(
-                f"To many pressure files found matching {search_string}!")
-            raise RuntimeError("Unambigous pressure files!")
-        pressure_file = pressure_file[0]
-        return pressure_file
-
-    def _check_for_bad_days(self):
-        """If any badDays (i.e. no good igrams/spectra) occured delete the
-        dates from the datelist
-        """
-        while not self.badDayQ.empty():
-            badDay = self.badDayQ.get()
-            self.dates.remove(badDay)
-            self.logger.debug(f"Delete day {badDay.strftime('%Y-%m-%d')}"
-                              " from processing list.")

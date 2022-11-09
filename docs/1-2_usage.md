@@ -12,16 +12,13 @@
 ## 1. General use
 
 **Ready-to-use Example**  
-We explain the usage of the PROFFASTpylot with the help of an example from Sodankyla which is provided as `example/run.py`.
+You can follow the usage of PROFFASTpylot with the help of an example from Sodankyla which is provided as `example/run.py`.
 The example input data (i.e. the example interferogram, map- and pressure files) are downloaded automatically when running `run.py` the first time.
-Furthermore, it generates the `input_sodankyla_example.yml` file matching the paths on your computer.
-
-It is a ready to use example where all needed input files are downloaded and created automatically.
-
+The runscript needs to be executed inside the `example` folder.
 
 ### Executing PROFFAST with the PROFFASTpylot takes two steps
 1. Create an input file with the required information
-2. Execute PROFFASTpylot via a Python script.
+2. Execute PROFFASTpylot via a Python script
 
 Both steps will be explained in more detail, in the following.
 
@@ -31,14 +28,6 @@ The input file (stored in the yaml format) contains all the key information requ
 An example with explanations (`example_sodankyla_input.yml`) is provided. It contains all options that are required to process the example data set.
 Adjust this file to your requirements.
 
-Alternatively, PROFFASTpylot provides an interactive tool to create an input file.  
-You can run
-```
-python prfpylot/create_inputfile.py
-```
-A step by step wizard helps you to generate the input file for your site.
-
-
 #### Starting the processing
 
 For starting the processing you need to create an instance of the Pylot class with an input file.
@@ -46,26 +35,29 @@ For starting the processing you need to create an instance of the Pylot class wi
 ```python
 from prfpylot.pylot import Pylot
 
-input_file = "input_sodankyla_example.yml"
-MyPylot = Pylot(input_file)
+if __name__ == "__main__":
+    input_file = "input_sodankyla_example.yml"
+    MyPylot = Pylot(input_file)
 ```
+Note that the `if __name__ == "__main__"` statement needs to be put before initialising the Pylot to prevent problems with the multiprocessing on Windows.
 
-Afterwards you can either run all steps of PROFFAST individually with the following commands:
+Afterwards all steps of PROFFAST can be executed automatically one after the other:
 
 ```python
-n_processes = 2
-try:
-    MyPylot.run_preprocess(n_processes)
-    MyPylot.run_pcxs(n_processes)
-    MyPylot.run_inv(n_processes)
-    MyPylot.combine_results()
-finally:
-    MyPylot.clean_files()
+    MyPylot.run(n_processes)
 ```
-Or run all these steps automatically one after the other by the command
+
+Alternatively you can run all steps of PROFFAST individually with the following commands:
 
 ```python
-my_pylot.run(n_processes)
+    n_processes = 2
+    try:
+        MyPylot.run_preprocess(n_processes)
+        MyPylot.run_pcxs(n_processes)
+        MyPylot.run_inv(n_processes)
+        MyPylot.combine_results()
+    finally:
+        MyPylot.clean_files()
 ```
 
 You can execute `run.py` to test this with the example data provided.
@@ -73,11 +65,11 @@ You can execute `run.py` to test this with the example data provided.
 
 ## 2. Special case: Process spectra directly
 
-If the spectra are already available, set the option `start_with_spectra` to `True` in the input file.  
+If the spectra are already available, set the option `start_with_spectra` to `True` in the input file.
 The path to the spectra is given to PROFFASTpylot by the entry `analysis_path`.
 Note, that the folder `analysis_path` must have the
 following substructure: `analysis/SiteName_InstrumentNumber/YYMMDD`.  
-Afterwards, run the functions `run_pcxs`, `run_inv` and `combine_results`.
+Afterwards, `Pylot.run()` will not execute preprocess.
 
 ## 3. Folder structure
 

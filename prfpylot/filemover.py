@@ -5,7 +5,7 @@ Create relevant folders.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
-Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
                         Karlsruhe Institut of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,8 @@ class FileMover(Preparation):
     """Copy, Move and remove temporary proffast Files."""
 
     def __init__(self, input_file, logginglevel="info"):
-        super(FileMover, self).__init__(input_file, logginglevel=logginglevel)
+        super(FileMover, self).__init__(
+            input_file,  logginglevel=logginglevel)
         # create all folders
         self.init_folders()
 
@@ -51,7 +52,7 @@ class FileMover(Preparation):
     def _create_analysis_subdirs(self):
         """Create subdirs of the analysis folder.
 
-        Created folders: 
+        Created folders:
             - 'cal' (for the spectra),
             - 'VMR-dim' (VMR-files),
             - pT
@@ -61,7 +62,7 @@ class FileMover(Preparation):
                 f"The analysis folder {self.analysis_instrument_path} "
                 "exists already! "
                 "The content may be overwritten.")
-        
+
         # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
         for date in self.dates:
             datestring = date.strftime("%y%m%d")
@@ -97,20 +98,27 @@ class FileMover(Preparation):
         # The result_foldername and result dir are already specified in
         # the init of prepare
         if os.path.exists(self.result_folder):
-            # check if already other backuped folder exist as well:
+            if self.backup_results is True:
+                # check if already other backuped folder exist as well:
 
-            backuped_results = glob(self.result_folder + "_backup*")
-            # rename existing folder by adding _backupN where N is the N-th
-            # backup
-            result_folder_backup = self.result_folder\
-                + f"_backup{len(backuped_results)}"
-            self.logger.warning(
-                f"The result directory {self.result_folder} exists already! "
-                "Renamed existing one to "
-                f"{result_folder_backup} and created a new one.")
-            # rename and create new, empty folder
-            os.rename(self.result_folder, result_folder_backup)
-            os.makedirs(self.result_folder)
+                backuped_results = glob(self.result_folder + "_backup*")
+                # rename existing folder by adding _backupN where N is the N-th
+                # backup
+                result_folder_backup = self.result_folder\
+                    + f"_backup{len(backuped_results)}"
+                self.logger.warning(
+                    f"The result directory {self.result_folder} exists "
+                    "already! "
+                    "Renamed existing one to "
+                    f"{result_folder_backup} and created a new one.")
+                # rename and create new, empty folder
+                os.rename(self.result_folder, result_folder_backup)
+                os.makedirs(self.result_folder)
+            else:  # backup_results is False
+                self.logger.warning(
+                    f"The result directory {self.result_folder} exists "
+                    "already! The content may be overwritten."
+                    )
         else:
             os.makedirs(self.result_folder)
 
@@ -118,13 +126,14 @@ class FileMover(Preparation):
         """Move the results to the data folder.
         """
         suffix_list = [
-            "colsens.dat",
-            "invparms.dat",
-            "job01.spc",
-            "job02.spc",
-            "job03.spc",
-            "job04.spc",
-            "job05.spc"
+            "colsens_?.dat",
+            "invparms_?.dat",
+            "job01_?.spc",
+            "job02_?.spc",
+            "job03_?.spc",
+            "job04_?.spc",
+            "job05_?.spc",
+            "version_?.dat"
         ]
         source_folder = os.path.join(self.proffast_path, "out_fast")
         for date in self.dates:
@@ -133,20 +142,40 @@ class FileMover(Preparation):
             for suffix in suffix_list:
                 file = prefix + suffix
                 source = os.path.join(source_folder, file)
-                target = os.path.join(self.result_folder, file)
+                sourcefiles = glob(source)
+                for sfile in sourcefiles:
+                    target = os.path.join(
+                        self.result_folder,
+                        os.path.basename(sfile))
+                    try:
+                        shutil.move(sfile, target)
+                    except FileNotFoundError:
+                        self.logger.error(f"File {sfile} was not found!")
+                    except PermissionError:
+                        self.logger.error(f"Could not write {target} due to "
+                                          "permission issues.")
+                    except OSError as e:
+                        self.logger.error("Unknown error while movig file "
+                                          f"{sfile}. Errormessage: {e}")
+
+    def delete_pT_VMR_files(self):
+        """Delete the pT and VMR files created by pcxs."""
+        wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
+        for date in self.dates:
+            pTFile =\
+                f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
+            VMRFile =\
+                f"{self.site_name}{date.strftime('%y%m%d')}-VMR_fast_out.dat"
+            for file in [pTFile, VMRFile]:
                 try:
-                    shutil.move(source, target)
+                    os.remove(os.path.join(wrk_fast_folder, file))
                 except FileNotFoundError:
-                    self.logger.error(f"File {source} was not found!")
-                except PermissionError:
-                    self.logger.error(f"Could not write {target} due to "
-                                      "permission issues.")
-                except OSError as e:
-                    self.logger.error("Unknown error while movig file "
-                                      f"{source}. Errormessage: {e}")
+                    self.logger.error(
+                        "File not Found: "
+                        f"Could not delete {file}")
 
     def delete_abscos_files(self):
-        """Delete the abscos.bin files."""
+        """Delete the abscos.bin files created by pcxs."""
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         for date in self.dates:
             filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
@@ -175,16 +204,14 @@ class FileMover(Preparation):
 
     def delete_input_files(self):
         """Delete the input files for preprocess, pcxs and inv"""
-        for i, date in enumerate(self.dates):
-            for type in ["prep", "pcxs", "inv"]:
-                inp_file = self.get_prf_input_path(type, date)
-                try:
-                    os.remove(inp_file)
-                except FileNotFoundError:
-                    self.logger.error(
-                        "File not Found: "
-                        f"Could not remove {type} input file"
-                        f" {inp_file}")
+        for inp_file in self.global_inputfile_list:
+            try:
+                os.remove(inp_file)
+            except FileNotFoundError:
+                self.logger.error(
+                    "File not Found: "
+                    f"Could not remove {type} input file"
+                    f" {inp_file}")
 
     def move_input_files(self):
         """Move the input files for prep., pcxs and inv to result folder"""
@@ -192,25 +219,22 @@ class FileMover(Preparation):
         inp_folder = os.path.join(self.result_folder, "input_files")
         if not os.path.exists(inp_folder):
             os.mkdir(inp_folder)
-
-        for type in ["prep", "pcxs", "inv"]:
-            for i, date in enumerate(self.dates):
-                inp_file = self.get_prf_input_path(type, date)
-                try:
-                    shutil.move(
-                        inp_file,
-                        os.path.join(inp_folder, os.path.basename(inp_file)))
-                except FileNotFoundError:
-                    self.logger.error(
-                        "File not found: "
-                        f"Could not move {type} input file"
-                        f" {inp_file}")
+        for inp_file in self.global_inputfile_list:
+            try:
+                shutil.move(
+                    inp_file,
+                    os.path.join(inp_folder, os.path.basename(inp_file)))
+            except FileNotFoundError:
+                self.logger.error(
+                    "File not found: "
+                    f"Could not move {type} input file"
+                    f" {inp_file}.")
 
     def _create_logfile_dir(self):
         """Create logfile dir if is does not exist."""
         if not os.path.exists(self.logfile_path):
             self.logger.debug(
-                f"Logfile path did not exist, create {self.logfile_path}")
+                f"Logfile path did not exist, create {self.logfile_path}.")
             os.makedirs(self.logfile_path)
         self.logger.debug(f"Logfile_path: {self.logfile_path}")
 
@@ -226,18 +250,18 @@ class FileMover(Preparation):
                 del handler
             # self.logger.handlers[:][1].close()
         target = os.path.join(self.logfile_path,
-                              os.path.basename(self.generalLogfile))
+                              os.path.basename(self.pylot_log))
         try:
-            shutil.move(self.generalLogfile, target)
+            shutil.move(self.pylot_log, target)
             self.logger.debug(
                 "Moved the general logfile to the"
-                " result/logfiles folder")
+                " result/logfiles folder.")
         except (FileNotFoundError) as e:
-            self.logger.debug(f"\nsource: {self.generalLogfile} "
+            self.logger.debug(f"\nsource: {self.pylot_log} "
                               f"\ntarget: {target}")
             self.logger.debug(e)
             self.logger.error("Could not move logfile to new logfile dir! "
-                              f"File is located in: {self.generalLogfile}")
+                              f"File is located in: {self.pylot_log}")
 
     def _move_prf_config_file(self):
         """Copy the PROFFASTpylot input file to the result folder."""

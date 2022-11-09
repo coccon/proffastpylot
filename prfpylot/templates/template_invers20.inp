@@ -6,14 +6,15 @@ date
 absco file
 pT detail dec (True/False)
 quiet run option (True/False)
+handle (single character is appended to the output files. For default behaviour choose 'X')
 $
-%DATAPATH%\%DATE%
+%DATAPATH%\%MEASUREMENT_DATE%
 %SITE%
-%DATE%
-%SITE%%DATE%-abscos.bin
+%LOCAL_DATE%
+%SITE%%LOCAL_DATE%-abscos.bin
 .true.
 .true.
-
+%SUFFIX%
 
 Unrefracted (False / COCCON standard) or refracted (True) solar elevation in *.bin file?
 $
@@ -69,7 +70,7 @@ $
 0
 0
 2
-0.9915,-0.007,-0.0045,"XAIR    "
+0.9905,-0.007,-0.0070,"XAIR    "
 0
 20
 0
@@ -78,7 +79,7 @@ $
 1.0,0.0,0.0,"XDUM2   "
 0
 2
-0.9986,0.0,0.0,"XCO2    "
+0.9962,0.0,-0.0060,"XCO2    "
 1
 0
 0
@@ -93,7 +94,7 @@ $
 2
 1.0,0.0,0.0,"XDUM4   "
 2
-0.9861,0.002,0.0,"XCH4    "
+0.9880,0.001,0.004,"XCH4    "
 0
 0
 0
@@ -107,7 +108,7 @@ $
 1.0,0.0,0.0,"XDUM6   "
 0
 2
-0.9913,-0.006,0.005,"XCH4_S5P"
+0.9948,-0.003,0.007,"XCH4_S5P"
 1
 2
 1.0,0.060,0.0,"XCO     "
@@ -116,8 +117,8 @@ $
 20
 0
 
-names of spectra
+list for all spectra: name of spectra, pressure, T_PBL
 (only list SN spectra here, the code will check whether a corresponding SM is available)
 $
-%SPECTRA_LIST%
+%SPECTRA_PT_INPUT%
 ***
