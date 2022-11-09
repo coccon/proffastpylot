@@ -117,8 +117,13 @@ class GeomsGenWriter(GeomsGenHelper):
         self.variables = []
 
     def generate_GEOMS_at(self, day):
+        """Create a HDF5geoms file for a specific day """
 
-        """ create a GEOMS file for a specific day """
+        self.geomsgen_logger.info(
+            "Generating a HDF5geoms file for {}.".format(
+                day.strftime("%Y-%m-%d")
+                )
+            )
 
         if not isinstance(day, dt.datetime):
             self.logger.error
@@ -146,7 +151,8 @@ class GeomsGenWriter(GeomsGenHelper):
         # are required to generate an HDF5 file.
 
         if df is None:
-            print('HDF file generation stopped while reading invparms file!')
+            self.logger.error(
+                'HDF file generation stopped while reading invparms file!')
             return
 
         # Get additional information from the colsens, pT_fast_out, and 
@@ -158,7 +164,7 @@ class GeomsGenWriter(GeomsGenHelper):
         # sza interpolation)
 
         if (vmr is None) or (ptf is None) or (sen is None):
-            print(
+            self.logger.error(
                 'HDF file generation stopped while reading VMR, pT, or '
                 'colsens file!')
             return
@@ -260,6 +266,8 @@ class GeomsGenWriter(GeomsGenHelper):
             os.remove(geoms_file_name) 
             # delete file in case the file already exits
         os.rename(geoms_file, geoms_file_name)
+        self.geomsgen_logger.info(
+            f"The HDF5geoms file was written to {geoms_file_name}")
 
     def get_start_stop_date_time(self, day, df):
 
@@ -439,10 +447,6 @@ class GeomsGenWriter(GeomsGenHelper):
             invparms_file, delimiter=",", skipinitialspace=True, 
             )
         df = df[cols]
-
-        print(df)
-        print(df.keys())
-        print(df["XCO"])
 
         # Check if the second CO channel exists.
         CO_avg = df["XCO"].mean()
@@ -1183,7 +1187,6 @@ class GeomsGenWriter(GeomsGenHelper):
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
-        # print(cont, dataset_name)
 
         # Convert data to numpy array.
         if cont == "H2O_COL":

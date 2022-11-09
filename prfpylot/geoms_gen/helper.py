@@ -7,12 +7,16 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 
+
 from prfpylot.prepare import Preparation
 
 
 class GeomsGenHelper(Preparation):
     def __init__(self, geomsgen_inputfile, prfpylot_inputfile):
-        super(GeomsGenHelper, self).__init__(prfpylot_inputfile)
+        super(GeomsGenHelper, self).__init__(
+            prfpylot_inputfile, logginglevel="warning")
+
+        self.geomsgen_logger = self.get_logger(logginglevel="info")
 
         # Read the input file.
         # Contains additional information to create the geoms file
@@ -110,11 +114,12 @@ class GeomsGenHelper(Preparation):
             day (dt.datetime) The day the data is requested
         """
         target_folder = self._find_correct_folder(day)
-        print(target_folder)
+        self.logger.debug(target_folder)
         csv_file = glob.glob(os.path.join(
             target_folder, f"combined_invparms_{self.site_name}*.csv"))
         if len(csv_file) > 1:
-            print("To many csv files in result folder. Exiting..")
+            self.logger.critical(
+                "To many csv files in result folder. Exiting..")
             sys.exit(1)
         return csv_file[0]
 
@@ -124,7 +129,7 @@ class GeomsGenHelper(Preparation):
         If colsen or invparms depends on the input of the argument `which`
         """
         if which not in ["colsens", "invparms"]:
-            print("Give 'colsens' or 'invparms' for 'which'!")
+            self.logger.error("Give 'colsens' or 'invparms' for 'which'!")
             return ""
         target_folder = self._find_correct_folder(day)
         filename = f"{self.site_name}{day.strftime('%y%m%d')}" + \
@@ -164,8 +169,6 @@ class GeomsGenHelper(Preparation):
         #         target_folder = folder
         #         break
 
-        # print("target folder", target_folder)
-        # print("result folder", self.result_folder)
         return self.result_folder
 
     def _get_pt_vmr_file(self, day, which):
@@ -174,7 +177,7 @@ class GeomsGenHelper(Preparation):
         If pt or vmr depends on the input of the `which` parameter.
         """
         if which not in ["pT", "VMR"]:
-            print("Parameter 'which' must be 'pT' or 'VMR'")
+            self.logger.error("Parameter 'which' must be 'pT' or 'VMR'")
             return ""
 
         datestr = day.strftime("%y%m%d")
