@@ -852,7 +852,10 @@ class Preparation():
             srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
             if len(mapfiles) == 1:
-                self.logger.debug("Detected GGG2014 map file!")
+                self.logger.warning(
+                    "Detected GGG2014 map file, this is not recommended! "
+                    "PROFFASTpylot is calibrated using GGG2020 map files, "
+                    "please use GGG2014 only for comparison purposes!")
                 self.ggg2020mapfiles = False
             else:
                 self.logger.warning(

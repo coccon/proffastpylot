@@ -30,6 +30,7 @@ import numpy as np
 import yaml
 import copy
 
+
 class PressureHandler():
     """Read, interpolate and return pressure data from various formats."""
 
@@ -43,7 +44,8 @@ class PressureHandler():
     default_options = {
         "utc_offset": 0.0,
         "pressure_factor": 1.0,
-        "pressure_offset": 0.0
+        "pressure_offset": 0.0,
+        "data_parameters": {}
     }
 
     parsed_dtcol = "parsed_datetime"
@@ -78,15 +80,19 @@ class PressureHandler():
             if self.__dict__.get(option) is None:
                 self.__dict__[option] = default
                 self.logger.debug(
-                    f"The optional option {option} was set to the default "
+                    f"The pressure parameter {option} was set to the default "
                     f"value: {default}.")
 
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
                 self.logger.critical(
-                    f"Mandatory option {option} not given in the pressure type"
-                    f" file {pressure_type_file}!")
+                    f"Mandatory pressure parameter {option} not given in the "
+                    f"pressure type file {pressure_type_file}!")
                 sys.exit()
+            else:
+                # fill defaults and check for missing values inside the dicts
+                self.__dict__[option] = self._set_defaults(option)
+                self._check_mandatory()
 
         # For a later read in of the pressure data frame it makes sense to only
         # read in the columns needed. In case of large meteo files, this can
@@ -94,7 +100,7 @@ class PressureHandler():
         self.cols_to_use = []
         for key in ["pressure_key", "time_key", "date_key", "datetime_key"]:
             val = self.dataframe_parameters[key]
-            if (val is not None) and (val != ""):
+            if val != "":
                 self.cols_to_use.append(val)
 
         # It can happen, that the pressure files are generated using local
@@ -123,19 +129,16 @@ class PressureHandler():
         frequency = self.frequency
 
         # Create the p_df for different file frequencies
-        if frequency == "subdaily":
+        if frequency in ["subdaily", "daily"]:
             self._read_subdaily_files()
-        elif frequency == "daily":
-            self._read_subdaily_files()
-        elif frequency == "weekly":
-            raise NotImplementedError(
-                f"{frequency} frequency not implemented yet.")
-        elif frequency == "monthly":
-            raise NotImplementedError(
-                f"{frequency} frequency not implemented yet.")
         elif frequency == "yearly":
             self._read_yearly_files()
         elif frequency == "unregular":
+            self._read_unregular_files()
+        elif frequency in ["monthly", "weekly"]:
+            self.logger.warning(
+                "Using 'unregular' frequency, weekly and monthly are not yet "
+                "implemented seperately.")
             self._read_unregular_files()
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
@@ -218,7 +221,8 @@ class PressureHandler():
             dataloggerFileList.sort()
             # get all files of one day and concat them:
             for file in dataloggerFileList:
-                # print(f"Read in file {file}")
+                self.logger.debug(f"Read in file {file}")
+                print(self.cols_to_use, self.dataframe_parameters["csv_kwargs"])
                 temp = pd.read_csv(
                     file,
                     usecols=self.cols_to_use,
@@ -327,10 +331,6 @@ class PressureHandler():
         dt_key = df_args["datetime_key"]
         dt_fmt = df_args["datetime_fmt"]
 
-        if time_key != "" and dt_key != "":
-            raise RuntimeError(
-                "time_key and datetime_key can not be given at the same time")
-
         if dt_key == "":
             # no datetime column available, check for date column:
             if date_key == "":
@@ -390,3 +390,88 @@ class PressureHandler():
                     params["ending"]]
             )
         return filename
+
+    def _set_defaults(self, option):
+        """Set defaults in dataframe, filename and data parameters dict.
+        Check for mandatory options.
+
+        Parameters:
+            option (str): "dataframe_parameters", "filename_parameters"
+                or "data_parameters"
+
+        Return:
+            modified dict
+        """
+        defaults = {}
+        defaults["data_parameters"] = {
+            "max_pressure": 1500,
+            "min_pressure": 500,
+            "default_value": "skip"
+        }
+        defaults["dataframe_parameters"] = {
+            "pressure_key": "",
+            "time_key": "",
+            "time_fmt": "",
+            "date_key": "",
+            "date_fmt": "",
+            "datetime_key": "",
+            "datetime_fmt": "",
+            "csv_kwargs": {},
+        }
+        defaults["filename_parameters"] = {
+            "basename": "",
+            "time_format": "",
+            "ending": ""
+        }
+
+        d = self.__dict__[option]
+        if option not in defaults.keys():
+            return d
+        for k, v in defaults[option].items():
+            if d.get(k) is None:
+                d[k] = v
+                self.logger.debug(
+                    f"The pressure parameter {option}:{k} was set to "
+                    f"default value: {v}.")
+        return d
+
+    def _check_mandatory(self):
+        """Check in mandatory options if
+            - pressure key is given,
+            - time key XOR datetime key is given and
+            - filename is not empty.
+        raise Error if not fullfilled.
+        """
+        # pressure key are given
+        pressure_key = self.dataframe_parameters.get("pressure_key")
+        if pressure_key == "":
+            raise RuntimeError(
+                "The key of the pressure column in the pressure file must be "
+                "given as dataframe_parameters: pressure_key")
+
+        # time or datetime key
+        time_key = self.dataframe_parameters.get("time_key")
+        datetime_key = self.dataframe_parameters.get("datetime_key")
+        general_instruction = (
+            " Give either the time_key or the datetime_key in "
+            "dataframe_parameters!")
+        if (time_key == "") and (datetime_key == ""):
+            raise RuntimeError(
+                "None of time_key and datetime_key are given!"
+                + general_instruction)
+        elif (time_key != "") and (datetime_key != ""):
+            raise RuntimeError(
+                "time_key and datetime_key can not be given at the same time!"
+                + general_instruction)
+
+        # filename not empty
+        joined_filename = "".join([
+            self.filename_parameters["basename"],
+            self.filename_parameters["time_format"],
+            self.filename_parameters["ending"]
+        ])
+        if joined_filename == "":
+            raise RuntimeError(
+                "No filename is given! Give the start, time format (optional) "
+                "and ending of your filename as filename_parameters: "
+                "basename, time_format and ending.")
