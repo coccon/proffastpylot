@@ -1008,3 +1008,16 @@ class Preparation():
         localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
         localtime_offset = localtime_utc_offset - self.utc_offset
         return localtime_offset
+
+    def _comb_invparms_file(self):
+        """Return the complete path to the combined invparms file."""
+        dt_format = "%y%m%d"
+        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
+            self.site_name,
+            self.instrument_number,
+            self.dates[0].strftime(dt_format),
+            self.dates[-1].strftime(dt_format)
+        )
+        combined_file = os.path.join(
+            self.result_folder, resultfile)
+        return combined_file

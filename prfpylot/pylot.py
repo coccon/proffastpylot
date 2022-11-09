@@ -319,19 +319,6 @@ class Pylot(FileMover):
             "The combined results of PROFFAST were written "
             f"to {combined_file}.")
 
-    def _comb_invparms_file(self):
-        """Return the complete path to the combined invparms file."""
-        dt_format = "%y%m%d"
-        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
-            self.site_name,
-            self.instrument_number,
-            self.dates[0].strftime(dt_format),
-            self.dates[-1].strftime(dt_format)
-        )
-        combined_file = os.path.join(
-            self.result_folder, resultfile)
-        return combined_file
-
     def clean_files(self):
         """After execution clean up the files not needed anymore"""
         self.logger.info("Removing temporary files ...")
@@ -454,19 +441,34 @@ class Pylot(FileMover):
         df = df.rename(columns=rename)
 
         sel_cols = [
-            "UTC", "LocalTime", "spectrum",
-            "JulianDate", "UTtimeh",
-            "gndP", "gndT",
-            "latdeg", "londeg", "altim",
-            "appSZA", "azimuth",
-            "XH2O", "XAIR",
-            "XCO2", "XCH4",
-            "XCO", "XCH4_S5P",
-            "H2O", "O2",
-            "CO2", "CH4",
-            "CO", "CH4_S5P",
-            "H2O_rms", "CO2_rms",
-            "CH4_rms", "CO_rms",
+            "UTC",
+            "LocalTime",
+            "spectrum",
+            "JulianDate",
+            "UTtimeh",
+            "gndP",
+            "gndT",
+            "latdeg",
+            "londeg",
+            "altim",
+            "appSZA",
+            "azimuth",
+            "XH2O",
+            "XAIR",
+            "XCO2",
+            "XCH4",
+            "XCO",
+            "XCH4_S5P",
+            "H2O",
+            "O2",
+            "CO2",
+            "CH4",
+            "CO",
+            "CH4_S5P",
+            "H2O_rms",
+            "CO2_rms",
+            "CH4_rms",
+            "CO_rms",
         ]
 
         df = df[sel_cols]

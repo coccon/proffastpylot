@@ -19,7 +19,7 @@ class GeomsGenHelper(Preparation):
         with open(geomsgen_inputfile, "r") as f:
             self.input_args = yaml.load(f, Loader=yaml.FullLoader)
         self.input_file = geomsgen_inputfile
-        
+
         # Path of output files:
         self.geoms_out_filename = "_".join(
             [self.site_name, self.instrument_number, 'GEOMS_OUT.h5'])
@@ -38,7 +38,7 @@ class GeomsGenHelper(Preparation):
         # Strip the whitespaces from the column names:
         newCols = {}
         for key in df.keys():
-            newCols[key]= key.strip()
+            newCols[key] = key.strip()
         df.rename(columns=newCols, inplace=True)
         # Get the factors of the correct instrument
         df = df.loc[df["Instrument"] == self.instrument_number]

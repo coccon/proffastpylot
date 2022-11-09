@@ -145,7 +145,6 @@ class GeomsGenWriter(GeomsGenHelper):
         # at least 11 (or 12 ???) remaining measurements per measurement day 
         # are required to generate an HDF5 file.
 
-        # print(df, type(df))
         if df is None:
             print('HDF file generation stopped while reading invparms file!')
             return
