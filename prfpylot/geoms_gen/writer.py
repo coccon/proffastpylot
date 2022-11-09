@@ -9,7 +9,7 @@ from prfpylot.geoms_gen.helper import GeomsGenHelper
 
 
 class GeomsGenWriter(GeomsGenHelper):
-    def __init__(self, geomsgen_inputfile):
+    def __init__(self, geomsgen_inputfile, prfpylot_inputfile):
 
         """
         This init can probably be omitted completly once it gets a part
@@ -19,7 +19,7 @@ class GeomsGenWriter(GeomsGenHelper):
       # Call the init method of the `Preparation` class.
       # This provides some usefull data within this class.
 
-        super(GeomsGenWriter, self).__init__(geomsgen_inputfile)
+        super(GeomsGenWriter, self).__init__(geomsgen_inputfile, prfpylot_inputfile)
 
       # List of all variables for the GEOMS compliant HDF5 files.
       # For further information, see document "geoms-1.0.pdf":
@@ -326,187 +326,112 @@ class GeomsGenWriter(GeomsGenHelper):
             print ("Error: Reading pT file!")
             print (self._get_pt_vmr_file(day, "pT"))
             return None
-      # else:
-      #     print ("Failure: Reading PT file!")
-      #     print (self._get_pt_vmr_file(day, "pT"))
-      #     return None
-
+        # else:
+        #     print ("Failure: Reading PT file!")
+        #     print (self._get_pt_vmr_file(day, "pT"))
+        #     return None
 
     def get_invparms_content(self, day):
 
-       # The results of the PROFFAST evaluation are provided in the invparms output file.
-       # Each invparms file contains among others the date and time, the pressure and temperature,
-       # the coordinates of the EM27/SUN instrument, the solar zenith and azimuth angles,
-       # and the trace gas concentrations for CO2, H2O, CH4, and CO.
-       # "DateTime": 0, "JulianDate": 0, "HHMMSS_ID": 1, 
-       # 3: "gndP", 4: "gndT", 5: "latdeg", 6: "londeg", 7: "altim", 8: "appSZA", 9: "azimuth", 
-       # 10: "XH2O", 12: "XAIR", 14: "XCO2", 17: "XCH4", 20: "XCH4_S5P", 21: "XCO", 
-       # 25: "H2O", 40: "O2", 67: "CO2", 97: "CH4", 127: "CO", 125: "CH4_S5P",
-       # 23: "job01_rms", 63: "job03_rms", 90: "job04_rms", 119: "job05_rms"
+        # !! The following is outdated !!
+        # The results of the PROFFAST evaluation are provided in the invparms output file.
+        # Each invparms file contains among others the date and time, the pressure and temperature,
+        # the coordinates of the EM27/SUN instrument, the solar zenith and azimuth angles,
+        # and the trace gas concentrations for CO2, H2O, CH4, and CO.
+        # "DateTime": 0, "JulianDate": 0, "HHMMSS_ID": 1, 
+        # 3: "gndP", 4: "gndT", 5: "latdeg", 6: "londeg", 7: "altim", 8: "appSZA", 9: "azimuth", 
+        # 10: "XH2O", 12: "XAIR", 14: "XCO2", 17: "XCH4", 20: "XCH4_S5P", 21: "XCO", 
+        # 25: "H2O", 40: "O2", 67: "CO2", 97: "CH4", 127: "CO", 125: "CH4_S5P",
+        # 23: "job01_rms", 63: "job03_rms", 90: "job04_rms", 119: "job05_rms"
 
-        lines = []
-        CO_avg = 0.0
-        CO_lnr = 0.0
+        # Get path and name of the invparms file for the corresponding day.
 
-      # Get path and name of the invparms file for the corresponding day.
+        invparms_file = self._comb_invparms_file()
 
-        path = self._find_colsens_invparms_file(day, "invparms") # which: "colsens", "invparms"
+        cols = [
+            "JulianDate",
+            "gndP",
+            "gndT",
+            "latdeg",
+            "londeg",
+            "altim",
+            "appSZA",
+            "azimuth",
+            "XH2O",
+            "XAIR",
+            "XCO2",
+            "XCH4",
+            "XCH4_S5P",
+            "XCO",
+            "H2O",
+            "O2",
+            "CO2",
+            "CH4",
+            "CO",
+            "CH4_S5P",
+            "H2O_rms",
+            "CO2_rms",
+            "CH4_rms",
+            "CO_rms",
+        ]
 
-      # Check if the second CO channel exists.
+        df = pd.read_csv(
+            invparms_file, delimiter=",", skipinitialspace=True, 
+            )
+        df = df[cols]
 
-        try:
-            with open(path,'r') as file:
-                header = file.readline().split('\t') # skip header line
-                for line in file:
-                    line = re.sub(' +', ' ', line)
-                    line = line.split(' ')
-                  # line = line.split('\t')
-                    if line[21] == 'NaN': continue # incomplete line
-                    CO_avg += float(line[21])
-                    CO_lnr += 1.0
+        print(df)
+        print(df.keys())
+        print(df["XCO"])
 
-                CO_avg = CO_avg / CO_lnr
+        # Check if the second CO channel exists.
+        CO_avg = df["XCO"].mean()
+        if CO_avg == 0.:
+            df["XCO"] = [-900000.]*len(df)
 
-                file.close
-        except:
-            print ("Error: Open invparms file! (1)")
-            print (path)
-            return None
-      # else:
-      #     print ("Failure: Open invparms file! (1)")
-      #     print (path)
-      #     return None
+        # quality checks
+        quality_check_passed = True
+        for index, row in df.iterrows():
+            if row["appSZA"] > self.input_args["QUALITY_FILTER_SZA"]:
+                quality_check_passed = False
+            if row["XAIR"] < self.input_args["QUALITY_FILTER_XAIR_MIN"]:
+                quality_check_passed = False
+            if row["XAIR"] > self.input_args["QUALITY_FILTER_XAIR_MAX"]:
+                quality_check_passed = False
 
-      # Apply several quality checks on the data set (e.g. XAIR, SZA, XCO, etc.).
+            for col in ["XH2O", "XCO2", "XCH4", "XCO"]:
+                if row[col] in [np.nan, 0.]:
+                    quality_check_passed = False
 
-        try:
-            with open(path,'r') as file:
-                header = file.readline() # read header line
-                header = re.sub(' +', ' ', header)
-                header = header.split(' ')
+            # remove row from df
+            if quality_check_passed is False:
+                df.drop(index=index)
 
-                for line in file:
-                    line = re.sub(' +', ' ', line)
-                    line = line.split(' ')
-
-                    if float(line[8])  > self.input_args['QUALITY_FILTER_SZA']:      continue # data filter for SZA greater than 75 deg
-                    if float(line[12]) < self.input_args['QUALITY_FILTER_XAIR_MIN']: continue # data filter for XAIR smaller than 0.98
-                    if float(line[12]) > self.input_args['QUALITY_FILTER_XAIR_MAX']: continue # data filter for XAIR greater than 1.02
-
-                    if line[10] == 'NaN': continue # incomplete line XH2O
-                    if line[14] == 'NaN': continue # incomplete line XCO2
-                    if line[17] == 'NaN': continue # incomplete line XCH4
-                    if line[21] == 'NaN': continue # incomplete line XCO
-
-                    if float(line[10]) == 0.0: continue # data filter for XH2O equal zero
-                    if float(line[14]) == 0.0: continue # data filter for XCO2 equal zero
-                    if float(line[17]) == 0.0: continue # data filter for XCH4 equal zero
-                  # if float(line[21]) == 0.0: continue # data filter for XCO equal zero (instrument with second channel)
-                    if (CO_avg >  0.0) and (float(line[21]) == 0.0): continue               # data filter for XCO equal zero (instrument with second channel)
-                    if (CO_avg == 0.0) and (float(line[21]) == 0.0): line[21] = '-900000.0' # data filter for XCO equal zero (instrument without second channel, fill value -900000.0)
-
-                    lines.append(line)
-
-                file.close
-        except:
-            print ("Error: Open invparms file! (2)")
-            print (path)
-            return None
-      # else:
-      #     print ("Failure: Open invparms file! (2)")
-      #     print (path)
-      #     return None
-
-      # Extract the required information from the data set
-      # and apply the correction factors
-
-        head000 = [] # "JulianDate"
-        head003 = [] # "gndP"
-        head004 = [] # "gndT"
-        head005 = [] # "latdeg"
-        head006 = [] # "londeg"
-        head007 = [] # "altim"
-        head008 = [] # "appSZA"
-        head009 = [] # "azimuth"
-        head010 = [] # "XH2O"
-        head012 = [] # "XAIR"
-        head014 = [] # "XCO2"
-        head017 = [] # "XCH4"
-        head020 = [] # "XCH4_S5P"
-        head021 = [] # "XCO"
-        head025 = [] # "H2O"
-        head040 = [] # "O2"
-        head067 = [] # "CO2"
-        head097 = [] # "CH4"
-        head127 = [] # "CO"
-        head125 = [] # "CH4_S5P"
-        head023 = [] # "job01_rms"
-        head063 = [] # "job03_rms"
-        head090 = [] # "job04_rms"
-        head119 = [] # "job05_rms"
-
-      # Get the correction factors for XCO2, XCH4 (as well as XAIR, XH2O, XCO, if available).
-
+        # apply correction factors
         corr_fac = self._get_correction_factors()
+        df["XCO2"] *= corr_fac["XCO2_cal"]
+        df["XCH4"] *= corr_fac["XCH4_cal"]
+        df["altim"] /= 1000.
 
-        for i in range(len(lines)):
-            head000.append(np.float64(lines[i][0]))   # "JulianDate"
-            head003.append(np.float64(lines[i][3]))   # "gndP"
-            head004.append(np.float64(lines[i][4]))   # "gndT"
-            head005.append(np.float64(lines[i][5]))   # "latdeg"
-            head006.append(np.float64(lines[i][6]))   # "londeg"
-            head007.append(np.float64(lines[i][7]) / 1000.0)   # "altim"
-            head008.append(np.float64(lines[i][8]))   # "appSZA"
-            head009.append(np.float64(lines[i][9]))   # "azimuth"
-            head010.append(np.float64(lines[i][10]))  # "XH2O"
-            head012.append(np.float64(lines[i][12]))  # "XAIR"
-          # head014.append(np.float64(lines[i][14]))  # "XCO2"
-          # head017.append(np.float64(lines[i][17]))  # "XCH4"
-            head014.append(np.float64(lines[i][14]) * corr_fac['XCO2_cal']) # "XCO2"
-            head017.append(np.float64(lines[i][17]) * corr_fac['XCH4_cal']) # "XCH4"
-            head020.append(np.float64(lines[i][20]))  # "XCH4_S5P"
-            head021.append(np.float64(lines[i][21]))  # "XCO"
-            head025.append(np.float64(lines[i][25]))  # "H2O"
-            head040.append(np.float64(lines[i][40]))  # "O2"
-            head067.append(np.float64(lines[i][67]))  # "CO2"
-            head097.append(np.float64(lines[i][97]))  # "CH4"
-            head127.append(np.float64(lines[i][127])) # "CO"
-            head125.append(np.float64(lines[i][125])) # "CH4_S5P"
-            head023.append(np.float64(lines[i][23]))  # "job01_rms"
-            head063.append(np.float64(lines[i][63]))  # "job03_rms"
-            head090.append(np.float64(lines[i][90]))  # "job04_rms"
-            head119.append(np.float64(lines[i][119])) # "job05_rms"
+        # write fill value to values out of bounds
+        df["XH2O"].mask(df["XH2O"] <= 0., inplace=True)
+        df["XH2O"].mask(df["XH2O"] >= 10000., inplace=True)
+        df["XCO2"].mask(df["XCO2"] <= 0., inplace=True)
+        df["XCO2"].mask(df["XCO2"] >= 10000., inplace=True)
+        df["XCH4"].mask(df["XCH4"] <= 0., inplace=True)
+        df["XCH4"].mask(df["XCH4"] >= 10., inplace=True)
+        df["XCO"].mask(df["XCO"] <= 0., inplace=True)
+        df["XCO"].mask(df["XCO"] >= 10000., inplace=True)
 
-        if head010[i] <= 0.0 or head010[i] >= 10000.0: head010[i] = -900000.0 # "XH2O"
-      # if head012[i] <= 0.0 or head012[i] >= 2.0:     head012[i] = -900000.0 # "XAIR"
-        if head014[i] <= 0.0 or head014[i] >= 10000.0: head014[i] = -900000.0 # "XCO2"
-        if head017[i] <= 0.0 or head017[i] >= 10.0:    head017[i] = -900000.0 # "XCH4"
-      # if head020[i] <= 0.0 or head020[i] >= 10.0:    head020[i] = -900000.0 # "XCH4_S5P"
-        if head021[i] <= 0.0 or head021[i] >= 10000.0: head021[i] = -900000.0 # "XCO"
+        fill_value = -900000.
+        df.replace(np.nan, fill_value, inplace=True)
 
-        data = { header[0]:   head000, header[3]:   head003, header[4]:   head004, \
-                 header[5]:   head005, header[6]:   head006, header[7]:   head007, \
-                 header[8]:   head008, header[9]:   head009, header[10]:  head010, \
-                 header[12]:  head012, header[14]:  head014, header[17]:  head017, \
-                 header[20]:  head020, header[21]:  head021, header[25]:  head025, \
-                 header[40]:  head040, header[67]:  head067, header[97]:  head097, \
-                 header[127]: head127, header[125]: head125, header[23]:  head023, \
-                 header[63]:  head063, header[90]:  head090, header[119]: head119, \
-               }
-
-        df = pd.DataFrame(data)
-
-      # At least 11 (or 12 ???) remaining measurements per measurement day are required
-      # to calculate the uncertainty using the moving average.
-
-        if (len(lines) < 11): # 11 or 12 ???
-            print ('Data filter applied... ', 'file_len: ', len(lines), ' < 11 !!!')
-            print (path)
-            return None # test file lenght
+        # return none if less than 11 lines
+        if len(df) < 11:
+            raise RuntimeError("Less than 11 valid measurement points!")
         else:
-            print ('Data filter applied... ', 'file_len: ', len(lines))
+            self.logger.debug('Data filter applied... ', 'file_len: ', len(df))
             return df
-
 
     def get_colsens_sza(self, day):
 
@@ -523,7 +448,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
       # Get path and name for the column sensitivity file of a certain day.
 
-        path = self._find_colsens_invparms_file(day, "colsens") # which: "colsens", "invparms"
+        day_str = day.strftime("%y%m%d")
+        colsens_filename = f"{self.site_name}{day_str}-colsens.dat"
+        path = os.path.join(self.result_folder, colsens_filename)
 
       # Read pressure and sensitivities as function of the altitude and SZA.
 

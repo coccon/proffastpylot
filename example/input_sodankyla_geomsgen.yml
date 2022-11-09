@@ -1,7 +1,7 @@
-calibration_params_list: D:\proffastpylot\GeomsGenerationDev\Calibration_Parameters.csv
+calibration_params_list: /home/lena/Projects/proffastpylot/prfpylot/geoms_gen/calibration_parameters.csv
 
 # output of the GEOMS-files:
-geoms_out_path: D:\proffastpylot\GeomsGenerationDev\geoms_out
+geoms_out_path: geomsgen_results
 
 
 

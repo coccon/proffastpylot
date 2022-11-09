@@ -125,10 +125,10 @@ class GeomsGenHelper(Preparation):
             return ""
         target_folder = self._find_correct_folder(day)
         filename = f"{self.site_name}{day.strftime('%y%m%d')}"+\
-                   f"-{which}.dat"
+                   f"-{which}_a.dat"
         return os.path.join(target_folder, filename)
 
-
+    # why can self.result_folder not be used here instead?
     def _find_correct_folder(self, day):
         """
         Returns the path to the folder providing the data of the day
@@ -136,26 +136,34 @@ class GeomsGenHelper(Preparation):
             day (dt.datetime): the day the data is requested 
         """
         # parse the result folders to find the correct time span
-        searchstrg = f"{self.site_name}_{self.instrument_number}_*"
-        folder_list = glob.glob(
-            os.path.join(self.result_path, searchstrg))
-        folder_list.sort()
-        target_folder = ""        
-        for folder in folder_list:
-            if "_backup" in folder:
-                continue
-            startdate = dt.datetime.strptime(folder.split("_")[-2], "%Y%m%d")
-            enddate = dt.datetime.strptime(folder.split("_")[-1]+"T23:59",
-                                           "%Y%m%dT%H:%M")
-            if day < startdate:
-                continue
-            if day > enddate:
-                continue
-            if day >= startdate and day <= enddate:
-                target_folder = folder
-                break
-        return target_folder
-        
+        # searchstrg = f"{self.site_name}_{self.instrument_number}_*"
+        # folder_list = glob.glob(
+        #     os.path.join(self.result_path, searchstrg))
+        # folder_list.sort()
+        # target_folder = ""        
+        # for folder in folder_list:
+        #     if "_backup" in folder:
+        #         continue
+        #     folder_elements = folder.split("_")
+        #     processing_time = folder_elements[-1].split("-")
+
+        #     startdate = dt.datetime.strptime(
+        #         processing_time[0], "%y%m%d")
+        #     enddate = dt.datetime.strptime(
+        #         processing_time[1]+"T23:59",
+        #         "%y%m%dT%H:%M")
+
+        #     if day < startdate:
+        #         continue
+        #     if day > enddate:
+        #         continue
+        #     if day >= startdate and day <= enddate:
+        #         target_folder = folder
+        #         break
+
+        # print("target folder", target_folder)
+        # print("result folder", self.result_folder)
+        return self.result_folder
 
     def _get_pt_vmr_file(self, day, which):
         """
