@@ -300,7 +300,7 @@ class Pylot(FileMover):
             "%.5e",  # CO2
             "%.5e",  # CH4
             "%.5e",  # CO
-            "%.5e"  # CH4_S5P
+            "%.5e",  # CH4_S5P
             "%.5e",  # H2O_rms
             "%.5e",  # CO2_rms
             "%.5e",  # CH4_rms
