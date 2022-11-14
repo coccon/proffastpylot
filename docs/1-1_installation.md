@@ -9,6 +9,8 @@
 3. Create a virtual environment in python
 4. Install PROFFASTpylot
 5. Resulting folder structure
+6. Getting Updates
+7. Contribution Notes
 
 
 
@@ -58,7 +60,7 @@ Copy the `prf` folder that was extracted from the zip file into `proffastpylot`.
 We recommend using a virtual environment (venv) to avoid conflicts between any other packages or Python modules.
 
 1. (Only first time) Navigate to the `proffastpylot` folder using a terminal.
-2. (Only first time) Enter `python -m venv prf_venv`
+2. (Only first time) Enter `python -m venv prf_venv
    This command will create a folder named `prf_venv` which contains the virtual environment
 3. Activate the virtual environment with
    - *Windows PowerShell:* `.\prf_venv\Scripts\Activate.ps1`
@@ -109,3 +111,17 @@ proffastpylot
 │   ├── ...
 └── setup.py
 ```
+
+## 6. Getting Updates
+
+If you used git during installation, you can easily get updates by entering
+
+```
+git pull
+```
+in a `git bash` or in a Terminal in your `proffastpylot` folder. This command will download all available updates.
+If you downloaded PROFFASTpylot as zip file, you need to redo all steps of this installation script.
+
+## 7. Contribution Notes
+
+If you want to share a contribution to PROFFASTpylot please check our `dev` branch first (by `git checkout dev`) if your change still fits to the latest developments. Afterwards you are welcome to create a merge request or contact us via email about your suggestion.
