@@ -265,6 +265,7 @@ class Pylot(FileMover):
         """Combine the generated result files and save as csv."""
         self.logger.debug("Moving results to final output folder ...")
         self.move_results()
+        self.copy_pT_VMR_files()
 
         df = self._get_merged_df()
         df = self._add_timezones_to(df)
@@ -327,18 +328,15 @@ class Pylot(FileMover):
         if self.delete_abscosbin_files:
             self.logger.debug("Deleting abscos.bin files ...")
             self.delete_abscos_files()
-            self.logger.debug("Deleting pT and VMR files...")
+            self.logger.debug("Deleting VMR and pT files ...")
             self.delete_pT_VMR_files()
+
         else:
             self.logger.info(
                 "Keeping abscos.bin files ...\n"
                 "They are located in "
                 f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
             self.check_abscosbin_summed_size()
-            self.logger.info(
-                "Keeping pT and VMR files...\n"
-                "They are located in "
-                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
 
         # handling input files
         if self.delete_input_files:
@@ -436,7 +434,7 @@ class Pylot(FileMover):
             'job01_rms': 'H2O_rms',
             'job03_rms': 'CO2_rms',
             'job04_rms': 'CH4_rms',
-            'job05_rms': 'CO_rms' 
+            'job05_rms': 'CO_rms'
         }
         df = df.rename(columns=rename)
 

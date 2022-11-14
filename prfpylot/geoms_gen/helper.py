@@ -108,7 +108,7 @@ class GeomsGenHelper(Preparation):
 
     def _find_csv_file(self, day):
         """
-        Returns the csv file containing the correct data for the 
+        Returns the csv file containing the correct data for the
         requested day
         Params:
             day (dt.datetime) The day the data is requested
@@ -141,14 +141,14 @@ class GeomsGenHelper(Preparation):
         """
         Returns the path to the folder providing the data of the day
         Params:
-            day (dt.datetime): the day the data is requested 
+            day (dt.datetime): the day the data is requested
         """
         # parse the result folders to find the correct time span
         # searchstrg = f"{self.site_name}_{self.instrument_number}_*"
         # folder_list = glob.glob(
         #     os.path.join(self.result_path, searchstrg))
         # folder_list.sort()
-        # target_folder = ""        
+        # target_folder = ""
         # for folder in folder_list:
         #     if "_backup" in folder:
         #         continue
@@ -182,8 +182,8 @@ class GeomsGenHelper(Preparation):
 
         datestr = day.strftime("%y%m%d")
         file = os.path.join(
-            self.analysis_instrument_path, datestr,
-            "pT", f"{which}_fast_out.dat")
+            self.result_folder, "pT-VMR-files",
+            f"{self.site_name}{datestr}-{which}_fast_out.dat")
         return file
 
     def _GEOMStoDateTime(self, times):

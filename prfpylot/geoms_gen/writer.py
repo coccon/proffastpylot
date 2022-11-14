@@ -141,14 +141,14 @@ class GeomsGenWriter(GeomsGenHelper):
 
         # Get data from the PROFFAST inparms output files
 
-        # df = self.get_data_content(day)     
+        # df = self.get_data_content(day)
         # PROFFAST output (df pandas data frame)
         self.create_invparms_content(day)  # invparms file
         df = self.df
 
-        # After applying the quality filter for SZA and XAIR 
+        # After applying the quality filter for SZA and XAIR
         # (see get_invparms_content),
-        # at least 11 (or 12 ???) remaining measurements per measurement day 
+        # at least 11 (or 12 ???) remaining measurements per measurement day
         # are required to generate an HDF5 file.
 
         if df is None:
@@ -156,12 +156,12 @@ class GeomsGenWriter(GeomsGenHelper):
                 'HDF file generation stopped while reading invparms file!')
             return
 
-        # Get additional information from the colsens, pT_fast_out, and 
+        # Get additional information from the colsens, pT_fast_out, and
         # VMR_fast_out PROFFAST output files.
 
         vmr = self.get_vmr_content(day)      # VMR file
         ptf = self.get_pt_content(day)       # pT file
-        sen = self.get_colsens_int(df, day)  # col sens file (including a 
+        sen = self.get_colsens_int(df, day)  # col sens file (including a
         # sza interpolation)
 
         if (vmr is None) or (ptf is None) or (sen is None):
@@ -264,7 +264,7 @@ class GeomsGenWriter(GeomsGenHelper):
         # Remove existing file and rename preliminary file name.
 
         if os.path.exists(geoms_file_name):
-            os.remove(geoms_file_name) 
+            os.remove(geoms_file_name)
             # delete file in case the file already exits
         os.rename(geoms_file, geoms_file_name)
         self.geomsgen_logger.info(
@@ -272,7 +272,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
     def get_start_stop_date_time(self, day, df):
 
-        # Get date and time of the first and last measurement of the 
+        # Get date and time of the first and last measurement of the
         # measurement day.
 
         data = df["JulianDate"]
@@ -312,7 +312,7 @@ class GeomsGenWriter(GeomsGenHelper):
         starttime = day.replace(hour=0, minute=0, second=0)
         endtime = day.replace(hour=23, minute=59, second=59)
         datetime_mask = (df["UTC"] > starttime) & (df["UTC"] < endtime)
-        # datetime_mask = (df["LocalTime"] > starttime) & 
+        # datetime_mask = (df["LocalTime"] > starttime) &
         # (df["LocalTime"]< endtime)
 
         df = df.loc[datetime_mask]
@@ -389,7 +389,7 @@ class GeomsGenWriter(GeomsGenHelper):
         ptf = pd.read_csv(
             self._get_pt_vmr_file(day, "pT"),
             header=0, skipinitialspace=True,
-            usecols=[0, 1, 2, 3, 4, 5, 6], 
+            usecols=[0, 1, 2, 3, 4, 5, 6],
             names=['Index', 'Altitude', 'Tem', 'Pre', 'DAC', 'H2O', 'HDO'],
             sep=' ', engine='python')
 
@@ -406,7 +406,7 @@ class GeomsGenWriter(GeomsGenHelper):
         # the coordinates of the EM27/SUN instrument, the solar zenith and
         # azimuth angles,
         # and the trace gas concentrations for CO2, H2O, CH4, and CO.
-        # "DateTime": 0, "JulianDate": 0, "HHMMSS_ID": 1, 
+        # "DateTime": 0, "JulianDate": 0, "HHMMSS_ID": 1,
         # 3: "gndP", 4: "gndT", 5: "latdeg", 6: "londeg", 7: "altim",
         # 8: "appSZA", 9: "azimuth",
         # 10: "XH2O", 12: "XAIR", 14: "XCO2", 17: "XCH4",
@@ -459,9 +459,9 @@ class GeomsGenWriter(GeomsGenHelper):
                         sza[i] = sza[i].astype(float)  # string to float
 
                 for j in range(49):  # number of altitude levels
-                    line = file.readline()[1:-1]   # skip first empty 
+                    line = file.readline()[1:-1]   # skip first empty
                     # space and carriage return character at the end
-                    line = re.sub(' +', ',', line)  # replace empty spaces 
+                    line = re.sub(' +', ',', line)  # replace empty spaces
                     # by a comma
                     line = line.split(',')         # split line into columns
 
@@ -469,7 +469,7 @@ class GeomsGenWriter(GeomsGenHelper):
                     pre[i].append(line[1])         # pressure (second column)
 
                     sen[i].append([])
-                    for k in range(2, len(line)):   # SZA (third column 
+                    for k in range(2, len(line)):   # SZA (third column
                         # upwards, total 15 columns)
                         sen[i][j].append(float(line[k]))
 
@@ -502,7 +502,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
             gas_sens.append([])
 
-            for i in range(len(appSZA)): 
+            for i in range(len(appSZA)):
                 # number of measurements
 
                 gas_sens[k].append([])
@@ -897,7 +897,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-    def write_instr_altitude(self, df, cont): 
+    def write_instr_altitude(self, df, cont):
         # "INST_ALT": "ALTITUDE.INSTRUMENT"
 
         # Write the instrument's altitude to the HDF5 file
@@ -934,9 +934,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
- 
+
         data = df["gndP"].to_numpy()
- 
+
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME"
         self.hdf5_atts["VAR_DESCRIPTION"] = \
@@ -952,7 +952,7 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["_FillValue"] = -900000.0
         self.hdf5_atts["units"] = "hPa"
         self.hdf5_atts["valid_range"] = [np.amin(data), np.amax(data)]
- 
+
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
     def write_surface_pressure_src(self, df, cont):
@@ -963,11 +963,11 @@ class GeomsGenWriter(GeomsGenHelper):
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
- 
+
         data = df["londeg"].to_numpy()
         data_size = data.size
         data_src = [f"{self.input_args['PRESSURE_SOURCE']}"] * data_size
- 
+
         self.hdf5_atts_src["VAR_DATA_TYPE"] = "STRING"
         self.hdf5_atts_src["VAR_DEPEND"] = "DATETIME"
         self.hdf5_atts_src["VAR_DESCRIPTION"] = \
@@ -975,7 +975,7 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts_src["VAR_NAME"] = dataset_name
         # self.hdf5_atts_src["VAR_NOTES"] = ""
         self.hdf5_atts_src["VAR_SIZE"] = str(np.size(data))
- 
+
         self.SRC_dtst = self._write_dataset_src(
             data_src, dataset_name, self.hdf5_atts_src)
 
@@ -1298,7 +1298,7 @@ class GeomsGenWriter(GeomsGenHelper):
             elif cont == "CH4_SRC":
                 # "CH4_SRC": "CH4.MIXING.RATIO.VOLUME.DRY_APRIORI.SOURCE"
                 data_src.append("Map file GFIT Code")
-            elif cont == "CO_SRC": 
+            elif cont == "CO_SRC":
                 # "CO_SRC":  "CO.MIXING.RATIO.VOLUME.DRY_APRIORI.SOURCE"
                 data_src.append("Map file GFIT Code")
 
@@ -1402,7 +1402,7 @@ class GeomsGenWriter(GeomsGenHelper):
             for j in range(ptf['Altitude'].shape[0]):
                 if j < len(ptf['Altitude'])-1:
 
-                    h1 = float(ptf['Altitude'][j])  
+                    h1 = float(ptf['Altitude'][j])
                     # * 1000.0 for conversion km to m
                     h2 = float(ptf['Altitude'][j+1])
                     # * 1000.0 for conversion km to m

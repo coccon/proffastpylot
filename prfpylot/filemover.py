@@ -168,7 +168,9 @@ class FileMover(Preparation):
                 f"{self.site_name}{date.strftime('%y%m%d')}-VMR_fast_out.dat"
             for file in [pTFile, VMRFile]:
                 try:
-                    os.remove(os.path.join(wrk_fast_folder, file))
+                    pathfile = os.path.join(wrk_fast_folder, file)
+                    self.logger.debug(f"Delete {pathfile}")
+                    os.remove(pathfile)
                 except FileNotFoundError:
                     self.logger.error(
                         "File not Found: "
@@ -185,6 +187,29 @@ class FileMover(Preparation):
                 self.logger.error(
                     "File not Found: "
                     f"Could not delete {filename}")
+
+    def copy_pT_VMR_files(self):
+        """Move the pT and VMR files to the result folder"""
+        target_folder = os.path.join(self.result_folder, "pT-VMR-files")
+        wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
+        os.makedirs(target_folder)
+        self.logger.debug("Copy pT and VMR files")
+        for date in self.dates:
+            pTFile =\
+                f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
+            VMRFile =\
+                f"{self.site_name}{date.strftime('%y%m%d')}-VMR_fast_out.dat"
+
+            for file in [pTFile, VMRFile]:
+                try:
+                    shutil.copy(
+                        os.path.join(wrk_fast_folder, file),
+                        os.path.join(target_folder, file)
+                    )
+                except FileNotFoundError:
+                    self.logger.error(
+                        "File not Found: "
+                        f"Could not copy {file}")
 
     def check_abscosbin_summed_size(self):
         """Get size of all abscos.bin files. Give warning if too large."""
