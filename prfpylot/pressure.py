@@ -103,6 +103,10 @@ class PressureHandler():
             if val != "":
                 self.cols_to_use.append(val)
 
+        # to ensure the date-columns are read in as string format
+        self.dataframe_parameters["csv_kwargs"] = \
+            self._append_dtype_to_csv_kwargs()
+
         # It can happen, that the pressure files are generated using local
         # days, however, the timestamp inside them is in utc.
         # This can lead to situtations, where pressure data of the first or the
@@ -222,7 +226,6 @@ class PressureHandler():
             # get all files of one day and concat them:
             for file in dataloggerFileList:
                 self.logger.debug(f"Read in file {file}")
-                print(self.cols_to_use, self.dataframe_parameters["csv_kwargs"])
                 temp = pd.read_csv(
                     file,
                     usecols=self.cols_to_use,
@@ -475,3 +478,17 @@ class PressureHandler():
                 "No filename is given! Give the start, time format (optional) "
                 "and ending of your filename as filename_parameters: "
                 "basename, time_format and ending.")
+
+    def _append_dtype_to_csv_kwargs(self):
+        """Return extended csv_kwargs to make sure the date and time column
+        are interpreted as string."""
+        csv_kwargs = self.dataframe_parameters["csv_kwargs"]
+        dtype = {
+            self.dataframe_parameters["date_key"]: str,
+            self.dataframe_parameters["time_key"]: str,
+            self.dataframe_parameters["datetime_key"]: str,
+        }
+        dtype.pop("", None)  # remove default empty string
+
+        csv_kwargs["dtype"] = dtype
+        return csv_kwargs
