@@ -226,7 +226,6 @@ class PressureHandler():
             # get all files of one day and concat them:
             for file in dataloggerFileList:
                 self.logger.debug(f"Read in file {file}")
-                print(self.cols_to_use, self.dataframe_parameters["csv_kwargs"])
                 temp = pd.read_csv(
                     file,
                     usecols=self.cols_to_use,
