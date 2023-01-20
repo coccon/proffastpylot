@@ -896,8 +896,9 @@ class Preparation():
 
         # List of all *.map files of the needed date
         search_str = (
-            f"{self.site_abbrev}_*_"
-            f"{noon_utc.strftime('%Y%m%d')}*Z.map")
+            f"{self.site_abbrev}*{noon_utc.strftime('%Y%m%d')}*Z.map")
+
+
         mapfiles = glob(os.path.join(self.map_path, search_str))
         # add files of the following day
         # in case of interpolation between 21:00 and 00:00
@@ -908,7 +909,6 @@ class Preparation():
         mapfiles.extend(
              glob(os.path.join(self.map_path, search_str)))
         mapfiles.sort()
-
         # find the correct map files: bevore and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
@@ -941,7 +941,7 @@ class Preparation():
         tdiff = 3 * 60 * 60   # seconds
         # date of file 1 for the requested time diff
         date_file1 = dt.strptime(
-                    os.path.basename(mapfiles[i_noon-1])[12:22], "%Y%m%d%H")
+                    os.path.basename(mapfiles[i_noon-1])[-15:-5], "%Y%m%d%H")
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
