@@ -373,21 +373,22 @@ class Preparation():
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
-    def get_map_file(self, date):
-        """Return path to mapfile of given date.
-
-        params:
-            date: datetime object
-        """
-        search_string = os.path.join(
-            self.map_path,
-            "*{date}.map".format(date=date.strftime("%y%m%d")))
-        map_file = glob(search_string)
-
-        assert len(map_file) == 1
-        map_file = map_file[0]
-
-        return map_file
+    # obsolete method?????
+    # def get_map_file(self, date):
+    #    """Return path to mapfile of given date.
+    #
+    #    params:
+    #        date: datetime object
+    #    """
+    #    search_string = os.path.join(
+    #        self.map_path,
+    #        "*{date}.map".format(date=date.strftime("%y%m%d")))
+    #    map_file = glob(search_string)
+    #
+    #    assert len(map_file) == 1
+    #    map_file = map_file[0]
+    #
+    #    return map_file
 
     def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
@@ -624,7 +625,18 @@ class Preparation():
         lat = self.coords["lat"]
         lon = self.coords["lon"]
         alt = self.coords["alt"]
-
+        # prepare map file path
+        if self.ggg2020mapfiles:
+            map_file = os.path.join(
+                self.map_path,
+                f"{self.site_abbrev}{date.strftime('%Y%m%d')}Z_"
+                "LocalTimeNoon.map"
+                )
+        else:
+            map_file = os.path.join(
+                self.map_path,
+                f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            )
         parameters = {
             "ALT": alt,
             "LAT": lat,
@@ -632,9 +644,7 @@ class Preparation():
             "DATAPATH": self.analysis_instrument_path,
             "DATE": date.strftime("%y%m%d"),
             "SITE": self.site_name,
-            "MAPPATH": self.map_path,
-            "SITE_ABBREV": self.site_abbrev,
-            "DATE_LONG": date.strftime("%Y%m%d"),
+            "MAPPATH_WITH_MAPFILE": map_file
         }
 
         # set %WET_VMR% parameter
@@ -841,7 +851,9 @@ class Preparation():
         where found.
         """
         # search for GGG2020 map files:
-        srchstrg = f"{self.site_abbrev}_*_*Z.map"
+        # This includes files produced by ginput as well as from a running
+        # ggg2020 evaluation
+        srchstrg = f"{self.site_abbrev}*{date.strftime('%Y%m%d')}*Z.map"
         mapfiles = glob(os.path.join(self.map_path, srchstrg))
         if len(mapfiles) != 0:
             self.logger.debug("Detected GGG2020 map files!")
@@ -853,7 +865,8 @@ class Preparation():
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
             if len(mapfiles) == 1:
                 self.logger.warning(
-                    "Detected GGG2014 map file, this is not recommended! "
+                    "Detected GGG2014 map file, at day "
+                    f"{date.strftime('%Y-%m-%d')}. This is not recommended! "
                     "PROFFASTpylot is calibrated using GGG2020 map files, "
                     "please use GGG2014 only for comparison purposes!")
                 self.ggg2020mapfiles = False
@@ -935,7 +948,7 @@ class Preparation():
                 * (noon_utc - date_file1).total_seconds()
 
         output_mapfile = \
-            f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            f"{self.site_abbrev}{date.strftime('%Y%m%d')}Z_LocalTimeNoon.map"
         output_mapfile = os.path.join(self.map_path, output_mapfile)
 
         # write header
