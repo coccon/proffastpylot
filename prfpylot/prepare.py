@@ -43,7 +43,7 @@ class Preparation():
     """Import input parameters, and create input files."""
 
     template_types = {
-        "prep": "preprocess4",
+        "prep": "preprocess5",
         "tccon": "tccon",
         "inv": "invers20",
         "pcxs": "pcxs20"
@@ -583,7 +583,7 @@ class Preparation():
         lon = self.coords["lon"]
         alt = self.coords["alt"]
         comment = (
-            "This spectrum is generated using preprocess4, a part of "
+            "This spectrum is generated using preprocess5, a part of "
             "PROFFAST controlled by PROFFASTpylot.")
         if self.note is not None:
             comment = " ".join([comment, self.note])
