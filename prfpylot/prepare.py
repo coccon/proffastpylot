@@ -865,7 +865,7 @@ class Preparation():
 
         # List of all *.map files of the needed date
         search_str = (
-            f"{self.site_abbrev}*{noon_utc.strftime('%Y%m%d')}*Z.map")
+            f"{self.site_abbrev}*Z.map")
         mapfiles = glob(os.path.join(self.map_path, search_str))
         # add files of the following day
         # in case of interpolation between 21:00 and 00:00
@@ -876,7 +876,6 @@ class Preparation():
         mapfiles.extend(
              glob(os.path.join(self.map_path, search_str)))
         mapfiles.sort()
-        print
         # find the correct map files: bevore and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
@@ -885,7 +884,6 @@ class Preparation():
             if hour_file > noon_hour:
                 i_noon = i
                 break
-        print(i_noon)
         if i_noon in [None, 0]:
             self.logger.critical(
                 f"Could not calculate mapfile for {noon_utc} UTC "
