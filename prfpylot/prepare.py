@@ -853,7 +853,7 @@ class Preparation():
         # search for GGG2020 map files:
         # This includes files produced by ginput as well as from a running
         # ggg2020 evaluation
-        srchstrg = f"{self.site_abbrev}*{date.strftime('%Y%m%d')}*Z.map"
+        srchstrg = f"{self.site_abbrev}*Z.map"
         mapfiles = glob(os.path.join(self.map_path, srchstrg))
         if len(mapfiles) != 0:
             self.logger.debug("Detected GGG2020 map files!")
@@ -897,7 +897,6 @@ class Preparation():
         # List of all *.map files of the needed date
         search_str = (
             f"{self.site_abbrev}*{noon_utc.strftime('%Y%m%d')}*Z.map")
-
 
         mapfiles = glob(os.path.join(self.map_path, search_str))
         # add files of the following day
