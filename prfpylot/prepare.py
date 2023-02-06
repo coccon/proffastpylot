@@ -76,6 +76,12 @@ class Preparation():
         "ignore_interpolation_error": None,
         "backup_results": True,
         "igram_pattern": "*.*"
+        "instrument_parameters": "em27",
+    }
+
+    instrument_templates = {
+        "em27": "instrument_templates/em27.yml"
+        "tccon_ka": "instrument_templates/tccon_ka.yml"
     }
 
     def __init__(self, input_file, logginglevel="info"):
