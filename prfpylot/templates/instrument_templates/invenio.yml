@@ -1,17 +1,17 @@
 # instrument parameters for the EM27/SUN spectrometers (for PROFFASTpreprocess)
 
 # in rad
-semi_fov: 2.36e-3
+semi_fov: 1.25e-3
 
 # 17 for EM27/SUN and IR Cube: 1.8 cm MPD,
 # 181/182: 2.5 cm /3.0 cm MPD,
 # 19 for VERTEX / INVENIO: 4.5 cm MPD,
 # 20 for 125HR: 16.2 cm MPD
-mpow_fft: 17
+mpow_fft: 19
 
 
 # True/False
-dual_ifg_recording: True
+dual_ifg_recording: False
 
 # Swap channels (applies for dual IFG recording: 1st channel SN, second channel SM - otherwise choose swap = true)
 swap_channels: False
