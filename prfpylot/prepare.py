@@ -949,7 +949,7 @@ class Preparation():
         # write the rest of the file
         with open(output_mapfile, "a") as f:
             frw = fortranformat.FortranRecordWriter(
-                "(2(f8.3,','),4(e10.3,','),1x,(f7.3,','),1x,(f7.3,','),"
+                "(2(f8.3,','),4(e10.4,','),1x,(f7.3,','),1x,(f7.3,','),"
                 "(e10.3,','),1x,(f6.1,','),(f8.3,','),1x,(f6.4,','),1x,"
                 "f5.3)")
             file1 = file1.transpose()
