@@ -43,7 +43,7 @@ class Preparation():
     """Import input parameters, and create input files."""
 
     template_types = {
-        "prep": "preprocess5",
+        "prep": "preprocess5_dbg",
         "tccon": "tccon",
         "inv": "invers20",
         "pcxs": "pcxs20"
@@ -75,13 +75,13 @@ class Preparation():
         "ils_parameters": None,
         "ignore_interpolation_error": None,
         "backup_results": True,
-        "igram_pattern": "*.*"
+        "igram_pattern": "*.*",
         "instrument_parameters": "em27",
     }
 
     instrument_templates = {
-        "em27": "instrument_templates/em27.yml"
-        "tccon_ka": "instrument_templates/tccon_ka.yml"
+        "em27": "em27.yml",
+        "tccon_ka": "tccon_ka.yml"
     }
 
     def __init__(self, input_file, logginglevel="info"):
@@ -116,6 +116,30 @@ class Preparation():
         # inspect.getsourcefile needes __init__.py!
         self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
 
+        # load instrument specific parameters:
+        # try if a preset instrument parameter file is available:
+        instrument_file = self.instrument_templates.get(
+            self.instrument_parameters)
+        if instrument_file is not None:
+            # file is available. load path:
+            instrument_file = os.path.join(
+                self.prfpylot_path, "templates", "instrument_templates",
+                instrument_file)
+        else:
+            # no match, load external file:
+            instrument_file = self.instrument_parameters
+        # now we can load the yaml file:
+        with open(instrument_file, "r") as f:
+            self.instrument_args = yaml.load(f, Loader=yaml.FullLoader)
+        # convert the Boolean values to .true. and .false.
+        temp = self.instrument_args.copy()
+        for key, val in temp.items():
+            if isinstance(val, bool):
+                if val:
+                    self.instrument_args[key] = ".true."
+                else:
+                    self.instrument_args[key] = ".false."
+        
         # define full path <analysis>/<site>_<instrument_nr>
         self.analysis_instrument_path = os.path.join(
                     self.analysis_path,
@@ -172,12 +196,13 @@ class Preparation():
                 "taken from the official COCCON ILS list!\n"
                 f"Used ILS Parameters: {self.ils_parameters}.")
 
+        # obsolet for PREPROCESS5
         # check if tccon mode is activated. Raise warning if it is activated
-        if self.tccon_mode is True:
-            self._tccon_mode_warning()
-            if args.get("tccon_setting") is None:
-                self.logger.critical("Give TCCON setting in TCCON mode!")
-                sys.exit()
+        # if self.tccon_mode is True:
+        #    self._tccon_mode_warning()
+        #     if args.get("tccon_setting") is None:
+        #         self.logger.critical("Give TCCON setting in TCCON mode!")
+        #         sys.exit()
 
         dt_format = "%y%m%d"
         result_foldername = "{}_{}_{}-{}".format(
@@ -580,7 +605,7 @@ class Preparation():
             self.tccon_file = prf_input_file
 
     def get_prep_parameters(self, date):
-        """Return Parameters to be replaced in the pereprocess input file."""
+        """Return Parameters to be replaced in the preprocess input file."""
         if self.ils_parameters is None:
             ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
         else:
@@ -618,7 +643,14 @@ class Preparation():
             'igrams': igrams,
             'path_preprocess_log': self.logfile_path,
             'filename_logfile': logfile,
-            'path_spectra': outfolder
+            'path_spectra': outfolder,
+            'mpow_fft': self.instrument_args["mpow_fft"],
+            'semi_fov': self.instrument_args["semi_fov"],
+            'dual_ifg_recording': self.instrument_args["dual_ifg_recording"],
+            'swap_channels': self.instrument_args["swap_channels"],
+            'use_analytical_phase': \
+                self.instrument_args["use_analytical_phase"],
+            'band_selection': self.instrument_args["band_selection"],
                      }
         return parameters
 

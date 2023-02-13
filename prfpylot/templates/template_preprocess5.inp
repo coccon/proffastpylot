@@ -6,7 +6,7 @@ DCmin
 DCvar
 $
 .false.
-17
+%mpow_fft%
 0.05
 0.10
 
@@ -19,7 +19,7 @@ semiFOV [rad]
 $
 %ILS_Channel1%
 %ILS_Channel2%
-2.36e-3
+%semi_fov%
 
 
 
@@ -47,10 +47,10 @@ $
 T
 %path_preprocess_log%
 %path_spectra%
-T
-F
-F
-1
+%dual_ifg_recording%
+%swap_channels%
+%use_analytical_phase%
+%band_selection%
 
 
 
