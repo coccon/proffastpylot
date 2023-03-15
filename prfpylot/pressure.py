@@ -92,7 +92,7 @@ class PressureHandler():
             else:
                 # fill defaults and check for missing values inside the dicts
                 self.__dict__[option] = self._set_defaults(option)
-                self._check_mandatory()
+        self._check_mandatory()
 
         # For a later read in of the pressure data frame it makes sense to only
         # read in the columns needed. In case of large meteo files, this can
@@ -233,7 +233,6 @@ class PressureHandler():
                 daily_df = pd.concat([daily_df, temp])
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
-
         self.p_df.reset_index(drop=True, inplace=True)
         self._parse_pressure()
 
