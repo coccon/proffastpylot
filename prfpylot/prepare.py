@@ -360,6 +360,7 @@ class Preparation():
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
+    ''' # probably not needed anymore
     def get_map_file(self, date):
         """Return path to mapfile of given date.
 
@@ -375,6 +376,7 @@ class Preparation():
         map_file = map_file[0]
 
         return map_file
+    '''
 
     def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
@@ -826,7 +828,7 @@ class Preparation():
         where found.
         """
         # search for GGG2020 map files:
-        srchstrg = f"{self.site_abbrev}*{date.strftime('%Y%m%d')}*Z.map"
+        srchstrg = f"{self.site_abbrev}*Z.map"
         mapfiles = glob(os.path.join(self.map_path, srchstrg))
         if len(mapfiles) != 0:
             self.logger.debug("Detected GGG2020 map files!")
@@ -865,7 +867,7 @@ class Preparation():
 
         # List of all *.map files of the needed date
         search_str = (
-            f"{self.site_abbrev}*Z.map")
+            f"{self.site_abbrev}*{noon_utc.strftime('%Y%m%d')}*Z.map")
         mapfiles = glob(os.path.join(self.map_path, search_str))
         # add files of the following day
         # in case of interpolation between 21:00 and 00:00
@@ -890,6 +892,7 @@ class Preparation():
                 "from the following files:\n"
                 f"{' '.join(mapfiles)}"
                 )
+
             sys.exit()
 
         file1 = pd.read_csv(
