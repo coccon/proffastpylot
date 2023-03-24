@@ -159,8 +159,8 @@ class PressureHandler():
             self._read_unregular_files()
         elif frequency in ["monthly", "weekly"]:
             self.logger.warning(
-                "Using 'unregular' frequency, weekly and monthly are not yet "
-                "implemented seperately.")
+                "Please use 'unregular' frequency."
+                " weekly and monthly are not yet implemented seperately.")
             self._read_unregular_files()
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
