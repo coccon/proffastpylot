@@ -16,3 +16,5 @@ prf_venv/
 .vscode/settings.json
 hdf_test
 KA_LongTerm/
+pressure_config_files/
+config_run_files/
