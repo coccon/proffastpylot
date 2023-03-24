@@ -43,7 +43,7 @@ class Preparation():
     """Import input parameters, and create input files."""
 
     template_types = {
-        "prep": "preprocess5_dbg",
+        "prep": "preprocess5",
         "tccon": "tccon",
         "inv": "invers20",
         "pcxs": "pcxs20"
@@ -222,7 +222,7 @@ class Preparation():
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
             self.pressure_type_file, self.pressure_path,
-            self.dates, self.logger)
+            self.dates, self.logger, self.utc_offset)
 
         # collect all generated input files to move in FileMover
         self.global_inputfile_list = []
