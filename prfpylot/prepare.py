@@ -81,7 +81,13 @@ class Preparation():
 
     instrument_templates = {
         "em27": "em27.yml",
-        "tccon_ka": "tccon_ka.yml"
+        "tccon_ka_hr": "tccon_ka_hr.yml",
+        "tccon_ka_lr": "tccon_ka_lr.yml",
+        "tccon_default_hr": "tccon_default_hr.yml",
+        "tccon_default_lr": "tccon_default_lr.yml",
+        "invenio": "invenio.yml",
+        "vertex": "vertex.yml",
+        "ircube": "ircube.yml"
     }
 
     def __init__(self, input_file, logginglevel="info"):
@@ -129,8 +135,18 @@ class Preparation():
             # no match, load external file:
             instrument_file = self.instrument_parameters
         # now we can load the yaml file:
-        with open(instrument_file, "r") as f:
-            self.instrument_args = yaml.load(f, Loader=yaml.FullLoader)
+        try:
+            with open(instrument_file, "r") as f:
+                self.instrument_args = yaml.load(f, Loader=yaml.FullLoader)
+        except FileNotFoundError:
+            self.logger.error(
+                f"The instrument file '{instrument_file}' could not be found"
+                " on disk.\nPlease give a correct filename or use"
+                " a pre-defined instrument template: " +\
+                ", ".join(list(self.instrument_templates.keys())) +\
+                ".\nThis is a fatal error. Terminating PROFFASTpylot"
+            )
+            exit()
         # convert the Boolean values to .true. and .false.
         temp = self.instrument_args.copy()
         for key, val in temp.items():
@@ -139,7 +155,7 @@ class Preparation():
                     self.instrument_args[key] = ".true."
                 else:
                     self.instrument_args[key] = ".false."
-        
+
         # define full path <analysis>/<site>_<instrument_nr>
         self.analysis_instrument_path = os.path.join(
                     self.analysis_path,
@@ -427,7 +443,7 @@ class Preparation():
         and replace template function.
 
         params:
-            template_type (str): Can be "prep", "tccon", "pt", "inv" or "pcxc"
+            template_type (str): Can be "prep", "inv" or "pcxc"
 
         Return:
             prf_input_file(s) (str, list of str or None):
@@ -447,9 +463,9 @@ class Preparation():
             parameters = self.get_prep_parameters(date)
             if parameters["igrams"] == "":
                 return None
-
-        elif template_type == "tccon":
-            parameters = {"tccon_setting": self.tccon_setting}
+        # obsolet with preprocess 5
+        # elif template_type == "tccon":
+        #     parameters = {"tccon_setting": self.tccon_setting}
 
         elif template_type == "pcxs":
             parameters = self.get_pcxs_parameters(date)
@@ -606,10 +622,34 @@ class Preparation():
 
     def get_prep_parameters(self, date):
         """Return Parameters to be replaced in the preprocess input file."""
-        if self.ils_parameters is None:
-            ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
-        else:
+        if self.ils_parameters is not None:
+            # the first priority is always the ILS params given in the the
+            # general config file:
             ME1, PE1, ME2, PE2 = self.ils_parameters
+            if self.instrument_parameters != "em27":
+                self.logger.warning(
+                    "Individual ILS Parameters are used,"
+                    " the parameters are not "
+                    "taken from the official COCCON ILS list!\n"
+                    f"Used ILS Parameters: {self.ils_parameters}.")
+        else:
+            # ILS parameters NOT given in general input file.
+            if self.instrument_parameters == "em27":
+                # for the EM27 try to take it from the ILS List:
+                self.logger.debug("Load ILS parameters from file.")
+                ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
+            else:
+                # for all other instruments use per default an ideal ILS
+                # Due to the historically grown design of proffast
+                # it is neccesar to use ME=0.983 and PE=0. This is "converted"
+                # in invers to unity ILS:
+                ME1 = ME2 = 0.983
+                PE1 = PE2 = 0.0
+                self.logger.info(
+                    "Using unity ILS parameter for non-em27 instruments as "
+                    "default. If you want to use different, specify it in the "
+                    "general input file.")
+
         lat = self.coords["lat"]
         lon = self.coords["lon"]
         alt = self.coords["alt"]
@@ -769,9 +809,6 @@ class Preparation():
         Returns:
             ils_parameters (tuple): MEChan1, PEChan1, MEChan2, PEChan2
         """
-        if self.tccon_mode:
-            return (0.983, 0., 0.983, 0.)
-
         ils_df = pd.read_csv(self.ils_file, skipinitialspace=True)
         ils_df["ValidSince"] = pd.to_datetime(ils_df["ValidSince"])
         ils_df = ils_df.set_index("Instrument")
