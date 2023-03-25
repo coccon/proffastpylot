@@ -420,21 +420,22 @@ class Preparation():
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
-    def get_map_file(self, date):
-        """Return path to mapfile of given date.
-
-        params:
-            date: datetime object
-        """
-        search_string = os.path.join(
-            self.map_path,
-            "*{date}.map".format(date=date.strftime("%y%m%d")))
-        map_file = glob(search_string)
-
-        assert len(map_file) == 1
-        map_file = map_file[0]
-
-        return map_file
+    # obsolete method?????
+    # def get_map_file(self, date):
+    #    """Return path to mapfile of given date.
+    #
+    #    params:
+    #        date: datetime object
+    #    """
+    #    search_string = os.path.join(
+    #        self.map_path,
+    #        "*{date}.map".format(date=date.strftime("%y%m%d")))
+    #    map_file = glob(search_string)
+    #
+    #    assert len(map_file) == 1
+    #    map_file = map_file[0]
+    #
+    #    return map_file
 
     def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
@@ -702,7 +703,18 @@ class Preparation():
         lat = self.coords["lat"]
         lon = self.coords["lon"]
         alt = self.coords["alt"]
-
+        # prepare map file path
+        if self.ggg2020mapfiles:
+            map_file = os.path.join(
+                self.map_path,
+                f"{self.site_abbrev}{date.strftime('%Y%m%d')}Z_"
+                "LocalTimeNoon.map"
+                )
+        else:
+            map_file = os.path.join(
+                self.map_path,
+                f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            )
         parameters = {
             "ALT": alt,
             "LAT": lat,
@@ -710,9 +722,7 @@ class Preparation():
             "DATAPATH": self.analysis_instrument_path,
             "DATE": date.strftime("%y%m%d"),
             "SITE": self.site_name,
-            "MAPPATH": self.map_path,
-            "SITE_ABBREV": self.site_abbrev,
-            "DATE_LONG": date.strftime("%Y%m%d"),
+            "MAPPATH_WITH_MAPFILE": map_file
         }
 
         # set %WET_VMR% parameter
@@ -916,7 +926,9 @@ class Preparation():
         where found.
         """
         # search for GGG2020 map files:
-        srchstrg = f"{self.site_abbrev}_*_*Z.map"
+        # This includes files produced by ginput as well as from a running
+        # ggg2020 evaluation
+        srchstrg = f"{self.site_abbrev}*Z.map"
         mapfiles = glob(os.path.join(self.map_path, srchstrg))
         if len(mapfiles) != 0:
             self.logger.debug("Detected GGG2020 map files!")
@@ -928,7 +940,8 @@ class Preparation():
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
             if len(mapfiles) == 1:
                 self.logger.warning(
-                    "Detected GGG2014 map file, this is not recommended! "
+                    "Detected GGG2014 map file, at day "
+                    f"{date.strftime('%Y-%m-%d')}. This is not recommended! "
                     "PROFFASTpylot is calibrated using GGG2020 map files, "
                     "please use GGG2014 only for comparison purposes!")
                 self.ggg2020mapfiles = False
@@ -958,8 +971,8 @@ class Preparation():
 
         # List of all *.map files of the needed date
         search_str = (
-            f"{self.site_abbrev}_*_"
-            f"{noon_utc.strftime('%Y%m%d')}*Z.map")
+            f"{self.site_abbrev}*{noon_utc.strftime('%Y%m%d')}*Z.map")
+
         mapfiles = glob(os.path.join(self.map_path, search_str))
         # add files of the following day
         # in case of interpolation between 21:00 and 00:00
@@ -970,7 +983,6 @@ class Preparation():
         mapfiles.extend(
              glob(os.path.join(self.map_path, search_str)))
         mapfiles.sort()
-
         # find the correct map files: bevore and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
@@ -1003,14 +1015,14 @@ class Preparation():
         tdiff = 3 * 60 * 60   # seconds
         # date of file 1 for the requested time diff
         date_file1 = dt.strptime(
-                    os.path.basename(mapfiles[i_noon-1])[12:22], "%Y%m%d%H")
+                    os.path.basename(mapfiles[i_noon-1])[-15:-5], "%Y%m%d%H")
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
                 * (noon_utc - date_file1).total_seconds()
 
         output_mapfile = \
-            f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            f"{self.site_abbrev}{date.strftime('%Y%m%d')}Z_LocalTimeNoon.map"
         output_mapfile = os.path.join(self.map_path, output_mapfile)
 
         # write header
@@ -1024,7 +1036,7 @@ class Preparation():
         # write the rest of the file
         with open(output_mapfile, "a") as f:
             frw = fortranformat.FortranRecordWriter(
-                "(2(f8.3,','),4(e10.3,','),1x,(f7.3,','),1x,(f7.3,','),"
+                "(2(f8.3,','),4(e10.4,','),1x,(f7.3,','),1x,(f7.3,','),"
                 "(e10.3,','),1x,(f6.1,','),(f8.3,','),1x,(f6.4,','),1x,"
                 "f5.3)")
             file1 = file1.transpose()
