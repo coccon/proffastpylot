@@ -13,7 +13,7 @@ semi_fov: 9.5693e-4
 # 181/182: 2.5 cm /3.0 cm MPD,
 # 19 for VERTEX / INVENIO: 4.5 cm MPD,
 # 20 for 125HR: 16.2 cm MPD
-mpow_fft: 20
+mpow_fft: 17
 
 
 # The preprocesser can handle recordings with two interferograms.
