@@ -100,10 +100,6 @@ delete_abscosbin_files: True
 # If False: Files will be moved to results folder
 delete_input_files:
 
-
-# None or path to instrument parameter file
-instrument_parameters: "tccon_karlsruhe"
-
 #########
 # PATHS #
 #########

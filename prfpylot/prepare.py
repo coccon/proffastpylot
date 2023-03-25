@@ -44,7 +44,6 @@ class Preparation():
 
     template_types = {
         "prep": "preprocess5",
-        "tccon": "tccon",
         "inv": "invers20",
         "pcxs": "pcxs20"
     }
@@ -71,7 +70,6 @@ class Preparation():
         "note": None,
         "delete_abscosbin_files": False,
         "delete_input_files": False,
-        "tccon_mode": False,
         "ils_parameters": None,
         "ignore_interpolation_error": None,
         "backup_results": True,
@@ -211,14 +209,6 @@ class Preparation():
                 "Individual ILS Parameters were used, the parameters were not "
                 "taken from the official COCCON ILS list!\n"
                 f"Used ILS Parameters: {self.ils_parameters}.")
-
-        # obsolet for PREPROCESS5
-        # check if tccon mode is activated. Raise warning if it is activated
-        # if self.tccon_mode is True:
-        #    self._tccon_mode_warning()
-        #     if args.get("tccon_setting") is None:
-        #         self.logger.critical("Give TCCON setting in TCCON mode!")
-        #         sys.exit()
 
         dt_format = "%y%m%d"
         result_foldername = "{}_{}_{}-{}".format(
@@ -1069,13 +1059,6 @@ class Preparation():
             self.logger.warning(
                 f"The Longitude of the map file ({lon_map}) "
                 f"Does not match the Latitude given to PROFFASTpylot ({lon})!")
-
-    def _tccon_mode_warning(self):
-        """Print warning if TCCON mode is activated """
-        self.logger.warning(
-            "TCCON Mode is activated!\nThis will not work with standard"
-            " EM27/SUN interferograms.\nOnly continue if this setting"
-            " was choosen by purpose. Otherwise break the execution!")
 
     def _get_localtime_offset(self):
         """Return offset between measurement time and local time.
