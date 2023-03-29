@@ -50,7 +50,9 @@ class PressureHandler():
 
     parsed_dtcol = "parsed_datetime"
 
-    def __init__(self, pressure_type_file, pressure_path, dates, logger):
+    def __init__(
+            self, pressure_type_file, pressure_path, dates, logger,
+            measurement_time=0):
         """
         Initialize the Pressure Handler.
         Params:
@@ -92,7 +94,7 @@ class PressureHandler():
             else:
                 # fill defaults and check for missing values inside the dicts
                 self.__dict__[option] = self._set_defaults(option)
-                self._check_mandatory()
+        self._check_mandatory()
 
         # For a later read in of the pressure data frame it makes sense to only
         # read in the columns needed. In case of large meteo files, this can
@@ -107,15 +109,31 @@ class PressureHandler():
         self.dataframe_parameters["csv_kwargs"] = \
             self._append_dtype_to_csv_kwargs()
 
-        # It can happen, that the pressure files are generated using local
-        # days, however, the timestamp inside them is in utc.
-        # This can lead to situtations, where pressure data of the first or the
-        # last day is missing.
-        # Therefore add a day before and a day after to the date list:
-        first_day = self.dates[0] - dt.timedelta(days=1)
-        last_day = self.dates[-1] + dt.timedelta(days=1)
-        self.dates.append(last_day)
-        self.dates.insert(0, first_day)
+        # When the pressure data is recorded using a different time zone, than
+        # the FTIR data, this can lead to gaps in the data. Hence convert the
+        # date list to a datelist which matches with the pressure data
+        # time zone.
+        if abs(measurement_time - self.utc_offset) > 4:
+            temp = self.dates.copy()
+            for date in temp:
+                # measurement_time = UTC + UTC_offset_measurement
+                # p_time = UTC + UTC_offset_p
+                # Hence, if measurement_time > UTC_offset_p then we also need
+                # to load the date BEFORE the current pressure date:
+                if measurement_time > self.utc_offset:
+                    previous_day = date - dt.timedelta(days=1)
+                    self.dates.append(previous_day)
+                # when the measurement_time < UTC_offset_p then we also need
+                # to load the date AFTER the current pressure date
+                else:
+                    next_day = date + dt.timedelta(days=1)
+                    self.dates.append(next_day)
+            # delete the duplicate days:
+            self.dates = list(set(self.dates))
+            self.dates.sort()
+        self.logger.debug(
+            "Date to load pressure files for:" + \
+            "\n".join([x.strftime("%Y-%m-%d") for x in self.dates]))
 
         self.p_df = pd.DataFrame()
 
@@ -141,8 +159,8 @@ class PressureHandler():
             self._read_unregular_files()
         elif frequency in ["monthly", "weekly"]:
             self.logger.warning(
-                "Using 'unregular' frequency, weekly and monthly are not yet "
-                "implemented seperately.")
+                "Please use 'unregular' frequency."
+                " weekly and monthly are not yet implemented seperately.")
             self._read_unregular_files()
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
@@ -196,7 +214,8 @@ class PressureHandler():
         if abs((t2 - t1).total_seconds()) / 3600 > 6:
             self.logger.warning(
                 "Pressure is interpolated for a time range larger than 6 h "
-                f"for date {timestamp}. This might give wrong results!"
+                f"for date {timestamp} (pressure time)."
+                "This might give wrong results!"
                 "Please check the input data for this day."
             )
 
@@ -233,7 +252,6 @@ class PressureHandler():
                 daily_df = pd.concat([daily_df, temp])
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
-
         self.p_df.reset_index(drop=True, inplace=True)
         self._parse_pressure()
 
@@ -369,14 +387,13 @@ class PressureHandler():
             try:
                 if dt_fmt == "POSIX-timestamp":
                     df[self.parsed_dtcol] = df[dt_key].apply(
-                        lambda x: dt.datetime.utcfromtimestamp(x))
+                        lambda x: dt.datetime.utcfromtimestamp(np.float64(x)))
                 else:
                     df[self.parsed_dtcol] = pd.to_datetime(
                         df[dt_key], format=dt_fmt)
             except KeyError:
                 self.logger.critical(
-                    f"Could not find key {dt_key} in "
-                    "pressure data."
+                    f"Could not find key {dt_key} in pressure data."
                     f"Pressure data are:\n{df}\n."
                     f"Pressure folder is: {self.pressure_path}\n"
                     "Exit Program.")

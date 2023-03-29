@@ -100,16 +100,6 @@ delete_abscosbin_files: True
 # If False: Files will be moved to results folder
 delete_input_files:
 
-# Activate TCCON Mode (True/False)    Default: False
-# Use preprocess to evaluate low resolution spectra recorded with a 125HR
-# instrument.
-tccon_mode:
-# Setting of the TCCON instrument.
-# Will be evaluated in case of tccon_mode = True only
-# 1: Standard TCCON Setting
-# 2: Karlsruhe TCCON Setting
-tccon_setting:
-
 #########
 # PATHS #
 #########

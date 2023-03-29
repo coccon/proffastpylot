@@ -71,18 +71,7 @@ class Pylot(FileMover):
 
         self.logger.info(
             f"Running preprocess with {n_processes} task(s) ...")
-        # check if TCCON Mode is activated. If yes create the tccon input file
-        if self.tccon_mode:
-            self.logger.debug("...create tccon file...")
-            self.generate_prf_input("tccon")
-        else:
-            # check if TCCON file is present by accident. If yes delete it
-            tccon_file = self.get_prf_input_path("tccon")
-            if os.path.exists(tccon_file):
-                os.remove(tccon_file)
-                self.logger.warning(
-                    "Found TCCON file, which was not expected."
-                    "Delete it for normal processing.")
+ 
         # Create inputfiles. If None is returned no date was found for this
         # specific day
         all_inputfiles = []
@@ -119,10 +108,6 @@ class Pylot(FileMover):
             output = pool.map(subs_method, all_inputfiles)
         self._write_logfile("preprocess", output)
 
-        if self.tccon_mode:
-            # delete tccon input file:
-            os.remove(self.tccon_file)
-            self.logger.debug("... delete TCCON file")
         self.logger.info("Finished preprocessing.\n")
 
     def run_pcxs(self, n_processes=1):

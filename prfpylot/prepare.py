@@ -43,8 +43,7 @@ class Preparation():
     """Import input parameters, and create input files."""
 
     template_types = {
-        "prep": "preprocess4",
-        "tccon": "tccon",
+        "prep": "preprocess5",
         "inv": "invers20",
         "pcxs": "pcxs20"
     }
@@ -71,11 +70,22 @@ class Preparation():
         "note": None,
         "delete_abscosbin_files": False,
         "delete_input_files": False,
-        "tccon_mode": False,
         "ils_parameters": None,
         "ignore_interpolation_error": None,
         "backup_results": True,
-        "igram_pattern": "*.*"
+        "igram_pattern": "*.*",
+        "instrument_parameters": "em27",
+    }
+
+    instrument_templates = {
+        "em27": "em27.yml",
+        "tccon_ka_hr": "tccon_ka_hr.yml",
+        "tccon_ka_lr": "tccon_ka_lr.yml",
+        "tccon_default_hr": "tccon_default_hr.yml",
+        "tccon_default_lr": "tccon_default_lr.yml",
+        "invenio": "invenio.yml",
+        "vertex": "vertex.yml",
+        "ircube": "ircube.yml"
     }
 
     def __init__(self, input_file, logginglevel="info"):
@@ -109,6 +119,40 @@ class Preparation():
 
         # inspect.getsourcefile needes __init__.py!
         self.prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
+
+        # load instrument specific parameters:
+        # try if a preset instrument parameter file is available:
+        instrument_file = self.instrument_templates.get(
+            self.instrument_parameters)
+        if instrument_file is not None:
+            # file is available. load path:
+            instrument_file = os.path.join(
+                self.prfpylot_path, "templates", "instrument_templates",
+                instrument_file)
+        else:
+            # no match, load external file:
+            instrument_file = self.instrument_parameters
+        # now we can load the yaml file:
+        try:
+            with open(instrument_file, "r") as f:
+                self.instrument_args = yaml.load(f, Loader=yaml.FullLoader)
+        except FileNotFoundError:
+            self.logger.error(
+                f"The instrument file '{instrument_file}' could not be found"
+                " on disk.\nPlease give a correct filename or use"
+                " a pre-defined instrument template: " +\
+                ", ".join(list(self.instrument_templates.keys())) +\
+                ".\nThis is a fatal error. Terminating PROFFASTpylot"
+            )
+            exit()
+        # convert the Boolean values to .true. and .false.
+        temp = self.instrument_args.copy()
+        for key, val in temp.items():
+            if isinstance(val, bool):
+                if val:
+                    self.instrument_args[key] = ".true."
+                else:
+                    self.instrument_args[key] = ".false."
 
         # define full path <analysis>/<site>_<instrument_nr>
         self.analysis_instrument_path = os.path.join(
@@ -166,13 +210,6 @@ class Preparation():
                 "taken from the official COCCON ILS list!\n"
                 f"Used ILS Parameters: {self.ils_parameters}.")
 
-        # check if tccon mode is activated. Raise warning if it is activated
-        if self.tccon_mode is True:
-            self._tccon_mode_warning()
-            if args.get("tccon_setting") is None:
-                self.logger.critical("Give TCCON setting in TCCON mode!")
-                sys.exit()
-
         dt_format = "%y%m%d"
         result_foldername = "{}_{}_{}-{}".format(
             self.site_name,
@@ -191,7 +228,7 @@ class Preparation():
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
             self.pressure_type_file, self.pressure_path,
-            self.dates, self.logger)
+            self.dates, self.logger, self.utc_offset)
 
         # collect all generated input files to move in FileMover
         self.global_inputfile_list = []
@@ -397,7 +434,7 @@ class Preparation():
         and replace template function.
 
         params:
-            template_type (str): Can be "prep", "tccon", "pt", "inv" or "pcxc"
+            template_type (str): Can be "prep", "inv" or "pcxc"
 
         Return:
             prf_input_file(s) (str, list of str or None):
@@ -417,9 +454,9 @@ class Preparation():
             parameters = self.get_prep_parameters(date)
             if parameters["igrams"] == "":
                 return None
-
-        elif template_type == "tccon":
-            parameters = {"tccon_setting": self.tccon_setting}
+        # obsolet with preprocess 5
+        # elif template_type == "tccon":
+        #     parameters = {"tccon_setting": self.tccon_setting}
 
         elif template_type == "pcxs":
             parameters = self.get_pcxs_parameters(date)
@@ -575,16 +612,40 @@ class Preparation():
             self.tccon_file = prf_input_file
 
     def get_prep_parameters(self, date):
-        """Return Parameters to be replaced in the pereprocess input file."""
-        if self.ils_parameters is None:
-            ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
-        else:
+        """Return Parameters to be replaced in the preprocess input file."""
+        if self.ils_parameters is not None:
+            # the first priority is always the ILS params given in the the
+            # general config file:
             ME1, PE1, ME2, PE2 = self.ils_parameters
+            if self.instrument_parameters != "em27":
+                self.logger.warning(
+                    "Individual ILS Parameters are used,"
+                    " the parameters are not "
+                    "taken from the official COCCON ILS list!\n"
+                    f"Used ILS Parameters: {self.ils_parameters}.")
+        else:
+            # ILS parameters NOT given in general input file.
+            if self.instrument_parameters == "em27":
+                # for the EM27 try to take it from the ILS List:
+                self.logger.debug("Load ILS parameters from file.")
+                ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
+            else:
+                # for all other instruments use per default an ideal ILS
+                # Due to the historically grown design of proffast
+                # it is neccesar to use ME=0.983 and PE=0. This is "converted"
+                # in invers to unity ILS:
+                ME1 = ME2 = 0.983
+                PE1 = PE2 = 0.0
+                self.logger.info(
+                    "Using unity ILS parameter for non-em27 instruments as "
+                    "default. If you want to use different, specify it in the "
+                    "general input file.")
+
         lat = self.coords["lat"]
         lon = self.coords["lon"]
         alt = self.coords["alt"]
         comment = (
-            "This spectrum is generated using preprocess4, a part of "
+            "This spectrum is generated using preprocess5, a part of "
             "PROFFAST controlled by PROFFASTpylot.")
         if self.note is not None:
             comment = " ".join([comment, self.note])
@@ -613,7 +674,14 @@ class Preparation():
             'igrams': igrams,
             'path_preprocess_log': self.logfile_path,
             'filename_logfile': logfile,
-            'path_spectra': outfolder
+            'path_spectra': outfolder,
+            'mpow_fft': self.instrument_args["mpow_fft"],
+            'semi_fov': self.instrument_args["semi_fov"],
+            'dual_ifg_recording': self.instrument_args["dual_ifg_recording"],
+            'swap_channels': self.instrument_args["swap_channels"],
+            'use_analytical_phase': \
+                self.instrument_args["use_analytical_phase"],
+            'band_selection': self.instrument_args["band_selection"],
                      }
         return parameters
 
@@ -741,9 +809,6 @@ class Preparation():
         Returns:
             ils_parameters (tuple): MEChan1, PEChan1, MEChan2, PEChan2
         """
-        if self.tccon_mode:
-            return (0.983, 0., 0.983, 0.)
-
         ils_df = pd.read_csv(self.ils_file, skipinitialspace=True)
         ils_df["ValidSince"] = pd.to_datetime(ils_df["ValidSince"])
         ils_df = ils_df.set_index("Instrument")
@@ -994,13 +1059,6 @@ class Preparation():
             self.logger.warning(
                 f"The Longitude of the map file ({lon_map}) "
                 f"Does not match the Latitude given to PROFFASTpylot ({lon})!")
-
-    def _tccon_mode_warning(self):
-        """Print warning if TCCON mode is activated """
-        self.logger.warning(
-            "TCCON Mode is activated!\nThis will not work with standard"
-            " EM27/SUN interferograms.\nOnly continue if this setting"
-            " was choosen by purpose. Otherwise break the execution!")
 
     def _get_localtime_offset(self):
         """Return offset between measurement time and local time.
