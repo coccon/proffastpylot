@@ -61,7 +61,8 @@ class Preparation():
     ]
 
     defaults = {
-        "ggg2020mapfiles": False,  # do not give in input file!
+        "mapfile_wetair_vmr": None,  # this is determined automatically if
+                                     # you use mapfiles from tccon
         "coords": {"lat": None, "lon": None, "alt": None},
         "coord_file": None,
         "utc_offset": 0.0,
@@ -209,6 +210,13 @@ class Preparation():
                 "Individual ILS Parameters were used, the parameters were not "
                 "taken from the official COCCON ILS list!\n"
                 f"Used ILS Parameters: {self.ils_parameters}.")
+
+        self.mapfile_format = None  # is determined in prepare_mapfile
+        if self.mapfile_wetair_vmr is None:
+            self.logger.warning(
+                "The parameter `mapfile_wetair_vmr` was given in the "
+                "input file. Don't use this option if you are using ggg2020 "
+                "or ggg2014 mapfiles from TCCON!")
 
         dt_format = "%y%m%d"
         result_foldername = "{}_{}_{}-{}".format(
@@ -694,13 +702,13 @@ class Preparation():
         lon = self.coords["lon"]
         alt = self.coords["alt"]
         # prepare map file path
-        if self.ggg2020mapfiles:
+        if self.mapfile_format == "ggg2020":
             map_file = os.path.join(
                 self.map_path,
                 f"{self.site_abbrev}{date.strftime('%Y%m%d')}Z_"
                 "LocalTimeNoon.map"
                 )
-        else:
+        elif self.mapfile_format == "ggg2014":
             map_file = os.path.join(
                 self.map_path,
                 f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
@@ -715,13 +723,12 @@ class Preparation():
             "MAPPATH_WITH_MAPFILE": map_file
         }
 
-        # set %WET_VMR% parameter
-        #   GGG2014 map files: dry air (False)
-        #   GGG2020 map files: wet air (True)
-        if self.ggg2020mapfiles:
-            parameters["WET_VMR"] = True
-        else:
-            parameters["WET_VMR"] = False
+        self._set_wet_vmr()  # set type of mapfile
+        parameters["WET_VMR"] = self.mapfile_wetair_vmr
+        if self.mapfile_wetair_vmr not in [True, False]:
+            raise RuntimeError(
+                "It was not determined if the mapfile "
+                "is based on dry or wet air.")
         return parameters
 
     def get_inv_parameters(self, date):
@@ -923,7 +930,7 @@ class Preparation():
         if len(mapfiles) != 0:
             self.logger.debug("Detected GGG2020 map files!")
             # GGG2020map files found!
-            self.ggg2020mapfiles = True
+            self.mapfile_format = "ggg2020"
             self._interpolate_map_files(date)
         else:
             srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
@@ -934,13 +941,31 @@ class Preparation():
                     f"{date.strftime('%Y-%m-%d')}. This is not recommended! "
                     "PROFFASTpylot is calibrated using GGG2020 map files, "
                     "please use GGG2014 only for comparison purposes!")
-                self.ggg2020mapfiles = False
+                self.mapfile_format = "ggg2014"
             else:
                 self.logger.warning(
                     "No suitable map file found at "
                     f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
                 return False
         return True
+
+    def _set_wet_vmr(self):
+        """Set self.mapfile_wet_vmr if not given in input file
+        to set the %WET_VMR% parameter.
+        - GGG2014 map files: dry air (False)
+        - GGG2020 map files: wet air (True)
+        value can be given separately in input file.
+        """
+        if self.mapfile_wetair_vmr is not None:
+            return
+        if self.mapfile_format == "ggg2020":
+            self.mapfile_wetair_vmr = True
+        elif self.mapfile_format == "ggg2014":
+            self.mapfile_wetair_vmr = False
+        else:
+            raise RuntimeError(
+                "The format of the mapfile was not determined."
+                )
 
     def _interpolate_map_files(self, date):
         """Interpolate GGG2020 map files.
