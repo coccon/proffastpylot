@@ -141,9 +141,9 @@ class Preparation():
             self.logger.error(
                 f"The instrument file '{instrument_file}' could not be found"
                 " on disk.\nPlease give a correct filename or use"
-                " a pre-defined instrument template: " +\
-                ", ".join(list(self.instrument_templates.keys())) +\
-                ".\nThis is a fatal error. Terminating PROFFASTpylot"
+                " a pre-defined instrument template: "
+                ", ".join(list(self.instrument_templates.keys())) + "\n."
+                "This is a fatal error. Terminating PROFFASTpylot."
             )
             exit()
         # convert the Boolean values to .true. and .false.
@@ -418,23 +418,6 @@ class Preparation():
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
-    # obsolete method?????
-    # def get_map_file(self, date):
-    #    """Return path to mapfile of given date.
-    #
-    #    params:
-    #        date: datetime object
-    #    """
-    #    search_string = os.path.join(
-    #        self.map_path,
-    #        "*{date}.map".format(date=date.strftime("%y%m%d")))
-    #    map_file = glob(search_string)
-    #
-    #    assert len(map_file) == 1
-    #    map_file = map_file[0]
-    #
-    #    return map_file
-
     def generate_prf_input(self, template_type, date=None):
         """Generate a template file.
 
@@ -462,9 +445,6 @@ class Preparation():
             parameters = self.get_prep_parameters(date)
             if parameters["igrams"] == "":
                 return None
-        # obsolet with preprocess 5
-        # elif template_type == "tccon":
-        #     parameters = {"tccon_setting": self.tccon_setting}
 
         elif template_type == "pcxs":
             parameters = self.get_pcxs_parameters(date)
@@ -687,7 +667,7 @@ class Preparation():
             'semi_fov': self.instrument_args["semi_fov"],
             'dual_ifg_recording': self.instrument_args["dual_ifg_recording"],
             'swap_channels': self.instrument_args["swap_channels"],
-            'use_analytical_phase': \
+            'use_analytical_phase':
                 self.instrument_args["use_analytical_phase"],
             'band_selection': self.instrument_args["band_selection"],
                      }
