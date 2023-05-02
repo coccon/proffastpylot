@@ -5,7 +5,7 @@
 ## Content
 
 1. Download the PROFFASTpylot repository
-2. Get PROFFAST and copy it to proffastpylot
+2. Get PROFFAST and copy it to `proffastpylot`
 3. Create a virtual environment in python
 4. Install PROFFASTpylot
 5. Resulting folder structure
@@ -88,7 +88,7 @@ To test the installation execute the `run.py` script. For details see [usage.md]
 
 ## 5. Resulting folder structure
 
-If you follow exactly the installation guide your folder strucutre should look like the following:
+If you follow exactly the installation guide your folder structure should look like the following:
 ```
 proffastpylot
 ├── prf_venv
