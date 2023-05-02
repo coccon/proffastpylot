@@ -12,7 +12,7 @@ They can be divided into four categories:
  All paths can be chosen freely (e.g. input data can be located on an external hard disk).   
  **We recommend disentangling input data, output data and the program execution files from each other.**
 
-_Note: To run the example files using [`run.py`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) PROFFAST must be located inside the proffastpylot directory as described in [`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md)._
+_Note: To run the example files using [`run.py`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) PROFFAST must be located inside the proffastpylot directory as described in [`docs/1-1_installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/1-1_installation.md)._
 
 ## 1. Input data
 
@@ -69,7 +69,7 @@ analysis_path
 ...
 ```
 Inside the `YYMMDD` folder the spectra, which are named `YYMMDD_HHMMSSSN.BIN` (or `SM.BIN`) will be located. Note that this timestamp as well as the folder name correspond to the measurement time. 
-The UTC time of the measurement, that is derived from the variable `utc_offset` in `preprocess`, is written to the header of the spectrum. For more information on time offsets, see [`docs/time_offsets.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/time_offsets.md).
+The UTC time of the measurement, that is derived from the variable `utc_offset` in `preprocess`, is written to the header of the spectrum. For more information on time offsets, see [`docs/2-2_time_offsets.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/2-2_time_offsets.md).
 
 The files that were located in `YYMMDD/pT` are handled elsewhere since version 1.1. 
 
