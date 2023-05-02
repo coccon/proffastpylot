@@ -79,7 +79,7 @@ In this file all parameters are given and explained.
   interferograms must be recorded double sided.  
   1: Standard TCCON Setting    
   2: Karlsruhe TCCON Setting
-- **`mapfile_wet_vmr`**  
+- **`mapfile_wetair_vmr`**  
   default: `None` (determined during runtime)  
   _If you are using other mapfiles_ than the standard ggg2020 or ggg2014 files you can set if the columns are based on wet air (`True`) or dry air (`False`).
 
