@@ -1,5 +1,9 @@
-# instrument parameters for the EM27/SUN spectrometers (for PROFFASTpreprocess)
+# instrument parameters for the vertex70 spectrometers (for PROFFASTpreprocess)
 
+# Semi FOV:
+# This parameter can be calculated from the entry "Aperture Setting" of the 
+# OPUS file:
+# semiFOV [rad] = "Aperture Setting" / (2 * 418)
 # in rad
 semi_fov: 1.25e-3
 
