@@ -29,7 +29,7 @@ specify time offset of OPUS time versus UT (hours+decimals)
 if fixed observer coordinates: specify fixed observer coords (lat_deg,long_deg (East pos),alt_km)
 
 $
-.true.
+T
 %site_name%
 %utc_offset%
 %lat%  %lon%  %alt%

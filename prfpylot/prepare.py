@@ -146,14 +146,14 @@ class Preparation():
                 "This is a fatal error. Terminating PROFFASTpylot."
             )
             exit()
-        # convert the Boolean values to .true. and .false.
+        # convert the Boolean values to "T" and "F"
         temp = self.instrument_args.copy()
         for key, val in temp.items():
             if isinstance(val, bool):
                 if val:
-                    self.instrument_args[key] = ".true."
+                    self.instrument_args[key] = "T"
                 else:
-                    self.instrument_args[key] = ".false."
+                    self.instrument_args[key] = "F"
 
         # define full path <analysis>/<site>_<instrument_nr>
         self.analysis_instrument_path = os.path.join(
@@ -212,7 +212,7 @@ class Preparation():
                 f"Used ILS Parameters: {self.ils_parameters}.")
 
         self.mapfile_format = None  # is determined in prepare_mapfile
-        if self.mapfile_wetair_vmr is None:
+        if self.mapfile_wetair_vmr is not None:
             self.logger.warning(
                 "The parameter `mapfile_wetair_vmr` was given in the "
                 "input file. Don't use this option if you are using ggg2020 "
