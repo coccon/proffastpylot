@@ -3,7 +3,7 @@
 # Semi FOV:
 # This parameter can be calculated from the entry "Aperture Setting" of the 
 # OPUS file:
-# semiFOV [rad] = 0.8 / (2 * 418)
+# semiFOV [rad] = "Aperture Setting" / (2 * 418)
 # in rad
 semi_fov: 1.25e-3
 
