@@ -69,7 +69,7 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 4. To deactivate run `deactivate`
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
-In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/troubleshooting.md) page.
+In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/2-5_troubleshooting.md) page.
 
 You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4,
 the other steps need to be executed only the first time.
@@ -84,7 +84,7 @@ Navigate to `proffastpylot` and enter
 pip install --editable .
 ```
 
-To test the installation execute the `run.py` script. For details see [usage.md](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/usage.md).
+To test the installation execute the `run.py` script. For details see [usage.md](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/1-2_usage.md).
 
 ## 5. Resulting folder structure
 
