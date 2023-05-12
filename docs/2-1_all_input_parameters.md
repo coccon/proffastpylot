@@ -63,6 +63,19 @@ In this file all parameters are given and explained.
   This parameter replaces and extends the old parameters `tccon_setting` and `tccon_mode` (new in version 1.3).   
   Possible values are: `em27`(default), `tccon_ka_hr`, `tccon_ka_lr`, `tccon_default_hr`, `tccon_default_lr`, `invenio`, `vertex`, `ircube` or a path to an instrument-config file.  
   For more details see at the [2-4_instrument_parameters](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/2-4_instrument_parameters.md) documentation.
+- **`tccon_setting`**  
+  Deprecated since version 1.2.   
+  Setting of the TCCON instrument. Will be evaluated in case of
+- `tccon_mode: True` only.  
+  Deprecated since version 1.2.   
+  Use PROFFAST to evaluate low resolution spectra recorded with
+  a 125HR instrument. The resolution must be 0.5 cm^-1 and the
+  interferograms must be recorded double sided.  
+  1: Standard TCCON Setting    
+  2: Karlsruhe TCCON Setting
+- **`mapfile_wetair_vmr`**  
+  default: `None` (determined during runtime)  
+  _If you are using other mapfiles_ than the standard ggg2020 or ggg2014 files you can set if the columns are based on wet air (`True`) or dry air (`False`).
 
 ## Path settings
 
