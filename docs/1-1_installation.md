@@ -5,10 +5,12 @@
 ## Content
 
 1. Download the PROFFASTpylot repository
-2. Get PROFFAST and copy it to proffastpylot
+2. Get PROFFAST and copy it to `proffastpylot`
 3. Create a virtual environment in python
 4. Install PROFFASTpylot
 5. Resulting folder structure
+6. Getting Updates
+7. Contribution Notes
 
 
 
@@ -58,7 +60,7 @@ Copy the `prf` folder that was extracted from the zip file into `proffastpylot`.
 We recommend using a virtual environment (venv) to avoid conflicts between any other packages or Python modules.
 
 1. (Only first time) Navigate to the `proffastpylot` folder using a terminal.
-2. (Only first time) Enter `python -m venv prf_venv`
+2. (Only first time) Enter `python -m venv prf_venv
    This command will create a folder named `prf_venv` which contains the virtual environment
 3. Activate the virtual environment with
    - *Windows PowerShell:* `.\prf_venv\Scripts\Activate.ps1`
@@ -67,7 +69,7 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 4. To deactivate run `deactivate`
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
-In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/troubleshooting.md) page.
+In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/2-5_troubleshooting.md) page.
 
 You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4,
 the other steps need to be executed only the first time.
@@ -82,11 +84,11 @@ Navigate to `proffastpylot` and enter
 pip install --editable .
 ```
 
-To test the installation execute the `run.py` script. For details see [usage.md](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/usage.md).
+To test the installation execute the `run.py` script. For details see [usage.md](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/1-2_usage.md).
 
 ## 5. Resulting folder structure
 
-If you follow exactly the installation guide your folder strucutre should look like the following:
+If you follow exactly the installation guide your folder structure should look like the following:
 ```
 proffastpylot
 ├── prf_venv
@@ -109,3 +111,17 @@ proffastpylot
 │   ├── ...
 └── setup.py
 ```
+
+## 6. Getting Updates
+
+If you used git during installation, you can easily get updates by entering
+
+```
+git pull
+```
+in a `git bash` or in a Terminal in your `proffastpylot` folder. This command will download all available updates.
+If you downloaded PROFFASTpylot as zip file, you need to redo all steps of this installation script.
+
+## 7. Contribution Notes
+
+If you want to share a contribution to PROFFASTpylot please check our `dev` branch first (by `git checkout dev`) if your change still fits to the latest developments. Afterwards you are welcome to create a merge request or contact us via email about your suggestion.

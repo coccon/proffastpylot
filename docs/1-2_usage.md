@@ -39,7 +39,7 @@ if __name__ == "__main__":
     input_file = "input_sodankyla_example.yml"
     MyPylot = Pylot(input_file)
 ```
-Note that the `if __name__ == "__main__"` statement needs to be put before initialising the Pylot to prevent problems with the multiprocessing on Windows.
+Note that the `if __name__ == "__main__"` statement needs to be put before initializing the Pylot to prevent problems with the multiprocessing on Windows.
 
 Afterwards all steps of PROFFAST can be executed automatically one after the other:
 
@@ -73,4 +73,4 @@ Afterwards, `Pylot.run()` will not execute preprocess.
 
 ## 3. Folder structure
 
-The results will be created automatically. Please see [`docs/folder_structure.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/folder_structure.md) about how the results are organized.
+The results will be created automatically. Please see [`docs/folder_structure.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/1-4_folder_structure.md) about how the results are organized.
