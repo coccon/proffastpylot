@@ -106,10 +106,10 @@ The main functionalities are:
 To ensure a simple usage and a fast error detection by the user several measures have been taken:
 
 - The empirical instrumental parameters (ILS parameters) [@Alberti:2022] are taken automatically from an internal list.
-- For auxiliary data, cross\-checks are implemented, that generate a warning or a controlled program stop (e.g. checking the correct location of atmospheric a-priori files).
+- For auxiliary data, cross\-checks are implemented that generate a warning or a controlled program stop (e.g. checking the correct location of atmospheric a-priori files).
 - Automatic handling of different time zones in interferograms and auxiliary data.
 - Correct handling of various pressure records (different sampling intervals or data formats).
-- Different levels of logging ("warning", "info" and "debug") help readability and troubleshooting.
+- Different levels of logging ("warning", "info", and "debug") help readability and troubleshooting.
 
 ## Design
 The PROFFASTpylot consists of three layers which inherit from each other and an independent fourth class:  
@@ -125,7 +125,7 @@ DD is involved in implementing additional functionality for the following releas
 CA is continuously providing the empirical instrumental parameters, which are distributed as a part of the PROFFASTpylot.
 
 # Acknowledgements
-We thank ESA for the funding in the framework of the FRM4GHG-II, COCCON-PROCEEDSIII and COCCON-OPERA projects. 
+We thank ESA for the funding in the framework of the FRM4GHG-II, COCCON-PROCEEDS-III and COCCON-OPERA projects. 
 We are thankful for the useful feedback, questions and suggestions that we received, especially by Patrick Aigner (TUM), Moritz Makowski (TUM), Simona Latchabady (LSCE), Morgan Lopez (LSCE) and David Noone (University of Auckland).
 
 # References
