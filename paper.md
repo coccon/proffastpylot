@@ -14,13 +14,17 @@ authors:
   - name: Lena Feld
     equal-contrib: true
     affiliation: 1
+    corresponding: true
+    orcid: 0009-0000-9955-7658
   - name: Benedikt Herkommer
     equal-contrib: true
     affiliation: 1
+    orcid: 0000-0001-5784-2127
   - name: Darko Dubravica
     affiliation: 1
   - name: Carlos Alberti
     affiliation: 1
+    orcid: 0000-0002-1574-5393
   - name: Frank Hase
     affiliation: 1
 affiliations:
