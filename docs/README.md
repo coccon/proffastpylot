@@ -1,5 +1,3 @@
-# Documentation
-
 ## Table of Contents
 This is a short overview about the content of this documentation.
 
@@ -14,7 +12,7 @@ This is a short overview about the content of this documentation.
 	4. **Folder structure**  
 		Here, the file organization is explained.
 
-2. Additional Information  
+2. User Information
 	In this Chapter additional Information is provided.
 	1. **All Input Parameters**  
 		Lists all input parameters for lookup.
@@ -24,3 +22,6 @@ This is a short overview about the content of this documentation.
 		A short information about the ILS Parameters that are provided with PROFFASTpylot.
 	4. **Troubleshooting**  
 		If you have a problem, check if it is solved already.
+
+3. Developer Information
+	1. **Contribution Notes**
