@@ -5,8 +5,6 @@ This page list the internal methods of all modules, for developing purposes.
 
 PROFFASTpylot consists of four main modules:
 
-.. hlist::
-   :columns: 2
 * **Pylot** contains the high level functionality,
 * **Filemover** creates a consistent file structure from the PROFFAST output,
 * **Prepare** derives all processing options from the input and
@@ -14,7 +12,7 @@ PROFFASTpylot consists of four main modules:
 
 
 Pylot
------
+------
 
 .. automodule:: pylot
    :members:
@@ -23,7 +21,7 @@ Pylot
 
 
 Filemover
-------
+----------
 
 .. automodule:: filemover
    :members:
@@ -32,7 +30,7 @@ Filemover
 
 
 Prepare
-------
+---------
 
 .. automodule:: prepare
    :members:
@@ -42,7 +40,7 @@ Prepare
 
 
 Pressure
------
+---------
 
 .. automodule:: pressure
    :members:

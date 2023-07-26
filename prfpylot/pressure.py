@@ -180,9 +180,11 @@ class PressureHandler():
             )
 
     def get_pressure_at(self, timestamp):
-        """ Return the pressure at timestamp
-        params:
-            timestamp (datetime)
+        """Return the pressure at timestamp.
+        
+        Parameters:
+            timestamp (datetime:datetime): Time in UTC
+
         """
         pkey = self.dataframe_parameters["pressure_key"]
         # get the two closest entries:
@@ -330,9 +332,19 @@ class PressureHandler():
         self.p_df[pressure_key] += self.pressure_offset
 
     def _parse_datetime_col(self, df, date=None):
-        """
-        parse the dataframe for a suitable datetime.
+        """Parse the dataframe for a suitable datetime.
+        
         Add the column 'parsed_datecol' to the dataframe
+        Depending on the options given, the datetime column is constructed f
+        rom the combination of the separate time and date columns.
+        
+        Parameters:
+            df (pandas.DataFrame): pressure dataframe containing time 
+                information in arbitrary format.
+
+        Returns:
+            df (pandas.DataFrame): with an additional datetime column.
+
         """
         # give warning if an empty df is read in and this is not the first
         # or the last day of the list
@@ -456,11 +468,16 @@ class PressureHandler():
         return d
 
     def _check_mandatory(self):
-        """Check in mandatory options if
-            - pressure key is given,
-            - time key XOR datetime key is given and
-            - filename is not empty.
-        raise Error if not fullfilled.
+        """Check mandatory options for completeness.
+
+        The options must satisfy the following:
+        - A pressure key is given,
+        - the time key XOR datetime key is given and
+        - the filename is not empty.
+
+        Raises:
+            RuntimeError: in case of a missing option.
+
         """
         # pressure key are given
         pressure_key = self.dataframe_parameters.get("pressure_key")
