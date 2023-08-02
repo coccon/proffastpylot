@@ -70,6 +70,7 @@ class Preparation():
         "start_with_spectra": False,
         "note": None,
         "delete_abscosbin_files": False,
+        "delete_pT_VMR_files": False,
         "delete_input_files": False,
         "ils_parameters": None,
         "ignore_interpolation_error": None,
@@ -226,9 +227,16 @@ class Preparation():
             self.dates[-1].strftime(dt_format))
         self.result_folder = os.path.join(self.result_path, result_foldername)
 
-        # log of the processes
+        # path to the logfiles of the processes
         self.logfile_path = os.path.join(
             self.result_folder, "logfiles")
+        # path to store the input files in:
+        self.input_files_folder = os.path.join(
+            self.result_folder, "input_files")
+        # path to store the final raw-outputfiles of proffast
+        self.raw_output_prf_folder = os.path.join(
+            self.result_folder, "raw_output_proffast")
+
 
         # calculate the _localtime_offset
         self._localtime_offset = self._get_localtime_offset()

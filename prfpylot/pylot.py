@@ -311,22 +311,19 @@ class Pylot(FileMover):
         """After execution clean up the files not needed anymore"""
         self.logger.info("Removing temporary files ...")
 
+        self.logger.debug("Handling pT and VMR files...")
+        self.handle_pT_VMR_files()
+
         # handling abscosbin
         if self.delete_abscosbin_files:
             self.logger.debug("Deleting abscos.bin files ...")
             self.delete_abscos_files()
-            self.logger.debug("Deleting pT and VMR files...")
-            self.delete_pT_VMR_files()
         else:
             self.logger.info(
                 "Keeping abscos.bin files ...\n"
                 "They are located in "
                 f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
             self.check_abscosbin_summed_size()
-            self.logger.info(
-                "Keeping pT and VMR files...\n"
-                "They are located in "
-                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
 
         # handling input files
         if self.delete_input_files:
@@ -376,7 +373,7 @@ class Pylot(FileMover):
     def _get_merged_df(self):
         """Read all invparm.dat files as Dataframe and combine them."""
         search_str = os.path.join(
-            self.result_folder, f"{self.site_name}*-invparms_?.dat")
+            self.raw_output_prf_folder, f"{self.site_name}*-invparms_?.dat")
         invparms_filelist = glob(search_str)
         if len(invparms_filelist) == 0:
             raise RuntimeError(

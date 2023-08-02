@@ -88,11 +88,13 @@ class FileMover(Preparation):
             os.makedirs(pt_path)
 
     def _create_result_dir(self):
-        """Create a result dir and a backup if previous results exist.
+        """Create a result dirs and a backup if previous results exist.
 
-        If the datafolder does exists, the existing folder is renamed adding
+        If the result folder does exists, the existing folder is renamed adding
         backupX where X increases if an other backup does already exists.
         After renaming, a new folder is created.
+        Within this folder the subfolders 'input_files', 'logfiles' and
+        'raw_output_proffast' are created. 
         """
 
         # The result_foldername and result dir are already specified in
@@ -113,7 +115,7 @@ class FileMover(Preparation):
                     f"{result_folder_backup} and created a new one.")
                 # rename and create new, empty folder
                 os.rename(self.result_folder, result_folder_backup)
-                os.makedirs(self.result_folder)
+
             else:  # backup_results is False
                 self.logger.warning(
                     f"The result directory {self.result_folder} exists "
@@ -125,6 +127,9 @@ class FileMover(Preparation):
     def move_results(self):
         """Move the results to the data folder.
         """
+        # check if target folder exists. If not create:
+        if not os.path.exists(self.raw_output_prf_folder):
+            os.makedirs(self.raw_output_prf_folder)
         suffix_list = [
             "colsens_?.dat",
             "invparms_?.dat",
@@ -145,7 +150,7 @@ class FileMover(Preparation):
                 sourcefiles = glob(source)
                 for sfile in sourcefiles:
                     target = os.path.join(
-                        self.result_folder,
+                        self.raw_output_prf_folder,
                         os.path.basename(sfile))
                     try:
                         shutil.move(sfile, target)
@@ -158,21 +163,40 @@ class FileMover(Preparation):
                         self.logger.error("Unknown error while movig file "
                                           f"{sfile}. Errormessage: {e}")
 
-    def delete_pT_VMR_files(self):
-        """Delete the pT and VMR files created by pcxs."""
+    def handle_pT_VMR_files(self):
+        """Delete or move the pT and VMR files created by pcxs.
+        
+        If the files are deleted or moved dependes on the input parameter
+        'delete_pT_VMR_files'. If not set, this defaults to 'True'.
+        """
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         for date in self.dates:
             pTFile =\
                 f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
             VMRFile =\
                 f"{self.site_name}{date.strftime('%y%m%d')}-VMR_fast_out.dat"
-            for file in [pTFile, VMRFile]:
-                try:
-                    os.remove(os.path.join(wrk_fast_folder, file))
-                except FileNotFoundError:
-                    self.logger.error(
-                        "File not Found: "
-                        f"Could not delete {file}")
+            try:
+                for file in [pTFile, VMRFile]:
+                    filepath = os.path.join(wrk_fast_folder, file)
+                    if self.delete_pT_VMR_files:
+                        action_string = f"delete {file}"
+                        os.remove(filepath)
+                    else:
+                        action_string = f"move {file} to result folder!"
+                        if self.delete_abscos_files:
+                            shutil.move(
+                                filepath,
+                                os.path.join(self.raw_output_prf_folder, file)
+                                    )
+                        else:
+                            shutil.copy(
+                                filepath,
+                                os.path.join(self.raw_output_prf_folder, file)
+                                    )
+            except FileNotFoundError:
+                self.logger.error(
+                    f"File not Found: Could not {action_string}")
+    
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files created by pcxs."""
@@ -215,15 +239,17 @@ class FileMover(Preparation):
 
     def move_input_files(self):
         """Move the input files for prep., pcxs and inv to result folder"""
-        # crate a folder in result dir for input files:
-        inp_folder = os.path.join(self.result_folder, "input_files")
-        if not os.path.exists(inp_folder):
-            os.mkdir(inp_folder)
+        # check if target folder exist. If not create:
+        if not os.path.exists(self.input_files_folder):
+            os.makedirs(self.input_files_folder)
+
         for inp_file in self.global_inputfile_list:
             try:
                 shutil.move(
                     inp_file,
-                    os.path.join(inp_folder, os.path.basename(inp_file)))
+                    os.path.join(
+                        self.input_files_folder, os.path.basename(inp_file))
+                    )
             except FileNotFoundError:
                 self.logger.error(
                     "File not found: "
