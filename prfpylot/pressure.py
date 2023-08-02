@@ -183,7 +183,7 @@ class PressureHandler():
         """Return the pressure at timestamp.
         
         Parameters:
-            timestamp (datetime:datetime): Time in UTC
+            timestamp (datetime:datetime): in timezone of pressure file
 
         """
         pkey = self.dataframe_parameters["pressure_key"]
