@@ -46,8 +46,7 @@ class FileMover(Preparation):
         - logfiles
         """
         self._create_analysis_subdirs()
-        self._create_result_dir()
-        self._create_logfile_dir()
+        self._create_result_dir()  # including the subdirs
 
     def _create_analysis_subdirs(self):
         """Create subdirs of the analysis folder.
@@ -90,13 +89,13 @@ class FileMover(Preparation):
     def _create_result_dir(self):
         """Create the result directories and a backup if previous results exist.
 
+        Within this folder the subfolders 'input_files', 'logfiles' and
+        'raw_output_proffast' are created.
+
         If backup_results: True is given and the result folder does exists,
         the existing folder is renamed adding
         backupX where X increases if an other backup does already exists.
-
         After renaming, a new folder is created.
-        Within this folder the subfolders 'input_files', 'logfiles' and
-        'raw_output_proffast' are created. 
         """
 
         # specification of self.result_folder in prepare
@@ -122,7 +121,7 @@ class FileMover(Preparation):
                     "already! The content may be overwritten. "
                     )
                 return
-        
+
         os.makedirs(self.result_folder)
         self._create_result_subdirs()
 
@@ -143,7 +142,7 @@ class FileMover(Preparation):
     def move_results(self):
         """Move the results to the data folder.
         """
-        
+
         suffix_list = [
             "colsens_?.dat",
             "invparms_?.dat",
@@ -254,7 +253,7 @@ class FileMover(Preparation):
                     f" {inp_file}")
 
     def move_input_files(self):
-        """Move the input files for prep., pcxs and inv to result folder"""        
+        """Move the input files for prep., pcxs and inv to result folder"""
 
         for inp_file in self.global_inputfile_list:
             try:
