@@ -350,7 +350,7 @@ class Pylot(FileMover):
         """Write the output of preprocess, pcxs and inv to a logfile."""
         self.logger.debug(f"... Write logfile of {program_name} ...")
 
-        file = os.path.join(self.logfile_path, f"{program_name}_output.log")
+        file = os.path.join(self.logfile_folder, f"{program_name}_output.log")
 
         logfile = open(file, "w")
         for i, entry in enumerate(output):

@@ -88,21 +88,21 @@ class FileMover(Preparation):
             os.makedirs(pt_path)
 
     def _create_result_dir(self):
-        """Create a result dirs and a backup if previous results exist.
+        """Create the result directories and a backup if previous results exist.
 
-        If the result folder does exists, the existing folder is renamed adding
+        If backup_results: True is given and the result folder does exists,
+        the existing folder is renamed adding
         backupX where X increases if an other backup does already exists.
+
         After renaming, a new folder is created.
         Within this folder the subfolders 'input_files', 'logfiles' and
         'raw_output_proffast' are created. 
         """
 
-        # The result_foldername and result dir are already specified in
-        # the init of prepare
+        # specification of self.result_folder in prepare
         if os.path.exists(self.result_folder):
             if self.backup_results is True:
                 # check if already other backuped folder exist as well:
-
                 backuped_results = glob(self.result_folder + "_backup*")
                 # rename existing folder by adding _backupN where N is the N-th
                 # backup
@@ -113,23 +113,37 @@ class FileMover(Preparation):
                     "already! "
                     "Renamed existing one to "
                     f"{result_folder_backup} and created a new one.")
-                # rename and create new, empty folder
                 os.rename(self.result_folder, result_folder_backup)
 
             else:  # backup_results is False
+                self._create_result_subdirs()  # only if not existent
                 self.logger.warning(
                     f"The result directory {self.result_folder} exists "
-                    "already! The content may be overwritten."
+                    "already! The content may be overwritten. "
                     )
-        else:
-            os.makedirs(self.result_folder)
+                return
+        
+        os.makedirs(self.result_folder)
+        self._create_result_subdirs()
+
+    def _create_result_subdirs(self):
+        """Create the subfolders in the result folder.
+
+        The folders 'input_files', 'logfiles' and 'raw_output_proffast' 
+        are only created if not exitent.
+        """
+        if not os.path.exists(self.input_files_folder):
+            os.makedirs(self.input_files_folder)
+        if not os.path.exists(self.raw_output_prf_folder):
+            os.makedirs(self.raw_output_prf_folder)
+        if not os.path.exists(self.logfile_folder):
+            os.makedirs(self.logfile_folder)
+        self.logger.debug("Created the subdirs in the result folder.")
 
     def move_results(self):
         """Move the results to the data folder.
         """
-        # check if target folder exists. If not create:
-        if not os.path.exists(self.raw_output_prf_folder):
-            os.makedirs(self.raw_output_prf_folder)
+        
         suffix_list = [
             "colsens_?.dat",
             "invparms_?.dat",
@@ -196,7 +210,6 @@ class FileMover(Preparation):
             except FileNotFoundError:
                 self.logger.error(
                     f"File not Found: Could not {action_string}")
-    
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files created by pcxs."""
@@ -238,10 +251,7 @@ class FileMover(Preparation):
                     f" {inp_file}")
 
     def move_input_files(self):
-        """Move the input files for prep., pcxs and inv to result folder"""
-        # check if target folder exist. If not create:
-        if not os.path.exists(self.input_files_folder):
-            os.makedirs(self.input_files_folder)
+        """Move the input files for prep., pcxs and inv to result folder"""        
 
         for inp_file in self.global_inputfile_list:
             try:
@@ -256,14 +266,6 @@ class FileMover(Preparation):
                     f"Could not move {type} input file"
                     f" {inp_file}.")
 
-    def _create_logfile_dir(self):
-        """Create logfile dir if is does not exist."""
-        if not os.path.exists(self.logfile_path):
-            self.logger.debug(
-                f"Logfile path did not exist, create {self.logfile_path}.")
-            os.makedirs(self.logfile_path)
-        self.logger.debug(f"Logfile_path: {self.logfile_path}")
-
     def _move_generallogfile_to_logdir(self):
         """Move the general logfile to the logdir"""
 
@@ -275,7 +277,7 @@ class FileMover(Preparation):
                 self.logger.removeHandler(handler)
                 del handler
             # self.logger.handlers[:][1].close()
-        target = os.path.join(self.logfile_path,
+        target = os.path.join(self.logfile_folder,
                               os.path.basename(self.pylot_log))
         try:
             shutil.move(self.pylot_log, target)

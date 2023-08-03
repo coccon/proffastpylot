@@ -228,7 +228,7 @@ class Preparation():
         self.result_folder = os.path.join(self.result_path, result_foldername)
 
         # path to the logfiles of the processes
-        self.logfile_path = os.path.join(
+        self.logfile_folder = os.path.join(
             self.result_folder, "logfiles")
         # path to store the input files in:
         self.input_files_folder = os.path.join(
@@ -668,7 +668,7 @@ class Preparation():
             'utc_offset': str(self.utc_offset),
             'comment': comment,
             'igrams': igrams,
-            'path_preprocess_log': self.logfile_path,
+            'path_preprocess_log': self.logfile_folder,
             'filename_logfile': logfile,
             'path_spectra': outfolder,
             'mpow_fft': self.instrument_args["mpow_fft"],
