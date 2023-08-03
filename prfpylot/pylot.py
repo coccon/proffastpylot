@@ -71,7 +71,7 @@ class Pylot(FileMover):
 
         self.logger.info(
             f"Running preprocess with {n_processes} task(s) ...")
- 
+
         # Create inputfiles. If None is returned no date was found for this
         # specific day
         all_inputfiles = []

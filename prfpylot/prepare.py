@@ -237,7 +237,6 @@ class Preparation():
         self.raw_output_prf_folder = os.path.join(
             self.result_folder, "raw_output_proffast")
 
-
         # calculate the _localtime_offset
         self._localtime_offset = self._get_localtime_offset()
 
