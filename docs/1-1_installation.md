@@ -9,8 +9,9 @@
 3. Create a virtual environment in python
 4. Install PROFFASTpylot
 5. Resulting folder structure
-6. Getting Updates
-7. Contribution Notes
+6. Test the installation by running an example dataset
+7. Getting Updates
+8. Contribution Notes
 
 
 
@@ -112,7 +113,16 @@ proffastpylot
 └── setup.py
 ```
 
-## 6. Getting Updates
+## 6. Test the installation by running an example dataset
+To test the installation we provide example raw data and a reference result file to compare the file to.
+The example can be executed by navigating to the example folder and execute `python run.py`
+(please ensure that your virtual environment is activated).   
+When first running the program it will ask you to download the exampe file data to your local computer.
+
+After the run is complete, please compare your results to the data given in `example\Reference_Output_Example_Sodankyla.csv`.
+The deviations should be less than 0.01 ppm for XCO2, 0.1 ppb for XCH4 and 0.1 ppb for XCO.
+
+## 7. Getting Updates
 
 If you used git during installation, you can easily get updates by entering
 
@@ -122,6 +132,6 @@ git pull
 in a `git bash` or in a Terminal in your `proffastpylot` folder. This command will download all available updates.
 If you downloaded PROFFASTpylot as zip file, you need to redo all steps of this installation script.
 
-## 7. Contribution Notes
+## 8. Contribution Notes
 
 If you want to share a contribution to PROFFASTpylot please check our `dev` branch first (by `git checkout dev`) if your change still fits to the latest developments. Afterwards you are welcome to create a merge request or contact us via email about your suggestion.
