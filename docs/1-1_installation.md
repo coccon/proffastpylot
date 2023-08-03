@@ -120,7 +120,7 @@ The example can be executed by navigating to the example folder and execute `pyt
 When first running the program it will ask you to download the exampe file data to your local computer.
 
 After the run is complete, please compare your results to the data given in `example\Reference_Output_Example_Sodankyla.csv`.
-The deviations should be less than 0.1 ppm for XCO2, 0.1 ppb for XCH4 and 0.1 ppb for XCO.
+The deviations should be less than 0.01 ppm for XCO2, 0.1 ppb for XCH4 and 0.1 ppb for XCO.
 
 ## 7. Getting Updates
 
