@@ -47,14 +47,18 @@ In this file all parameters are given and explained.
   Date with the format `YYYY-MM-DD`.  
   The last date to be processed. If not given, the latest available date is the end date.
 - **`delete_abscosbin_files`**  
-  `True` (default) or `False`  
-  If True the `*abscos.bin`, the `pT_fast_out.dat` and the `pT_fast_out.dat` will be removed after the run.
+  `False` (default) or `True`  
+  If True the `*abscos.bin` will be removed after the run.
   The `*abscos.bin` file contains the the simulation of the
-  atmosphere which is the result of the PROFFAST pcxs program.  
+  atmosphere which is the result of the PROFFAST pcxs program.
+- **`delete_pT_VMR_files`**
+  `False` (default) or `True`
+  If `True` the `pT_fast_out.dat` and the `pT_fast_out.dat` will be deleted
+  after the run. If `False` they are copied to the `results/raw_output_proffast` folder.  
   The `pT_fast_out.dat` file contains the daily a priori
   height profile of pressure, temperature, ...  
   The `VMR_fast_out_dat` contains the a prior vertical
-  mix ratios of the gases.
+  mixing ratios of the gases.
 - **`delete_input_files`**  
   `False` (default) or `True`  
   If False: The output of the PROFFAST programs will be moved to results folder.
