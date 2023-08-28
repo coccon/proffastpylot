@@ -87,12 +87,15 @@ note:
 # Delete the abscos.bin files? (True/False)    Default: False
 # The abscos.bin file contains the simulation of the atmosphere which is
 # the result of the 'pcxs' program part of PROFFAST.
-# The pT_fast_out.dat and VMR_fast_out.dat files will be removed as well.
+delete_abscosbin_files: True
+
+# Delete the pT and VMR files (True/False) Default: False
 # The pT_fast_out.dat file contains the daily a priori height profile of
 # pressure, temperature, ...
 # The VMR_fast_out_dat. contains the a prior vertical mix ratios of the
-# gases
-delete_abscosbin_files: True
+# gases.
+# When not removed they are copied/moved to results/raw_output_proffast
+delete_pT_VMR_files: False
 
 
 
