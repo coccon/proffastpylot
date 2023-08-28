@@ -121,7 +121,3 @@ git pull
 ```
 in a `git bash` or in a Terminal in your `proffastpylot` folder. This command will download all available updates.
 If you downloaded PROFFASTpylot as zip file, you need to redo all steps of this installation script.
-
-## 7. Contribution Notes
-
-If you want to share a contribution to PROFFASTpylot please check our `dev` branch first (by `git checkout dev`) if your change still fits to the latest developments. Afterwards you are welcome to create a merge request or contact us via email about your suggestion.
