@@ -11,6 +11,16 @@ Information about the usage and installation of this package can be found in `do
 Please follow the instructions in 
 [`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md) first.  
 
+To create a html version of the documentation install sphinx using
+ ```
+ python -m pip install sphinx sphinx_mdinclude
+ ```
+and execute
+```
+./make html
+```
+inside the `docs` folder.
+
 If you have any comments or questions, contact us at
 benedikt.herkommer@kit.edu and lena.feld@kit.edu.
 You are welcome to contribute.
