@@ -39,7 +39,7 @@ Extracting it will create the folder `proffastpylot`.
 
 
 
-## 2. Get PROFFAST and copy it to `proffastpylot`
+## 2. Get PROFFAST and copy it to proffastpylot
 
 ### Download PROFFAST
 Download PROFFAST Version 2.2 from the KIT website:  
@@ -52,7 +52,7 @@ bash install_proffast_linux.sh
 For Windows users, the executables are already provided.
 
 
-### Copy the PROFFAST directory into `proffastpylot`
+### Copy the PROFFAST directory into proffastpylot
 
 Copy the `prf` folder that was extracted from the zip file into `proffastpylot`.
 
@@ -72,8 +72,7 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
 In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/2-5_troubleshooting.md) page.
 
-You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4,
-the other steps need to be executed only the first time.
+You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4, the other steps need to be executed only the first time.
 
 
 ## 4. Install the PROFFASTpylot repository

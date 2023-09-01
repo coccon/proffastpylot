@@ -178,12 +178,10 @@ class FileMover(Preparation):
 
     def handle_pT_VMR_files(self):
         """Delete or move the pT and VMR files created by pcxs.
-        
-        If the files are deleted or moved or copied
 
-        If `delete_pT_VMR_files` is True (default), the files are removed.
-        If `delete_pT_VMR_files` as False the files are copied (moved) if
-        `delete_abscos_bin`is False (True).
+        If 'delete_pT_VMR_files' is True (default), the files are removed.
+        If 'delete_pT_VMR_files' as False the files are copied (moved) if
+        'delete_abscos_bin' is False (True).
         """
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         for date in self.dates:
