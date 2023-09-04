@@ -73,4 +73,4 @@ Afterwards, `Pylot.run()` will not execute preprocess.
 
 ## 3. Folder structure
 
-The results will be created automatically. Please see [`docs/folder_structure.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/1-4_folder_structure.md) about how the results are organized.
+The results will be created automatically. Please see the **Folder structure** article about how the results are organized.

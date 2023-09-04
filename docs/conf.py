@@ -12,7 +12,6 @@ import sys
 sys.path.insert(0, os.path.abspath('../prfpylot'))
 
 
-
 project = 'PROFFASTpylot'
 copyright = '2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology'
 author = 'Lena Feld, Benedikt Herkommer'
@@ -65,4 +64,3 @@ html_static_path = ['_static']
 #     'full_logo': False}
 
 html_css_files = ['css/custom.css']
-
