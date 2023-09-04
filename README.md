@@ -10,16 +10,6 @@ https://www.imk-asf.kit.edu/english/3225.php.
 Information about the usage and installation of this package can be found in our [Documentation](https://www.imk-asf.kit.edu/english/4261.php).  
 Please follow the installation instructions, first.
 
-To create a html version of the documentation install sphinx using
- ```
- python -m pip install sphinx sphinx_mdinclude
- ```
-and execute
-```
-./make html
-```
-inside the `docs` folder.
-
 If you have any comments or questions, contact us at
 benedikt.herkommer@kit.edu and lena.feld@kit.edu.
 You are welcome to contribute.
