@@ -72,9 +72,9 @@ For the date- and timestamp the datetime can be constructed from two separate co
 In addition to the formats supported by the datetime package (see below) the key `POSIX-timestamp` can be used. This assumes the datetime column to be in seconds passed since the 1979-01-01 in UTC.
 `df[pressure_key]` should contain the corresponding pressure values.
 
-For more information you can look at the pandas [documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) of `read_csv()` and the [datetime package](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+For more information you can look at the [pandas documentation](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) of `read_csv()` and the [datetime package](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
-# Additional Options
+## Additional Options
 
 - A UTC offset of the pressure file can be given as `utc_offset`.
 - In `data_parameters` you can define minimum and maximum pressure values.

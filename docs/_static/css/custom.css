@@ -71,7 +71,7 @@ html {
  *to the left. Removing those two values will center the site again. */
 body {
     position: absolute; 
-    left: 5%; 
+    left: 0%; 
     line-height: 1.5;
     margin: auto;
     padding: 0px;
@@ -150,7 +150,7 @@ div.content {
     margin-left: 40px;
     margin-right: 40px;
     margin-bottom: 50px;
-    font-size: 0.9em;
+    font-size: 1em;
 }
 
 /* heading and navigation */
@@ -159,12 +159,12 @@ div.header {
     position: relative;
     left: 0px;
     top: 0px;
-    height: 85px;
+    height: 100px;
     /* background: #eeeeee; */
     padding: 0 40px;
 }
 div.header h1 {
-    font-size: 2em;
+    font-size: 2.3em;
     font-style: normal;
     font-weight: bold;
     letter-spacing: 1px;
@@ -178,7 +178,7 @@ div.header h1 a {
     color: #404040;
 }
 div.header h2 {
-    font-size: 1.6em;
+    font-size: 1.8em;
     font-weight: normal;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -209,7 +209,7 @@ div.topnav p {
     margin-right: 40px;
     margin-bottom: 0px;
     text-align: right;
-    font-size: 0.8em;
+    font-size: 0.9em;
 }
 div.bottomnav {
     background: #eeeeee;

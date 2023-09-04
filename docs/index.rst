@@ -6,14 +6,15 @@
 Welcome to PROFFASTpylot's documentation!
 ==========================================
 
-Here you can find all instructions on PROFFASTpylot.
+At this documentation you can find all instructions on PROFFASTpylot.
+
+| PROFFASTpylot version 1.2 is an interface for PROFFAST 2.3. For more information about PROFFAST, see https://www.imk-asf.kit.edu/english/3225.php.     
+| The source code is available at gitlab (https://gitlab.eudat.eu/coccon-kit/proffastpylot). If you have any comments or questions, contact us at benedikt.herkommer@kit.edu and lena.feld@kit.edu. You are welcome to contribute.
 
 
 
 User Guide
 ===========
-
-.. mdinclude:: README.md
 
 
 Getting Started

@@ -1,4 +1,4 @@
-# List of all input Parameters
+# List of all Input Parameters
 
 The example input file [`input_sodankyla_example.yml`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/input_sodankyla_example.yml)
 contains the most relevant input parameters to run the PROFFASTpylot.
@@ -66,7 +66,7 @@ In this file all parameters are given and explained.
   To evaluate EM27/SUN data this parameter does not have to be given explicitly.  
   This parameter replaces and extends the old parameters `tccon_setting` and `tccon_mode` (new in version 1.3).   
   Possible values are: `em27`(default), `tccon_ka_hr`, `tccon_ka_lr`, `tccon_default_hr`, `tccon_default_lr`, `invenio`, `vertex`, `ircube` or a path to an instrument-config file.  
-  For more details see at the [2-4_instrument_parameters](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/2-4_instrument_parameters.md) documentation.
+  For more details see at the **Input Parameters** article of the documentation.
 - **`tccon_setting`**  
   Deprecated since version 1.2.   
   Setting of the TCCON instrument. Will be evaluated in case of

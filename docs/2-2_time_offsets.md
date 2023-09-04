@@ -1,4 +1,4 @@
-# Time offsets
+# Time Offsets
 
 Since version 1.1 the handling of the time offsets is improved.
 This enables PROFFASTpylot now to process measurements near the date line which have been recorded near the dateline, where one local day belongs to two different UTC days and vice versa.
