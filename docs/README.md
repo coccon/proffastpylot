@@ -1,3 +1,19 @@
+## Build the documentation
+
+A webversion of the documentation is available [here](https://www.imk-asf.kit.edu/english/4261.php).
+
+To create the html version of the documentation, install sphinx with
+ ```
+ python -m pip install sphinx sphinx_mdinclude
+ ```
+and execute
+```
+./make html
+```
+inside the `docs` folder.
+
+
+
 ## Table of Contents
 This is a short overview about the content of this documentation.
 
