@@ -287,7 +287,7 @@ class Preparation():
         """Return a list of dates for the given site, instrument.
         Truncate the list if start_date and end_date are given.
 
-        Params:
+        Parameters:
             start_date (dt.date): optional start date
             end_date (dt.date): optional end date
         """
@@ -431,7 +431,7 @@ class Preparation():
         Calling the corresponding collect parameters function
         and replace template function.
 
-        params:
+        Parameters:
             template_type (str): Can be "prep", "inv" or "pcxc"
 
         Return:
@@ -541,7 +541,7 @@ class Preparation():
         """Read measurement time from filename, calculate local and utc time.
         Check if UTC time is consistent in the spectra header.
 
-        Params:
+        Parameters:
             spectrum (str): full path to a spectrum
 
         Return:
@@ -582,13 +582,13 @@ class Preparation():
     def replace_params_in_template(
             self, parameters, template_type, prf_input_file):
         """Generate a site specific input file by using a template.
-        params:
-            parameters(dict): containing keys which match the variable
-                              names in the template file. They are replaced by
-                              the entries.
+        
+        Parameters:
+            parameters (dict): Containing keys which match the variable
+                names in the template file. They are replaced by the entries.
+            template_type (str): Can be "prep", "pt", "inv" or "pcxc"
+            prf_input_file (str): The filename of the input file
 
-            template_type(str): Can be "prep", "pt", "inv" or "pcxc"
-            prf_input_file(str): the filename of the input file
         """
         templ_file = self.get_template_path(template_type)
         templ_stream = open(templ_file, 'r')
@@ -720,9 +720,14 @@ class Preparation():
 
     def get_inv_parameters(self, date):
         """Return Parameters to replace in the invers20.inp file.
+        
+        Parameters:
+            date (dt.datetime): Measurement date
+
         Returns:
-            parameters(list): contains one or two dict depending on measurement
-                              time. See get_spectra_pT_input docstring.
+            parameters (list): Contains one or two dict depending on 
+                measurement time. See get_spectra_pT_input docstring.
+
         """
         spectra_pT_input = self.get_spectra_pT_input(date)
         parameters = []
@@ -742,16 +747,21 @@ class Preparation():
 
     def get_spectra_pT_input(self, date):
         """Return a list of list of strings containing spectra and pT infos.
+        
         If two UTC-Dates are found inside of one local day, spectra_pT_input
         contains two lists.
 
-        YYMMDD_HHMMSSSN.BIN, pressure, T_PBL
-
+        The string has the format `YYMMDD_HHMMSSSN.BIN, pressure, T_PBL`  
+        
         This function replaces the pt_intraday.inp file!
         Note that T_PBL is currently set to 0.0.
 
-        params:
-            (date): dt.Datetime, measurement time in local time or UTC time
+        Parameters:
+            date (dt.datetime): Measurement date in local time or UTC time
+
+        Returns:
+            spectra_pT_input (list): Containing spectra and pT infos
+
         """
         spectra_list = self.localdate_spectra[date]
         spectra_list.sort()
@@ -905,9 +915,13 @@ class Preparation():
         return line
 
     def prepare_map_file(self, date):
-        """Generate map file if GGG2020 map file.
-        Returns True if map files where found and created, False if no files
-        where found.
+        """Generate map file if GGG2020 map file are used.
+        
+        Returns:
+            success (bool): 
+                True if map files where found and created
+                False if no files where found.
+
         """
         # search for GGG2020 map files:
         # This includes files produced by ginput as well as from a running
@@ -959,7 +973,7 @@ class Preparation():
         Genereate a map file at 12:00 local time.
         This method is only called for mapfiles of type GGG2020.
 
-        params:
+        Parameters:
             date (dt.datetime): datetime in local time (is called with
                 elements of the localdate_spectra)
         """
@@ -1049,7 +1063,7 @@ class Preparation():
         """Check if the coordinates of the mapfile are consistent.
         Print a warning if not.
 
-        params:
+        Parameters:
             header (list of lines): originating from a GGG20 mapfile
         """
         line = header[1]

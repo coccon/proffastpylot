@@ -17,7 +17,7 @@
 
 ## 1. Download the PROFFASTpylot repository
 
-**We recommend downloading the files using [git](https://www.git-scm.com).**   
+**We recommend downloading the files using git (https://www.git-scm.com).**   
 
 It will make future updates easier.
 
@@ -39,10 +39,10 @@ Extracting it will create the folder `proffastpylot`.
 
 
 
-## 2. Get PROFFAST and copy it to `proffastpylot`
+## 2. Get PROFFAST and copy it to the proffastpylot folder
 
 ### Download PROFFAST
-Download PROFFAST Version 2.2 from the KIT website:  
+Download PROFFAST Version 2.3 from the KIT website:  
 https://www.imk-asf.kit.edu/english/3225.php
 
 **For Linux users**: Run the installation script to create the executables. 
@@ -52,7 +52,7 @@ bash install_proffast_linux.sh
 For Windows users, the executables are already provided.
 
 
-### Copy the PROFFAST directory into `proffastpylot`
+### Copy the prf directory
 
 Copy the `prf` folder that was extracted from the zip file into `proffastpylot`.
 
@@ -70,10 +70,9 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 4. To deactivate run `deactivate`
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
-In case of a problem, take a look at the [Troubleshooting](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/2-5_troubleshooting.md) page.
+In case of a problem, take a look at the **Troubelshooting** article.
 
-You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4,
-the other steps need to be executed only the first time.
+You need to activate the virtual environment bevore each run of PROFFASTpylot by executing the command in step 4, the other steps need to be executed only the first time.
 
 
 ## 4. Install the PROFFASTpylot repository
@@ -85,7 +84,7 @@ Navigate to `proffastpylot` and enter
 pip install --editable .
 ```
 
-To test the installation execute the `run.py` script. For details see [usage.md](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/1-2_usage.md).
+To test the installation execute the `run.py` script. For details see the **Usage** article.
 
 ## 5. Resulting folder structure
 
@@ -131,7 +130,3 @@ git pull
 ```
 in a `git bash` or in a Terminal in your `proffastpylot` folder. This command will download all available updates.
 If you downloaded PROFFASTpylot as zip file, you need to redo all steps of this installation script.
-
-## 8. Contribution Notes
-
-If you want to share a contribution to PROFFASTpylot please check our `dev` branch first (by `git checkout dev`) if your change still fits to the latest developments. Afterwards you are welcome to create a merge request or contact us via email about your suggestion.
