@@ -140,11 +140,13 @@ class FileMover(Preparation):
         self.logger.debug("Created the subdirs in the result folder.")
 
     def move_results(self):
-        """Move the results to the data folder.
-        """
+        """Move the gererated files to the result folder.
+
+        The colsens.dat, invparms_?.dat, job_?.spc and version_?.dat files
+        are searched.
+        If files are not found, a warning is issued."""
 
         suffix_list = [
-            "colsens_?.dat",
             "invparms_?.dat",
             "job01_?.spc",
             "job02_?.spc",
@@ -154,6 +156,26 @@ class FileMover(Preparation):
             "version_?.dat"
         ]
         source_folder = os.path.join(self.proffast_path, "out_fast")
+
+        # move colsens files
+        for localdate in self.localdate_spectra.keys():
+            datestr = localdate.strftime("%y%m%d")
+            prefix = self.site_name + datestr + "-"
+            file = prefix + "colsens.dat"
+            sfile = os.path.join(source_folder, file)
+            target = os.path.join(self.raw_output_prf_folder, file)
+            try:
+                shutil.move(sfile, target)
+            except FileNotFoundError:
+                self.logger.warning(f"File {sfile} was not found!")
+            except PermissionError:
+                self.logger.error(f"Could not write {target} due to "
+                                  "permission issues.")
+            except OSError as e:
+                self.logger.error("OSError while movig file "
+                                  f"{sfile}. Errormessage: {e}")
+
+        # move invparms.dat .spc and version.dat
         for date in self.dates:
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
@@ -161,19 +183,20 @@ class FileMover(Preparation):
                 file = prefix + suffix
                 source = os.path.join(source_folder, file)
                 sourcefiles = glob(source)
+                if len(sourcefiles) == 0:
+                    self.logger.warning(f"No file {file} was not found!")
+
                 for sfile in sourcefiles:
                     target = os.path.join(
                         self.raw_output_prf_folder,
                         os.path.basename(sfile))
                     try:
                         shutil.move(sfile, target)
-                    except FileNotFoundError:
-                        self.logger.error(f"File {sfile} was not found!")
                     except PermissionError:
                         self.logger.error(f"Could not write {target} due to "
                                           "permission issues.")
                     except OSError as e:
-                        self.logger.error("Unknown error while movig file "
+                        self.logger.error("OSError while movig file "
                                           f"{sfile}. Errormessage: {e}")
 
     def handle_pT_VMR_files(self):
