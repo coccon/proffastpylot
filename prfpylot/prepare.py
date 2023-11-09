@@ -814,15 +814,15 @@ class Preparation():
         for sublist in spectra_list:
             temp_pT_input = []
             for s in sublist:
-                # get timestamp of spectrum
-                # can be UTC or local time depending on measurement time
-                timestamp = dt.strptime(s, "%y%m%d_%H%M%SSN.BIN")
-                # apply a possible offset of the pressure data
-                time_offset_p_igram = \
-                    self.pressure_handler.utc_offset - self.utc_offset
-                timestamp += timedelta(hours=time_offset_p_igram)
+                # get utc time of spectrum
+                meas_time, local_time, utc_time = self.get_times_of(s)
+
+                pressure_offset = timedelta(
+                    hours=self.pressure_handler.utc_offset)
+                pressure_time = utc_time + pressure_offset
+
                 # get pressure from mapfile
-                p = self.pressure_handler.get_pressure_at(timestamp)
+                p = self.pressure_handler.get_pressure_at(pressure_time)
 
                 temp_pT_input.append(f"{s}, {p}, 0.0")
             spectra_pT_input.append(temp_pT_input)
