@@ -520,11 +520,11 @@ class Preparation():
         Returns:
             spectra (list): 
                 with full path to all spectra of measurement date
-                ["YYMMDD_HHMMSSSN.BIN", ...]
+                ["path_to/YYMMDD_HHMMSSSN.BIN", ...]
 
         """
         datestring = date.strftime("%y%m%d")
-        # create cal-folder
+        # search cal-folder
         spectra_searchstr = os.path.join(
             self.analysis_instrument_path,
             datestring,
@@ -794,24 +794,26 @@ class Preparation():
         spectra_list.sort()
 
         # in case of two local days in a measurement date list, split them up:
+        spectra0 = []
         spectra1 = []
-        spectra2 = []
-        first_date = dt.strptime(spectra_list[0][:6], "%y%m%d")
-        spectra1.append(spectra_list[0])
+        first_spectrum_name = os.path.basename(spectra_list[0])
+        first_date = dt.strptime(first_spectrum_name[:6], "%y%m%d")
+        spectra0.append(spectra_list[0])
         for spectrum in spectra_list[1:]:
-            current_date = dt.strptime(spectrum[:6], "%y%m%d")
+            spectrum_name = os.path.basename(spectrum)
+            current_date = dt.strptime(spectrum_name[:6], "%y%m%d")
             if current_date != first_date:
-                spectra2.append(spectrum)
-            else:
                 spectra1.append(spectrum)
-        if len(spectra2) == 0:
-            assert spectra_list == spectra1
-            spectra_list = [spectra1]
+            else:
+                spectra0.append(spectrum)
+        if len(spectra1) == 0:
+            assert len(spectra_list) == len(spectra0)
+            split_spectra_list = [spectra0]
         else:
-            spectra_list = [spectra1, spectra2]
+            split_spectra_list = [spectra0, spectra1]
 
         spectra_pT_input = []
-        for sublist in spectra_list:
+        for sublist in split_spectra_list:
             temp_pT_input = []
             for s in sublist:
                 # get utc time of spectrum
@@ -824,7 +826,7 @@ class Preparation():
                 # get pressure from mapfile
                 p = self.pressure_handler.get_pressure_at(pressure_time)
 
-                temp_pT_input.append(f"{s}, {p}, 0.0")
+                temp_pT_input.append(f"{os.path.basename(s)}, {p}, 0.0")
             spectra_pT_input.append(temp_pT_input)
 
         return spectra_pT_input
