@@ -720,24 +720,27 @@ class Preparation():
 
     def get_inv_parameters(self, date):
         """Return Parameters to replace in the invers20.inp file.
-        
+
         Parameters:
-            date (dt.datetime): Measurement date
+            date (dt.datetime): date in measurement time
 
         Returns:
-            parameters (list): Contains one or two dict depending on 
-                measurement time. See get_spectra_pT_input docstring.
+            parameters (list): Contains one or two dict objects, depending
+                if all spectra in the YYMMDD folder belong to the
+                same local date.
+                The local date is read from
+                `get_spectra_pT_input` (see docstring).
 
         """
         spectra_pT_input = self.get_spectra_pT_input(date)
         parameters = []
         charlist = ["a", "b", "c", "d", "e"]
         for i, sub_pT_input in enumerate(spectra_pT_input):
-            measurement_date = sub_pT_input[0][0:6]
+            local_date = sub_pT_input[0][0:6]
             temp_parameters = {
                 "DATAPATH": self.analysis_instrument_path,
-                "MEASUREMENT_DATE": measurement_date,
-                "LOCAL_DATE": date.strftime("%y%m%d"),
+                "MEASUREMENT_DATE": date.strftime("%y%m%d"),
+                "LOCAL_DATE": local_date,
                 "SITE": self.site_name,
                 "SUFFIX": charlist[i],
                 "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
