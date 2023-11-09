@@ -511,6 +511,28 @@ class Preparation():
                               "found in get_igrams().")
         return igrams
 
+    def get_spectra(self, date):
+        """Return list of spectra for a given date (in measurement time).
+
+        Params:
+            date (dt.date): in measurement time
+
+        Returns:
+            spectra (list): 
+                with full path to all spectra of measurement date
+                ["YYMMDD_HHMMSSSN.BIN", ...]
+
+        """
+        datestring = date.strftime("%y%m%d")
+        # create cal-folder
+        spectra_searchstr = os.path.join(
+            self.analysis_instrument_path,
+            datestring,
+            "cal",
+            "*SN.BIN")
+        spectra = glob(spectra_searchstr)
+        return spectra
+
     def get_localdate_spectra(self):
         """Return dict linking all spectra to local dates.
         returns:
@@ -750,26 +772,28 @@ class Preparation():
 
     def get_spectra_pT_input(self, date):
         """Return a list of list of strings containing spectra and pT infos.
-        
-        If two UTC-Dates are found inside of one local day, spectra_pT_input
-        contains two lists.
 
-        The string has the format `YYMMDD_HHMMSSSN.BIN, pressure, T_PBL`  
-        
+        If two local dates are found inside of one measurement date,
+        spectra_pT_input contains two lists.
+        The list is split by the filename of the spectra,
+        since the filename refers to local time.
+
+        The string has the format `YYMMDD_HHMMSSSN.BIN, pressure, T_PBL`
+
         This function replaces the pt_intraday.inp file!
         Note that T_PBL is currently set to 0.0.
 
         Parameters:
-            date (dt.datetime): Measurement date in local time or UTC time
+            date (dt.datetime): Date in measurement time
 
         Returns:
             spectra_pT_input (list): Containing spectra and pT infos
 
         """
-        spectra_list = self.localdate_spectra[date]
+        spectra_list = self.get_spectra(date)  # get spectra from YYMMDD folder
         spectra_list.sort()
 
-        # in case of two UTC days in a local day list, split them up:
+        # in case of two local days in a measurement date list, split them up:
         spectra1 = []
         spectra2 = []
         first_date = dt.strptime(spectra_list[0][:6], "%y%m%d")
