@@ -180,7 +180,7 @@ class Pylot(FileMover):
         self.pressure_handler.prepare_pressure_df()
 
         all_inputfiles = []
-        for date, spectra in self.localdate_spectra.items():
+        for date in self.dates:
             input_files = self.generate_prf_input("inv", date)
             all_inputfiles.extend(input_files)
 

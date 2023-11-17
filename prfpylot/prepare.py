@@ -530,7 +530,7 @@ class Preparation():
             datestring,
             "cal",
             "*SN.BIN")
-        spectra = glob(spectra_searchstr)
+        spectra = glob(spectra_searchstr).sort()
         return spectra
 
     def get_localdate_spectra(self):
@@ -742,6 +742,8 @@ class Preparation():
 
     def get_inv_parameters(self, date):
         """Return Parameters to replace in the invers20.inp file.
+        Has to be called by a measurement date,
+        because get_spectra_pT_input searches the YYMMDD folder.
 
         Parameters:
             date (dt.datetime): date in measurement time
@@ -755,14 +757,28 @@ class Preparation():
 
         """
         spectra_pT_input = self.get_spectra_pT_input(date)
+
+        spectra = self.get_spectra(date)
+        if len(spectra_pT_input) == 1:
+            representative_spectra = [spectra[0]]
+        elif len(spectra_pT_input) == 2:
+            representative_spectra = [spectra[0], spectra[-1]]
+        else:
+            raise NotImplementedError(
+                "Define a representative spectrum if the return of "
+                "get_spectra_pT_input of a date can contain more "
+                "than two lists.")
+
         parameters = []
         charlist = ["a", "b", "c", "d", "e"]
-        for i, sub_pT_input in enumerate(spectra_pT_input):
-            local_date = sub_pT_input[0][0:6]
+        for i, (sub_pT_input, s) \
+                in enumerate(zip(spectra_pT_input, representative_spectra)):
+
+            meas_time, local_time, utc_time = self.get_times_of(s)
             temp_parameters = {
                 "DATAPATH": self.analysis_instrument_path,
-                "MEASUREMENT_DATE": date.strftime("%y%m%d"),
-                "LOCAL_DATE": local_date,
+                "MEASUREMENT_DATE": meas_time.strftime("%y%m%d"),
+                "LOCAL_DATE": local_time.strftime("%y%m%d"),
                 "SITE": self.site_name,
                 "SUFFIX": charlist[i],
                 "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
@@ -791,7 +807,6 @@ class Preparation():
 
         """
         spectra_list = self.get_spectra(date)  # get spectra from YYMMDD folder
-        spectra_list.sort()
 
         # in case of two local days in a measurement date list, split them up:
         spectra0 = []
