@@ -530,8 +530,9 @@ class Preparation():
             datestring,
             "cal",
             "*SN.BIN")
-        spectra = glob(spectra_searchstr).sort()
-        return spectra
+
+        spectra = glob(spectra_searchstr)
+        return sorted(spectra)
 
     def get_localdate_spectra(self):
         """Return dict linking all spectra to local dates.
