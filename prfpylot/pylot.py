@@ -211,19 +211,6 @@ class Pylot(FileMover):
         # store the path to change the cwd for the popen commmand
         exec_path = os.path.dirname(inv_exe)
 
-        if n_processes <= 1:
-            for inputfile in all_inputfiles:
-                tmp_out = self.run_prf_with_inputfile(
-                    inputfile, inv_exe, popen_kwargs={"cwd": exec_path})
-                output.append(tmp_out)
-        else:
-            subs_method = partial(
-                self.run_prf_with_inputfile,
-                executable=inv_exe,
-                popen_kwargs={"cwd": exec_path})
-            pool = multiprocessing.Pool(processes=n_processes)
-            output = pool.map(subs_method, all_inputfiles)
-
         # check for failed interpolation of pressure
         interpolation_failed_at = self.pressure_handler.interpolation_failed_at
         n_failed_interpolation = len(interpolation_failed_at)
@@ -251,6 +238,19 @@ class Pylot(FileMover):
                 raise RuntimeError("The interpolated pressure was NaN!")
             else:
                 self.logger.warning("The interpolation error was ignored!")
+
+        if n_processes <= 1:
+            for inputfile in all_inputfiles:
+                tmp_out = self.run_prf_with_inputfile(
+                    inputfile, inv_exe, popen_kwargs={"cwd": exec_path})
+                output.append(tmp_out)
+        else:
+            subs_method = partial(
+                self.run_prf_with_inputfile,
+                executable=inv_exe,
+                popen_kwargs={"cwd": exec_path})
+            pool = multiprocessing.Pool(processes=n_processes)
+            output = pool.map(subs_method, all_inputfiles)
 
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
