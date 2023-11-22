@@ -63,7 +63,7 @@ class FileMover(Preparation):
                 "The content may be overwritten.")
 
         # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
-        for date in self.dates:
+        for date in self.meas_dates:
             datestring = date.strftime("%y%m%d")
             # create cal-folder
             calfolder = os.path.join(
@@ -77,11 +77,11 @@ class FileMover(Preparation):
                 os.makedirs(vmrfolder)
             self._create_pT_dir(date)
 
-    def _create_pT_dir(self, date):
+    def _create_pT_dir(self, meas_date):
         """Create pt directory."""
         pt_path = os.path.join(
             self.analysis_instrument_path,
-            date.strftime("%y%m%d"),
+            meas_date.strftime("%y%m%d"),
             "pT")
         if not os.path.exists(pt_path):
             os.makedirs(pt_path)
@@ -176,7 +176,7 @@ class FileMover(Preparation):
                                   f"{sfile}. Errormessage: {e}")
 
         # move invparms.dat .spc and version.dat
-        for date in self.dates:
+        for date in self.meas_dates:
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
@@ -207,7 +207,7 @@ class FileMover(Preparation):
         'delete_abscos_bin' is False (True).
         """
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
-        for date in self.dates:
+        for date in self.meas_dates:
             pTFile =\
                 f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
             VMRFile =\
@@ -237,7 +237,7 @@ class FileMover(Preparation):
     def delete_abscos_files(self):
         """Delete the abscos.bin files created by pcxs."""
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
-        for date in self.dates:
+        for date in self.meas_dates:
             filename = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
             try:
                 os.remove(os.path.join(wrk_fast_folder, filename))

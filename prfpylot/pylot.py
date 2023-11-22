@@ -75,7 +75,7 @@ class Pylot(FileMover):
         # Create inputfiles. If None is returned no date was found for this
         # specific day
         all_inputfiles = []
-        temp = self.dates[:]
+        temp = self.meas_dates[:]
         for meas_date in temp:
             inputfile = self.generate_preprocess_input(meas_date)
             if inputfile is not None:
@@ -84,7 +84,7 @@ class Pylot(FileMover):
                 self.logger.warning(
                     f"No suitable iterferogram was found for day {meas_date}!"
                     "Skip processing of this day.")
-                self.dates.remove(meas_date)
+                self.meas_dates.remove(meas_date)
 
         prep_exe = self._get_executable("prep")
         # store the path to change the cwd for the popen commmand
@@ -281,8 +281,8 @@ class Pylot(FileMover):
         resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
             self.site_name,
             self.instrument_number,
-            self.dates[0].strftime(dt_format),
-            self.dates[-1].strftime(dt_format)
+            self.meas_dates[0].strftime(dt_format),
+            self.meas_dates[-1].strftime(dt_format)
         )
         combined_file = os.path.join(
             self.result_folder, resultfile)

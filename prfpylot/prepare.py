@@ -180,7 +180,7 @@ class Preparation():
             start_date = dt.strptime(start_date, "%Y-%m-%d").date()
         if isinstance(end_date, str):
             end_date = dt.strptime(end_date, "%Y-%m-%d").date()
-        self.dates = self.get_dates(
+        self.meas_dates = self.get_meas_dates(
                 start_date=start_date,
                 end_date=end_date
             )
@@ -223,8 +223,8 @@ class Preparation():
         result_foldername = "{}_{}_{}-{}".format(
             self.site_name,
             self.instrument_number,
-            self.dates[0].strftime(dt_format),
-            self.dates[-1].strftime(dt_format))
+            self.meas_dates[0].strftime(dt_format),
+            self.meas_dates[-1].strftime(dt_format))
         self.result_folder = os.path.join(self.result_path, result_foldername)
 
         # path to the logfiles of the processes
@@ -243,7 +243,7 @@ class Preparation():
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
             self.pressure_type_file, self.pressure_path,
-            self.dates, self.logger, self.utc_offset)
+            self.meas_dates, self.logger, self.utc_offset)
 
         # collect all generated input files to move in FileMover
         self.global_inputfile_list = []
@@ -283,8 +283,10 @@ class Preparation():
         logger.debug(f"Initialized logger with random number {r}.")
         return logger
 
-    def get_dates(self, start_date=None, end_date=None):
-        """Return a list of dates for the given site, instrument.
+    def get_meas_dates(self, start_date=None, end_date=None):
+        """
+        Return a list of dates in measurement time for the site + instrument.
+        
         Truncate the list if start_date and end_date are given.
 
         Parameters:
@@ -350,9 +352,9 @@ class Preparation():
             if self.coord_file is None:
                 self.logger.critical(coord_error)
                 sys.exit()
-            coords = self.get_coords_from_file(self.dates[0])
+            coords = self.get_coords_from_file(self.meas_dates[0])
             # check for consistent coordinates in measurement period
-            last_coords = self.get_coords_from_file(self.dates[-1])
+            last_coords = self.get_coords_from_file(self.meas_dates[-1])
             if last_coords != coords:
                 self.logger.critical(
                     f"Coordinates at the start date {coords} do not match "
@@ -510,9 +512,9 @@ class Preparation():
         # return several input files hence do it already here:
         return prf_input_files
 
-    def get_igrams(self, date):
+    def get_igrams(self, meas_date):
         """Search for interferograms on disk and return a list of files."""
-        date_str = date.strftime("%y%m%d")
+        date_str = meas_date.strftime("%y%m%d")
         igrams = glob(os.path.join(
             self.interferogram_path, date_str,
             self.igram_pattern))
@@ -532,14 +534,14 @@ class Preparation():
         if skipped_interferograms is False:
             self.logger.debug(
                 "No interferogram was skipped because of its filesize "
-                f"at {date.date()}.")
+                f"at {meas_date.date()}.")
 
         if igrams == []:
             self.logger.debug(f"No suitable Interferogram at day {date_str} "
                               "found in get_igrams().")
         return igrams
 
-    def get_spectra(self, date):
+    def get_spectra(self, meas_date):
         """Return list of spectra for a given date (in measurement time).
 
         Params:
@@ -551,7 +553,7 @@ class Preparation():
                 ["path_to/YYMMDD_HHMMSSSN.BIN", ...]
 
         """
-        datestring = date.strftime("%y%m%d")
+        datestring = meas_date.strftime("%y%m%d")
         # search cal-folder
         spectra_searchstr = os.path.join(
             self.analysis_instrument_path,
@@ -568,7 +570,7 @@ class Preparation():
             {local_date: ["path/YYMMDD_HHMMSSSN.BIN", ...]}
         """
         all_spectra = []
-        for date in self.dates:
+        for date in self.meas_dates:
             tmp_spectra = self.get_spectra(date)
             all_spectra.extend(tmp_spectra)
         all_spectra.sort()
