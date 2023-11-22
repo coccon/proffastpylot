@@ -537,7 +537,7 @@ class Preparation():
     def get_localdate_spectra(self):
         """Return dict linking all spectra to local dates.
         returns:
-            {local_date: ["YYMMDD_HHMMSSSN.BIN", ...]}
+            {local_date: ["path/YYMMDD_HHMMSSSN.BIN", ...]}
         """
         all_spectra = []
         for date in self.dates:
@@ -546,14 +546,13 @@ class Preparation():
         all_spectra.sort()
         localdate_spectra = {}
         for spectrum in all_spectra:
-            spectrum_name = os.path.basename(spectrum)
-            meas_time, local_time, utc_time = self.get_times_of(
-                spectrum=spectrum)
+            times = self.get_times_of(spectrum=spectrum)
+            local_time = times["local_time"]
             local_date = local_time.date()
             if local_date in localdate_spectra.keys():
-                localdate_spectra[local_date].append(spectrum_name)
+                localdate_spectra[local_date].append(spectrum)
             else:
-                localdate_spectra[local_date] = [spectrum_name]
+                localdate_spectra[local_date] = [spectrum]
         return localdate_spectra
 
     def get_times_of(self, spectrum):
@@ -563,10 +562,12 @@ class Preparation():
         Parameters:
             spectrum (str): full path to a spectrum
 
-        Return:
-            meas_time (dt.DateTime): time parsed from the filename
-            local_time (dt.DateTime): calculated local time
-            utc_time (dt.DateTime): read from spectra header
+        Returns:
+            times(dict):
+                A dict with the following keys:
+                    - meas_time (dt.DateTime): time parsed from the filename
+                    - local_time (dt.DateTime): calculated local time
+                    - utc_time (dt.DateTime): read from spectra header
         """
         spectrum_name = os.path.basename(spectrum)
         meas_time = dt.strptime(spectrum_name, "%y%m%d_%H%M%SSN.BIN")
@@ -596,7 +597,13 @@ class Preparation():
                 "files from another processing in the analysis folder!"
                 )
             sys.exit()
-        return meas_time, local_time, utc_time
+
+        times = {
+            "meas_time": meas_time,
+            "local_time": local_time,
+            "utc_time": utc_time            
+        }
+        return times
 
     def replace_params_in_template(
             self, parameters, template_type, prf_input_file):
@@ -770,12 +777,11 @@ class Preparation():
         charlist = ["a", "b", "c", "d", "e"]
         for i, (sub_pT_input, s) \
                 in enumerate(zip(spectra_pT_input, representative_spectra)):
-
-            meas_time, local_time, utc_time = self.get_times_of(s)
+            times = self.get_times_of(s)
             temp_parameters = {
                 "DATAPATH": self.analysis_instrument_path,
-                "MEASUREMENT_DATE": meas_time.strftime("%y%m%d"),
-                "LOCAL_DATE": local_time.strftime("%y%m%d"),
+                "MEASUREMENT_DATE": times["meas_time"].strftime("%y%m%d"),
+                "LOCAL_DATE": times["local_time"].strftime("%y%m%d"),
                 "SITE": self.site_name,
                 "SUFFIX": charlist[i],
                 "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
@@ -783,34 +789,36 @@ class Preparation():
             parameters.append(temp_parameters)
         return parameters
 
-    def get_spectra_pT_input(self, date):
-        """Return a list of list of strings containing spectra and pT infos.
+    def get_spectra_pT_input(self, local_date):
+        """Return invers formatted pT infos for given local date.
 
-        If two local dates are found inside of one measurement date,
+        If two measurement dates belong to one local date,
         spectra_pT_input contains two lists.
-        The list is split by the filename of the spectra,
-        since the filename refers to local time.
+        The list is split based on the filename of the spectra,
+        since the filename refers to measurement time.
 
         The string has the format `YYMMDD_HHMMSSSN.BIN, pressure, T_PBL`
 
-        This function replaces the pt_intraday.inp file!
+        This function replaces the pt_intraday.inp file from older PROFFAST
+        versions.
         Note that T_PBL is currently set to 0.0.
 
         Parameters:
             date (dt.datetime): Date in measurement time
 
         Returns:
-            spectra_pT_input (list): Containing spectra and pT infos
+            spectra_pT_input (list): 
+                List containing a list of strings with spectra and pT infos
 
         """
-        spectra_list = self.get_spectra(date)  # get spectra from YYMMDD folder
-
-        # in case of two local days in a measurement date list, split them up:
+        # in case of two measurement days in a local date list, split them up:
+        spectra_list = self.localdate_spectra[local_date]
         spectra0 = []
         spectra1 = []
         first_spectrum_name = os.path.basename(spectra_list[0])
         first_date = dt.strptime(first_spectrum_name[:6], "%y%m%d")
         spectra0.append(spectra_list[0])
+        # compare the dates from filename with first filename in the list
         for spectrum in spectra_list[1:]:
             spectrum_name = os.path.basename(spectrum)
             current_date = dt.strptime(spectrum_name[:6], "%y%m%d")
@@ -829,8 +837,8 @@ class Preparation():
             temp_pT_input = []
             for s in sublist:
                 # get utc time of spectrum
-                meas_time, local_time, utc_time = self.get_times_of(s)
-
+                times = self.get_times_of(s)
+                utc_time = times["utc_time"]
                 pressure_offset = timedelta(
                     hours=self.pressure_handler.utc_offset)
                 pressure_time = utc_time + pressure_offset

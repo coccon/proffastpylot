@@ -112,36 +112,50 @@ class Pylot(FileMover):
 
     def run_pcxs(self, n_processes=1):
         """Run pcxs.
-        If n_processes > 1, run_pcxs_at is
-        called directly. Otherwise it is called via run_parallel
+
+        Loops over local dates and executes the following steps:
+            - check if the abscos bin file exists already.
+            - Interpolate the mapfile.
+              If no mapfile is found for a local date, the date is removed
+              from self.local_dates.
+            - generate the input file.
+            - run pcxs(in parallel).
+        
+        Params:
+            n_processes(int) = 1: 
+                If n_processes == 1, `run_pcxs_at` is called directly.
+                Otherwise it is called via run_parallel.
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
         output = []
         self.logger.debug("Get localdate spectra...")
+        # define here, as needed several times later and costs computation time
         self.localdate_spectra = self.get_localdate_spectra()
+        # create a list out of the dictionary to increase code clarity
+        self.local_dates = list(self.localdate_spectra.keys())
         wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
         inputfile_list = []
-        temp = deepcopy(self.localdate_spectra)
-        for date, spectra in temp.items():
+        temp = deepcopy(self.local_dates)
+        for local_date in temp:
             # Check if absos file is there, skip
-            srchstrg = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+            srchstrg = f"{self.site_name}{local_date.strftime('%y%m%d')}-abscos.bin"
             if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
                 message = (
-                    f"*.abscos.bin file for day {date} exists already."
+                    f"*.abscos.bin file for day {local_date} exists already."
                     " Skip calculation..")
                 self.logger.info(message)
                 output.append(
                     [message, "", "No return code", "No call String"])
                 continue
             # Generate/find map files
-            success = self.prepare_map_file(date)
+            success = self.prepare_map_file(local_date)
             if not success:
                 self.logger.warning(
-                    f"Skip day {date} since no map file is present")
-                self.localdate_spectra.pop(date)
+                    f"Skip day {local_date} since no map file is present")
+                self.local_dates.remove(local_date)
                 continue
             # Generate input files:
-            inputfile = self.generate_prf_input("pcxs", date)
+            inputfile = self.generate_prf_input("pcxs", local_date)
             inputfile_list.append(inputfile)
 
         pcxs_exe = self._get_executable("pcxs")
@@ -167,12 +181,20 @@ class Pylot(FileMover):
 
     def run_inv(self, n_processes=1):
         """Run inverse.
-        If n_processes > 1, run_inv_at() is called directly.
-        Otherwise it is called via run_parallel.
+
+        Loops over localdates, generates the input files and runs invers.
+
+        Params:
+            n_processes(int) = 1: 
+                If n_processes == 1, `run_inv_at` is called directly.
+                Otherwise it is called via run_parallel.        
         """
         self.logger.info(f"Running invers with {n_processes} task(s) ...")
-        if not hasattr(self, "localdate_spectra"):
+        # needed if run_pcxs was not executed before
+        if not hasattr(self, "local_dates"):
             self.localdate_spectra = self.get_localdate_spectra()
+            self.local_dates = list(self.localdate_spectra.keys())
+           
         output = []
 
         # the interpolated pressure is stored and can be
@@ -180,8 +202,8 @@ class Pylot(FileMover):
         self.pressure_handler.prepare_pressure_df()
 
         all_inputfiles = []
-        for date in self.dates:
-            input_files = self.generate_prf_input("inv", date)
+        for local_date in self.local_dates:
+            input_files = self.generate_prf_input("inv", local_date)
             all_inputfiles.extend(input_files)
 
         output = []

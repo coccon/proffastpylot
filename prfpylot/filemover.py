@@ -158,8 +158,8 @@ class FileMover(Preparation):
         source_folder = os.path.join(self.proffast_path, "out_fast")
 
         # move colsens files
-        for localdate in self.localdate_spectra.keys():
-            datestr = localdate.strftime("%y%m%d")
+        for local_date in self.local_dates:
+            datestr = local_date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             file = prefix + "colsens.dat"
             sfile = os.path.join(source_folder, file)
