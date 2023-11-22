@@ -541,12 +541,8 @@ class Preparation():
         """
         all_spectra = []
         for date in self.dates:
-            searchpath = os.path.join(
-                self.analysis_instrument_path,
-                date.strftime("%y%m%d"),
-                "cal",
-                "*SN.BIN")
-            all_spectra.extend(glob(searchpath))
+            tmp_spectra = self.get_spectra(date)
+            all_spectra.extend(tmp_spectra)
         all_spectra.sort()
         localdate_spectra = {}
         for spectrum in all_spectra:
