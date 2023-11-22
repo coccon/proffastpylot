@@ -76,15 +76,15 @@ class Pylot(FileMover):
         # specific day
         all_inputfiles = []
         temp = self.dates[:]
-        for date in temp:
-            inputfile = self.generate_prf_input("prep", date)
+        for meas_date in temp:
+            inputfile = self.generate_preprocess_input(meas_date)
             if inputfile is not None:
                 all_inputfiles.append(inputfile)
             else:
                 self.logger.warning(
-                    f"No suitable iterferogram was found for day {date}!"
+                    f"No suitable iterferogram was found for day {meas_date}!"
                     "Skip processing of this day.")
-                self.dates.remove(date)
+                self.dates.remove(meas_date)
 
         prep_exe = self._get_executable("prep")
         # store the path to change the cwd for the popen commmand
@@ -155,7 +155,7 @@ class Pylot(FileMover):
                 self.local_dates.remove(local_date)
                 continue
             # Generate input files:
-            inputfile = self.generate_prf_input("pcxs", local_date)
+            inputfile = self.generate_pcxs_input(local_date)
             inputfile_list.append(inputfile)
 
         pcxs_exe = self._get_executable("pcxs")
@@ -203,7 +203,7 @@ class Pylot(FileMover):
 
         all_inputfiles = []
         for local_date in self.local_dates:
-            input_files = self.generate_prf_input("inv", local_date)
+            input_files = self.generate_invers_input(local_date)
             all_inputfiles.extend(input_files)
 
         output = []

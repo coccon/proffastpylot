@@ -425,62 +425,90 @@ class Preparation():
         prf_input_path = os.path.join(folder_path, filename)
         return prf_input_path
 
-    def generate_prf_input(self, template_type, date=None):
-        """Generate a template file.
+    def generate_preprocess_input(self, meas_date):
+        """Fills the preprocess tempate file.
 
-        Calling the corresponding collect parameters function
-        and replace template function.
-
+        Calls self.get_prep_parameters(meas_date)
         Parameters:
-            template_type (str): Can be "prep", "inv" or "pcxc"
+            meas_date (dt.datetime):
+                the date in measurement time to be processed
 
         Return:
-            prf_input_file(s) (str, list of str or None):
-                In case of inverse multiple input
-                files are created if spectra of one measurement day belong to
-                different map files. If no spectra are, return None
+            prf_input_file (str, or None):
+                If no igrams are found, return None, else the path to the
+                input file
         """
         # the name of the input file to be generated
-        prf_input_file = self.get_prf_input_path(template_type, date)
+        prf_input_file = self.get_prf_input_path("prep", meas_date)
 
-        if date is not None:
-            date_str = dt.strftime(date, "%y%m%d")
-
-        if template_type == "prep":
-            self.logger.debug(
-                f"Generating preprocess inp file for {date_str}..")
-            parameters = self.get_prep_parameters(date)
-            if parameters["igrams"] == "":
-                return None
-
-        elif template_type == "pcxs":
-            parameters = self.get_pcxs_parameters(date)
-            self.logger.debug(
-                f"Generating {self.template_types[template_type]}"
-                f" inp file for {date_str}..")
-
-        elif template_type == "inv":
-            self.logger.debug(
-                f"Generating {self.template_types[template_type]}"
-                f" inp file for {date_str}..")
-            parameters = self.get_inv_parameters(date)
-            prf_input_files = []
-            for parameter_i in parameters:
-                suffix = parameter_i["SUFFIX"]
-                prf_input_files.append(prf_input_file[:-4] + f"_{suffix}.inp")
-                self.replace_params_in_template(
-                    parameter_i, template_type, prf_input_files[-1])
-            # safe inputfiles in global list to move/delete them later
-            self.global_inputfile_list.extend(prf_input_files)
-            # return several input files hence do it already here:
-            return prf_input_files
-        else:
-            raise ValueError(f"Unknown template_type {template_type}")
-
+        if meas_date is not None:
+            date_str = dt.strftime(meas_date, "%y%m%d")
+        self.logger.debug(
+            f"Generating preprocess inp file for {date_str}..")
+        parameters = self.get_prep_parameters(meas_date)
+        if parameters["igrams"] == "":
+            return None
         self.replace_params_in_template(
-            parameters, template_type, prf_input_file)
+            parameters, "prep", prf_input_file)
         self.global_inputfile_list.append(prf_input_file)
         return prf_input_file
+
+    def generate_pcxs_input(self, local_date):
+        """Fills the pcxs input file.
+
+        Calls `get_pcxs_parameters` with local_date.
+
+        Parameters:
+            local_date (dt.datetime):
+                the date in local time to be processed
+
+        Return:
+            prf_input_file (str): Path to the input file.
+        """
+        # the name of the input file to be generated
+        prf_input_file = self.get_prf_input_path("pcxs", local_date)
+
+        date_str = dt.strftime(local_date, "%y%m%d")
+            
+        parameters = self.get_pcxs_parameters(local_date)
+        self.logger.debug(
+            f"Generating {self.template_types['pcxs']}"
+            f" inp file for {date_str}..")            
+
+        self.replace_params_in_template(
+            parameters, "pcxs", prf_input_file)
+        self.global_inputfile_list.append(prf_input_file)
+        return prf_input_file
+
+    def generate_invers_input(self, local_date):
+        """Fills the invers input file.
+
+        Calls `get_inv_parameters` with the local date.
+
+        Parameters:
+            local_date (dt.datetime):
+                the date in local time to be processed
+
+        Return:
+            prf_input_files (list): A list of paths to the input files.
+        """
+        # the name of the input file to be generated
+        prf_input_file = self.get_prf_input_path("inv", local_date)
+        date_str = dt.strftime(local_date, "%y%m%d")
+        self.logger.debug(
+            f"Generating {self.template_types['inv']}"
+            f" inp file for {date_str}..")
+        parameters = self.get_inv_parameters(local_date)
+        prf_input_files = []
+        for parameter_i in parameters:
+            suffix = parameter_i["SUFFIX"]
+            prf_input_files.append(prf_input_file[:-4] + f"_{suffix}.inp")
+            self.replace_params_in_template(
+                parameter_i, "inv", prf_input_files[-1])
+        # safe inputfiles in global list to move/delete them later
+        self.global_inputfile_list.extend(prf_input_files)
+        # return several input files hence do it already here:
+        return prf_input_files
 
     def get_igrams(self, date):
         """Search for interferograms on disk and return a list of files."""
