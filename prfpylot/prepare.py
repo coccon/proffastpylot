@@ -774,29 +774,40 @@ class Preparation():
                 "is based on dry or wet air.")
         return parameters
 
-    def get_inv_parameters(self, date):
-        """Return Parameters to replace in the invers20.inp file.
-        Has to be called by a measurement date,
-        because get_spectra_pT_input searches the YYMMDD folder.
+    def get_inv_parameters(self, local_date):
+        """Return parameters to fill the invers20.inp template.
+
+        If spectra from two measurement days (i.e. different folders) belong
+        to one local date, spectra_pT_input is a list with two elements,
+        else, the it has one element.
+
+        For each element in the spectra_pT_input list a dict containing the
+        parameters for the input files is generated.
+
+        The list of spectra belongig to one local date is sorted by the
+        measurement date of the spectra which is determined by the function
+        get_times_of(spectrum).
 
         Parameters:
-            date (dt.datetime): date in measurement time
+            local_date (dt.datetime): date in local time
 
         Returns:
-            parameters (list): Contains one or two dict objects, depending
-                if all spectra in the YYMMDD folder belong to the
-                same local date.
-                The local date is read from
-                `get_spectra_pT_input` (see docstring).
-
+            parameters (list):
+                Contains one or two dict objects, depending
+                if all spectra of the local date are stored in the same
+                YYMMDD folder.
         """
-        spectra_pT_input = self.get_spectra_pT_input(date)
+        spectra_pT_input = self.get_spectra_pT_input(local_date)
+        spectra = self.localdate_spectra[local_date]
 
-        spectra = self.get_spectra(date)
+        # select one spectraum that reperents the correct measurement
+        # date for each element in the spectra_pT_input list
         if len(spectra_pT_input) == 1:
             representative_spectra = [spectra[0]]
+            charlist = ["a"]
         elif len(spectra_pT_input) == 2:
             representative_spectra = [spectra[0], spectra[-1]]
+            charlist = ["b", "c"]
         else:
             raise NotImplementedError(
                 "Define a representative spectrum if the return of "
@@ -804,16 +815,15 @@ class Preparation():
                 "than two lists.")
 
         parameters = []
-        charlist = ["a", "b", "c", "d", "e"]
-        for i, (sub_pT_input, s) \
-                in enumerate(zip(spectra_pT_input, representative_spectra)):
-            times = self.get_times_of(s)
+        for sub_pT_input, spectrum, suffix \
+                in zip(spectra_pT_input, representative_spectra, charlist):
+            times = self.get_times_of(spectrum)
             temp_parameters = {
                 "DATAPATH": self.analysis_instrument_path,
                 "MEASUREMENT_DATE": times["meas_time"].strftime("%y%m%d"),
                 "LOCAL_DATE": times["local_time"].strftime("%y%m%d"),
                 "SITE": self.site_name,
-                "SUFFIX": charlist[i],
+                "SUFFIX": suffix,
                 "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
             }
             parameters.append(temp_parameters)
