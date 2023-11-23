@@ -75,16 +75,16 @@ class Pylot(FileMover):
         # Create inputfiles. If None is returned no date was found for this
         # specific day
         all_inputfiles = []
-        temp = self.dates[:]
-        for date in temp:
-            inputfile = self.generate_prf_input("prep", date)
+        temp = self.meas_dates[:]
+        for meas_date in temp:
+            inputfile = self.generate_preprocess_input(meas_date)
             if inputfile is not None:
                 all_inputfiles.append(inputfile)
             else:
                 self.logger.warning(
-                    f"No suitable iterferogram was found for day {date}!"
+                    f"No suitable iterferogram was found for day {meas_date}!"
                     "Skip processing of this day.")
-                self.dates.remove(date)
+                self.meas_dates.remove(meas_date)
 
         prep_exe = self._get_executable("prep")
         # store the path to change the cwd for the popen commmand
@@ -112,36 +112,50 @@ class Pylot(FileMover):
 
     def run_pcxs(self, n_processes=1):
         """Run pcxs.
-        If n_processes > 1, run_pcxs_at is
-        called directly. Otherwise it is called via run_parallel
+
+        Loops over local dates and executes the following steps:
+            - check if the abscos bin file exists already.
+            - Interpolate the mapfile.
+              If no mapfile is found for a local date, the date is removed
+              from self.local_dates.
+            - generate the input file.
+            - run pcxs(in parallel).
+        
+        Params:
+            n_processes(int) = 1: 
+                If n_processes == 1, `run_pcxs_at` is called directly.
+                Otherwise it is called via run_parallel.
         """
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
         output = []
         self.logger.debug("Get localdate spectra...")
+        # define here, as needed several times later and costs computation time
         self.localdate_spectra = self.get_localdate_spectra()
+        # create a list out of the dictionary to increase code clarity
+        self.local_dates = list(self.localdate_spectra.keys())
         wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
         inputfile_list = []
-        temp = deepcopy(self.localdate_spectra)
-        for date, spectra in temp.items():
+        temp = deepcopy(self.local_dates)
+        for local_date in temp:
             # Check if absos file is there, skip
-            srchstrg = f"{self.site_name}{date.strftime('%y%m%d')}-abscos.bin"
+            srchstrg = f"{self.site_name}{local_date.strftime('%y%m%d')}-abscos.bin"
             if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
                 message = (
-                    f"*.abscos.bin file for day {date} exists already."
+                    f"*.abscos.bin file for day {local_date} exists already."
                     " Skip calculation..")
                 self.logger.info(message)
                 output.append(
                     [message, "", "No return code", "No call String"])
                 continue
             # Generate/find map files
-            success = self.prepare_map_file(date)
+            success = self.prepare_map_file(local_date)
             if not success:
                 self.logger.warning(
-                    f"Skip day {date} since no map file is present")
-                self.localdate_spectra.pop(date)
+                    f"Skip day {local_date} since no map file is present")
+                self.local_dates.remove(local_date)
                 continue
             # Generate input files:
-            inputfile = self.generate_prf_input("pcxs", date)
+            inputfile = self.generate_pcxs_input(local_date)
             inputfile_list.append(inputfile)
 
         pcxs_exe = self._get_executable("pcxs")
@@ -167,12 +181,20 @@ class Pylot(FileMover):
 
     def run_inv(self, n_processes=1):
         """Run inverse.
-        If n_processes > 1, run_inv_at() is called directly.
-        Otherwise it is called via run_parallel.
+
+        Loops over localdates, generates the input files and runs invers.
+
+        Params:
+            n_processes(int) = 1: 
+                If n_processes == 1, `run_inv_at` is called directly.
+                Otherwise it is called via run_parallel.        
         """
         self.logger.info(f"Running invers with {n_processes} task(s) ...")
-        if not hasattr(self, "localdate_spectra"):
+        # needed if run_pcxs was not executed before
+        if not hasattr(self, "local_dates"):
             self.localdate_spectra = self.get_localdate_spectra()
+            self.local_dates = list(self.localdate_spectra.keys())
+           
         output = []
 
         # the interpolated pressure is stored and can be
@@ -180,27 +202,14 @@ class Pylot(FileMover):
         self.pressure_handler.prepare_pressure_df()
 
         all_inputfiles = []
-        for date, spectra in self.localdate_spectra.items():
-            input_files = self.generate_prf_input("inv", date)
+        for local_date in self.local_dates:
+            input_files = self.generate_invers_input(local_date)
             all_inputfiles.extend(input_files)
 
         output = []
         inv_exe = self._get_executable("inv")
         # store the path to change the cwd for the popen commmand
         exec_path = os.path.dirname(inv_exe)
-
-        if n_processes <= 1:
-            for inputfile in all_inputfiles:
-                tmp_out = self.run_prf_with_inputfile(
-                    inputfile, inv_exe, popen_kwargs={"cwd": exec_path})
-                output.append(tmp_out)
-        else:
-            subs_method = partial(
-                self.run_prf_with_inputfile,
-                executable=inv_exe,
-                popen_kwargs={"cwd": exec_path})
-            pool = multiprocessing.Pool(processes=n_processes)
-            output = pool.map(subs_method, all_inputfiles)
 
         # check for failed interpolation of pressure
         interpolation_failed_at = self.pressure_handler.interpolation_failed_at
@@ -229,6 +238,19 @@ class Pylot(FileMover):
                 raise RuntimeError("The interpolated pressure was NaN!")
             else:
                 self.logger.warning("The interpolation error was ignored!")
+
+        if n_processes <= 1:
+            for inputfile in all_inputfiles:
+                tmp_out = self.run_prf_with_inputfile(
+                    inputfile, inv_exe, popen_kwargs={"cwd": exec_path})
+                output.append(tmp_out)
+        else:
+            subs_method = partial(
+                self.run_prf_with_inputfile,
+                executable=inv_exe,
+                popen_kwargs={"cwd": exec_path})
+            pool = multiprocessing.Pool(processes=n_processes)
+            output = pool.map(subs_method, all_inputfiles)
 
         self._write_logfile("inv", output)
         self.logger.info("Finished invers.\n")
@@ -259,8 +281,8 @@ class Pylot(FileMover):
         resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
             self.site_name,
             self.instrument_number,
-            self.dates[0].strftime(dt_format),
-            self.dates[-1].strftime(dt_format)
+            self.meas_dates[0].strftime(dt_format),
+            self.meas_dates[-1].strftime(dt_format)
         )
         combined_file = os.path.join(
             self.result_folder, resultfile)
