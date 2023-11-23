@@ -1,9 +1,9 @@
 Input file invers20
 
-complete analysis folder
+complete analysis folder (YYMMDD in measurement time)
 site name
-date
-absco file
+local date
+abscos file
 pT detail dec (T/F)
 Quiet execution (no user requests) (T/F)
 handle
