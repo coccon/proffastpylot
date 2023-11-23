@@ -132,7 +132,7 @@ class PressureHandler():
             self.dates = list(set(self.dates))
             self.dates.sort()
         self.logger.debug(
-            "Date to load pressure files for:" + \
+            "Date to load pressure files for:"
             "\n".join([x.strftime("%Y-%m-%d") for x in self.dates]))
 
         self.p_df = pd.DataFrame()
@@ -179,17 +179,19 @@ class PressureHandler():
             f"{df_print.head()}\n"
             )
 
-    def get_pressure_at(self, timestamp):
-        """Return the pressure at timestamp.
-        
+    def get_pressure_at(self, pressure_time):
+        """Return the interpolated pressure at a given time.
+
         Parameters:
-            timestamp (datetime:datetime): in timezone of pressure file
+            pressure_time (datetime:datetime):
+                time in timezone of the pressure file
 
         """
         pkey = self.dataframe_parameters["pressure_key"]
         # get the two closest entries:
         # calculate differences to current value:
-        diff = (self.p_df[self.parsed_dtcol] - timestamp).dt.total_seconds()
+        diff = \
+            (self.p_df[self.parsed_dtcol] - pressure_time).dt.total_seconds()
         diff = abs(diff).sort_values()
         inds = diff.index[:2].to_list()
         inds.sort()
@@ -197,18 +199,18 @@ class PressureHandler():
         i2 = inds[1]
         t1 = self.p_df.loc[i1][self.parsed_dtcol]
         t2 = self.p_df.loc[i2][self.parsed_dtcol]
-        if not (t1 < timestamp and t2 > timestamp):
+        if not (t1 < pressure_time and t2 > pressure_time):
             if i1 == 0 or i2 == len(self.p_df) - 1:
                 # at the beginning of the dataseries, data will be extrapolated
                 self.logger.warning(
-                    f"No pressure data available for {timestamp}."
+                    f"No pressure data available for {pressure_time}."
                     "Pressure data will be linear extrapolated!")
             else:
                 # for not equistant data this case can happen
-                if t2 < timestamp:
+                if t2 < pressure_time:
                     i2 += 1
                     i1 += 1
-                if t1 > timestamp:
+                if t1 > pressure_time:
                     i1 -= 1
                     i2 -= 1
                 t1 = self.p_df.loc[i1][self.parsed_dtcol]
@@ -216,7 +218,7 @@ class PressureHandler():
         if abs((t2 - t1).total_seconds()) / 3600 > 6:
             self.logger.warning(
                 "Pressure is interpolated for a time range larger than 6 h "
-                f"for date {timestamp} (pressure time)."
+                f"for date {pressure_time} (pressure time)."
                 "This might give wrong results!"
                 "Please check the input data for this day."
             )
@@ -226,10 +228,10 @@ class PressureHandler():
 
         if np.isnan(m):
             m = 0
-            self.interpolation_failed_at.append(timestamp)
+            self.interpolation_failed_at.append(pressure_time)
 
         p = m * \
-            (timestamp - t1).total_seconds()\
+            (pressure_time - t1).total_seconds()\
             + self.p_df.loc[i1][pkey]
         return p
 

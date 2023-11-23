@@ -662,8 +662,16 @@ class Preparation():
         if template_type == "tccon":
             self.tccon_file = prf_input_file
 
-    def get_prep_parameters(self, date):
-        """Return Parameters to be replaced in the preprocess input file."""
+    def get_prep_parameters(self, meas_date):
+        """Return Parameters to be replaced in the preprocess template.
+
+        Parameters:
+            meas_date (dt.Datetime): date in measurement time
+
+        Returns:
+            parameters (dict):
+                dict with parameters to fill the preporcess template.
+        """
         if self.ils_parameters is not None:
             # the first priority is always the ILS params given in the the
             # general config file:
@@ -679,7 +687,7 @@ class Preparation():
             if self.instrument_parameters == "em27":
                 # for the EM27 try to take it from the ILS List:
                 self.logger.debug("Load ILS parameters from file.")
-                ME1, PE1, ME2, PE2 = self.get_ils_from_file(date)
+                ME1, PE1, ME2, PE2 = self.get_ils_from_file(meas_date)
             else:
                 # for all other instruments use per default an ideal ILS
                 # Due to the historically grown design of proffast
@@ -702,10 +710,10 @@ class Preparation():
             comment = " ".join([comment, self.note])
 
         # get all good igrams
-        igrams = self.get_igrams(date)
+        igrams = self.get_igrams(meas_date)
         igrams = "\n".join(igrams)
         # generate path to outputfolder for this date:
-        datestring = date.strftime("%y%m%d")
+        datestring = meas_date.strftime("%y%m%d")
         # NOTE: the 'cal' is necessary since "invers" automatically adds
         #       a "cal" string to the spectra path.
         outfolder = os.path.join(
@@ -736,8 +744,16 @@ class Preparation():
                      }
         return parameters
 
-    def get_pcxs_parameters(self, date):
-        """Return parameters to replace in the pcxs20.inp file."""
+    def get_pcxs_parameters(self, local_date):
+        """Return parameters to fill the pcxs20.inp template.
+
+        Parameters:
+            local_date (dt.Datetime): date in local time
+
+        Returns:
+            parameters (dict):
+                dict containing the parameters to fill the pcxs template.
+        """
 
         self.logger.debug("Create pcxs input parameters ...")
 
@@ -748,20 +764,20 @@ class Preparation():
         if self.mapfile_format == "ggg2020":
             map_file = os.path.join(
                 self.map_path,
-                f"{self.site_abbrev}{date.strftime('%Y%m%d')}Z_"
+                f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}Z_"
                 "LocalTimeNoon.map"
                 )
         elif self.mapfile_format == "ggg2014":
             map_file = os.path.join(
                 self.map_path,
-                f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+                f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}.map"
             )
         parameters = {
             "ALT": alt,
             "LAT": lat,
             "LON": lon,
             "DATAPATH": self.analysis_instrument_path,
-            "DATE": date.strftime("%y%m%d"),
+            "DATE": local_date.strftime("%y%m%d"),
             "SITE": self.site_name,
             "MAPPATH_WITH_MAPFILE": map_file
         }
@@ -1003,14 +1019,16 @@ class Preparation():
             return line.replace("\\", "/")
         return line
 
-    def prepare_map_file(self, date):
+    def prepare_map_file(self, local_date):
         """Generate map file if GGG2020 map file are used.
-        
-        Returns:
-            success (bool): 
-                True if map files where found and created
-                False if no files where found.
 
+        Parameters:
+            local_date (dt.Datetime): date in local time
+
+        Returns:
+            success (bool):
+                True if map files were found and created
+                False if no files were found.
         """
         # search for GGG2020 map files:
         # This includes files produced by ginput as well as from a running
@@ -1021,21 +1039,22 @@ class Preparation():
             self.logger.debug("Detected GGG2020 map files!")
             # GGG2020map files found!
             self.mapfile_format = "ggg2020"
-            self._interpolate_map_files(date)
+            self._interpolate_map_files(local_date)
         else:
-            srchstrg = f"{self.site_abbrev}{date.strftime('%Y%m%d')}.map"
+            srchstrg = f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}.map"
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
             if len(mapfiles) == 1:
                 self.logger.warning(
                     "Detected GGG2014 map file, at day "
-                    f"{date.strftime('%Y-%m-%d')}. This is not recommended! "
+                    f"{local_date.strftime('%Y-%m-%d')}. This is not "
+                    "recommended! "
                     "PROFFASTpylot is calibrated using GGG2020 map files, "
                     "please use GGG2014 only for comparison purposes!")
                 self.mapfile_format = "ggg2014"
             else:
                 self.logger.warning(
                     "No suitable map file found at "
-                    f"{self.map_path} for {date.strftime('%Y-%m-%d')}.")
+                    f"{self.map_path} for {local_date.strftime('%Y-%m-%d')}.")
                 return False
         return True
 
@@ -1057,18 +1076,20 @@ class Preparation():
                 "The format of the mapfile was not determined."
                 )
 
-    def _interpolate_map_files(self, date):
+    def _interpolate_map_files(self, local_date):
         """Interpolate GGG2020 map files.
-        Genereate a map file at 12:00 local time.
+
+        Generate a map file at 12:00 local time.
         This method is only called for mapfiles of type GGG2020.
 
         Parameters:
-            date (dt.datetime): datetime in local time (is called with
-                elements of the localdate_spectra)
+            local_date (dt.datetime): datetime in local time
         """
         # create a timestamp of local noon
         noon_local = dt(
-            year=date.year, month=date.month, day=date.day, hour=12)
+            year=local_date.year,
+            month=local_date.month,
+            day=local_date.day, hour=12)
 
         total_localtime_utc_offset = timedelta(
             hours=(self.utc_offset + self._localtime_offset))
@@ -1088,7 +1109,7 @@ class Preparation():
         mapfiles.extend(
              glob(os.path.join(self.map_path, search_str)))
         mapfiles.sort()
-        # find the correct map files: bevore and after the hour of noon_utc
+        # find the correct map files: before and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = noon_utc.hour
         for i, file in enumerate(mapfiles):
@@ -1116,7 +1137,7 @@ class Preparation():
         file2 = file2.to_numpy().transpose()
 
         # interpolate between the files
-        # difference between two file is allways 3 hours
+        # difference between two file is always 3 hours
         tdiff = 3 * 60 * 60   # seconds
         # date of file 1 for the requested time diff
         date_file1 = dt.strptime(
@@ -1126,8 +1147,10 @@ class Preparation():
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
                 * (noon_utc - date_file1).total_seconds()
 
-        output_mapfile = \
-            f"{self.site_abbrev}{date.strftime('%Y%m%d')}Z_LocalTimeNoon.map"
+        output_mapfile = (
+            f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}"
+            "Z_LocalTimeNoon.map"
+            )
         output_mapfile = os.path.join(self.map_path, output_mapfile)
 
         # write header
