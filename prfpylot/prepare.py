@@ -103,6 +103,8 @@ class Preparation():
         for option, value in args.items():
             self.__dict__[option] = value
 
+        if args.get("start_with_spectra") is True:
+            self.mandatory_options.remove("interferogram_path")
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
                 self.logger.critical(
