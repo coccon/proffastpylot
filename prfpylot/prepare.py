@@ -1140,7 +1140,7 @@ class Preparation():
         # difference between two file is always 3 hours
         tdiff = 3 * 60 * 60   # seconds
         # date of file 1 for the requested time diff
-        date_file1 = dt.strptime(
+        date_file1 = dt.datetime.strptime(
                     os.path.basename(mapfiles[i_noon-1])[-15:-5], "%Y%m%d%H")
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
