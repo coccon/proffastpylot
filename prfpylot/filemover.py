@@ -73,10 +73,13 @@ class FileMover(Preparation):
     def _create_result_dir(self):
         """Create the result directories and a backup if previous results exist.
 
-        Within this folder the subfolders 'input_files', 'logfiles' and
-        'raw_output_proffast' are created.
+        Within this folder the following subfolders are created:
+            - input_files, 
+            - logfiles
+            - raw_output_proffast
 
-        If backup_results: True is given and the result folder does exists,
+        Backup behavior:
+        If backup_results is True and the result folder does exist:
         the existing folder is renamed adding
         backupX where X increases if an other backup does already exists.
         After renaming, a new folder is created.
@@ -113,7 +116,7 @@ class FileMover(Preparation):
         """Create the subfolders in the result folder.
 
         The folders 'input_files', 'logfiles' and 'raw_output_proffast' 
-        are only created if not exitent.
+        are only created if not existent.
         """
         if not os.path.exists(self.input_files_folder):
             os.makedirs(self.input_files_folder)
