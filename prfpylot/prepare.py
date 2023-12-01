@@ -609,7 +609,8 @@ class Preparation():
             header = f.readlines(1)[:24]
         UTh = float(header[13].strip())
         UT_date = header[12].strip()
-        utc_time = dt.datetime.strptime(UT_date, "%y%m%d") + timedelta(hours=UTh)
+        utc_time = dt.datetime.strptime(UT_date, "%y%m%d") + timedelta(
+            hours=UTh)
 
         # check if times are consistent
         total_offset = self._localtime_offset + self.utc_offset
@@ -762,11 +763,14 @@ class Preparation():
         alt = self.coords["alt"]
         # prepare map file path
         if self.mapfile_format == "ggg2020":
+            local_noon_utc = self.get_local_noon_utc(local_date)
             map_file = os.path.join(
-                self.map_path,
-                f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}Z_"
-                "LocalTimeNoon.map"
+                self.result_folder,
+                "interpolated_mapfiles",
+                f"{self.site_abbrev}{local_noon_utc.strftime('%Y%m%d%H')}"
+                "_Z.map"
                 )
+
         elif self.mapfile_format == "ggg2014":
             map_file = os.path.join(
                 self.map_path,
@@ -1039,7 +1043,7 @@ class Preparation():
             self.logger.debug("Detected GGG2020 map files!")
             # GGG2020map files found!
             self.mapfile_format = "ggg2020"
-            self._interpolate_map_files(local_date)
+            self.interpolate_map_files(local_date)
         else:
             srchstrg = f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}.map"
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
@@ -1076,42 +1080,68 @@ class Preparation():
                 "The format of the mapfile was not determined."
                 )
 
-    def _interpolate_map_files(self, local_date):
-        """Interpolate GGG2020 map files.
+    def get_local_noon_utc(self, local_date):
+        """Return local noon in utc.
 
-        Generate a map file at 12:00 local time.
-        This method is only called for mapfiles of type GGG2020.
+        Local noon is referring to the 12:00 in the local time.
+        Daylight saving time is not considered for this transformation.
 
         Parameters:
-            local_date (dt.datetime): datetime in local time
+            local_date (dt.datetime):
+                date in local time
+
+        Returns:
+            local_noon_utc: 12:00 in local time converted to UTC
         """
-        # create a timestamp of local noon
-        noon_local = dt.datetime(
+        local_noon = dt.datetime(
             year=local_date.year,
             month=local_date.month,
             day=local_date.day, hour=12)
-
         total_localtime_utc_offset = timedelta(
             hours=(self.utc_offset + self._localtime_offset))
-        noon_utc = noon_local - total_localtime_utc_offset
+        local_noon_utc = local_noon - total_localtime_utc_offset
+        return local_noon_utc
 
-        # List of all *.map files of the needed date
+    def get_mapfiles(self, local_noon_utc):
+        """Return mapfiles of date and following date of the local noon in UTC.
+        """
+
         search_str = (
-            f"{self.site_abbrev}*{noon_utc.strftime('%Y%m%d')}*Z.map")
-
+            f"{self.site_abbrev}*{local_noon_utc.strftime('%Y%m%d')}*Z.map")
         mapfiles = glob(os.path.join(self.map_path, search_str))
+
         # add files of the following day
         # in case of interpolation between 21:00 and 00:00
-        next_day = noon_utc + timedelta(hours=24)
+        next_day = local_noon_utc + timedelta(hours=24)
         search_str = (
             f"{self.site_abbrev}_*_"
             f"{next_day.strftime('%Y%m%d')}*Z.map")
         mapfiles.extend(
              glob(os.path.join(self.map_path, search_str)))
         mapfiles.sort()
+        return mapfiles
+
+    def interpolate_map_files(self, local_date):
+        """Interpolate GGG2020 map files.
+
+        Generate a map file at 12:00 local time.
+        This method is only called for mapfiles of type GGG2020.
+        The mapfile is created in <result_folder>/interpolated_mapfiles
+
+        with the following filename:
+            "<site_abbrev><local_noon_utc>_Z.map"
+
+        The folder interpolated_mapfiles is created in this function.
+
+        Parameters:
+            local_date (dt.datetime): datetime in local time
+        """
+        local_noon_utc = self.get_local_noon_utc(local_date)
+        mapfiles = self.get_mapfiles(local_noon_utc)
+
         # find the correct map files: before and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
-        noon_hour = noon_utc.hour
+        noon_hour = local_noon_utc.hour
         for i, file in enumerate(mapfiles):
             hour_file = int(file[-7:-5])
             if hour_file > noon_hour:
@@ -1119,7 +1149,7 @@ class Preparation():
                 break
         if i_noon in [None, 0]:
             self.logger.critical(
-                f"Could not calculate mapfile for {noon_utc} UTC "
+                f"Could not calculate mapfile for {local_noon_utc} UTC "
                 "from the following files:\n"
                 f"{' '.join(mapfiles)}"
                 )
@@ -1145,13 +1175,18 @@ class Preparation():
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
-                * (noon_utc - date_file1).total_seconds()
+                * (local_noon_utc - date_file1).total_seconds()
 
-        output_mapfile = (
-            f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}"
-            "Z_LocalTimeNoon.map"
+        output_folder = os.path.join(
+            self.result_folder, "interpolated_mapfiles")
+        os.makedirs(output_folder, exist_ok=True)
+
+        output_filename = (
+            f"{self.site_abbrev}"
+            f"{local_noon_utc.strftime('%Y%m%d%H')}_Z.map"
             )
-        output_mapfile = os.path.join(self.map_path, output_mapfile)
+
+        output_mapfile = os.path.join(output_folder, output_filename)
 
         # write header
         with open(mapfiles[0], "r") as f:
