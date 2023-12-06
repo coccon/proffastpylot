@@ -108,6 +108,7 @@ class Pylot(FileMover):
             output = pool.map(subs_method, all_inputfiles)
         self._write_logfile("preprocess", output)
 
+        self.executed_preprocess = True
         self.logger.info("Finished preprocessing.\n")
 
     def run_pcxs(self, n_processes=1):
@@ -177,6 +178,7 @@ class Pylot(FileMover):
             temp = pool.map(subs_method, inputfile_list)
             output.extend(temp)
         self._write_logfile("pcxs", output)
+        self.executed_preprocess = True
         self.logger.info("Finished pcxs.\n")
 
     def run_inv(self, n_processes=1):
@@ -228,7 +230,7 @@ class Pylot(FileMover):
                 "pressure data. The interpolation failed at the following "
                 "times:\n"
                 f"{failed_list_print}.\n"
-                "If this is due to unaivaoidable overlap from different "
+                "If this is due to unavoidable overlap from different "
                 "pressure files and only occured in limited time ranges, "
                 "there is an option to continue execution. Set\n"
                 "ignore_interpolation_error: True\n"
@@ -253,6 +255,7 @@ class Pylot(FileMover):
             output = pool.map(subs_method, all_inputfiles)
 
         self._write_logfile("inv", output)
+        self.executed_invers = True
         self.logger.info("Finished invers.\n")
 
     def run_prf_with_inputfile(
@@ -270,9 +273,16 @@ class Pylot(FileMover):
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
+        if not self.executed_invers:
+            self.logger.warning(
+                "The method `combine_results` was called but invers was not "
+                "executed. Therefore `combine_results has nothing to do. "
+                "Please do not execute this function without executing "
+                "`run_invers`."
+            )
+            return
         self.logger.debug("Moving results to final output folder ...")
         self.move_results()
-
         df = self._get_merged_df()
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
@@ -334,18 +344,20 @@ class Pylot(FileMover):
         self.logger.info("Removing temporary files ...")
 
         self.logger.debug("Handling pT and VMR files...")
-        self.handle_pT_VMR_files()
+        if self.executed_pcxs:
+            self.handle_pT_VMR_files()
 
         # handling abscosbin
-        if self.delete_abscosbin_files:
-            self.logger.debug("Deleting abscos.bin files ...")
-            self.delete_abscos_files()
-        else:
-            self.logger.info(
-                "Keeping abscos.bin files ...\n"
-                "They are located in "
-                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
-            self.check_abscosbin_summed_size()
+        if self.executed_pcxs:
+            if self.delete_abscosbin_files:
+                self.logger.debug("Deleting abscos.bin files ...")
+                self.delete_abscos_files()
+            else:
+                self.logger.info(
+                    "Keeping abscos.bin files ...\n"
+                    "They are located in "
+                    f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
+                self.check_abscosbin_summed_size()
 
         # handling input files
         if self.delete_input_files:

@@ -250,6 +250,11 @@ class Preparation():
 
         self.logger.debug("Finished reading of input file.")
 
+        # check and log if prepo., pcxs and invers were excuted:
+        self.executed_preprocess = False
+        self.executed_pcxs = False
+        self.executed_invers = False
+
     def get_logger(self, logginglevel="info"):
         """Create and return a logger."""
         r = str(randint(10000, 99999))
