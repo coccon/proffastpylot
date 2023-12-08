@@ -505,15 +505,20 @@ class Preparation():
         self.logger.debug(
             f"Generating {self.template_types['inv']}"
             f" inp file for {date_str}..")
-        parameters = self.get_inv_parameters(local_date)
+        list_of_parameters = self.get_inv_parameters(local_date)
         prf_input_files = []
-        for parameter_i in parameters:
-            suffix = parameter_i["SUFFIX"]
-            prf_input_files.append(prf_input_file[:-4] + f"_{suffix}.inp")
-            self.replace_params_in_template(
-                parameter_i, "inv", prf_input_files[-1])
+        for parameters in list_of_parameters:
+            if parameters is None:
+                prf_input_files.append(None)
+            else:
+                suffix = parameters["SUFFIX"]
+                prf_input_files.append(prf_input_file[:-4] + f"_{suffix}.inp")
+                self.replace_params_in_template(
+                    parameters, "inv", prf_input_files[-1])
         # safe inputfiles in global list to move/delete them later
-        self.global_inputfile_list.extend(prf_input_files)
+        self.global_inputfile_list.extend(
+            [x for x in prf_input_files if x is not None]
+            )
         # return several input files hence do it already here:
         return prf_input_files
 
@@ -839,14 +844,18 @@ class Preparation():
         for sub_pT_input, spectrum, suffix \
                 in zip(spectra_pT_input, representative_spectra, charlist):
             times = self.get_times_of(spectrum)
-            temp_parameters = {
-                "DATAPATH": self.analysis_instrument_path,
-                "MEASUREMENT_DATE": times["meas_time"].strftime("%y%m%d"),
-                "LOCAL_DATE": times["local_time"].strftime("%y%m%d"),
-                "SITE": self.site_name,
-                "SUFFIX": suffix,
-                "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
-            }
+            if len(sub_pT_input) == 0:
+                # occurs if no pressure was found for all spectra
+                temp_parameters = None
+            else:
+                temp_parameters = {
+                    "DATAPATH": self.analysis_instrument_path,
+                    "MEASUREMENT_DATE": times["meas_time"].strftime("%y%m%d"),
+                    "LOCAL_DATE": times["local_time"].strftime("%y%m%d"),
+                    "SITE": self.site_name,
+                    "SUFFIX": suffix,
+                    "SPECTRA_PT_INPUT": "\n".join(sub_pT_input)
+                }
             parameters.append(temp_parameters)
         return parameters
 
@@ -869,7 +878,7 @@ class Preparation():
 
         Returns:
             spectra_pT_input (list): 
-                List containing a list of strings with spectra and pT infos
+                List containing a list of strings with spectra and pT infos.
 
         """
         # in case of two measurement days in a local date list, split them up:
@@ -896,18 +905,25 @@ class Preparation():
         spectra_pT_input = []
         for sublist in split_spectra_list:
             temp_pT_input = []
-            for s in sublist:
+            for spec in sublist:
                 # get utc time of spectrum
-                times = self.get_times_of(s)
+                times = self.get_times_of(spec)
                 utc_time = times["utc_time"]
                 pressure_offset = timedelta(
                     hours=self.pressure_handler.utc_offset)
                 pressure_time = utc_time + pressure_offset
 
-                # get pressure from mapfile
+                # get pressure from pressure record
                 p = self.pressure_handler.get_pressure_at(pressure_time)
-
-                temp_pT_input.append(f"{os.path.basename(s)}, {p}, 0.0")
+                if p == 0:
+                    self.logger.warning(
+                        f"For the spectrum {spec} no pressure record is "
+                        "available. The reason can be found in the previous "
+                        "message. "
+                        "Hence, this spectrum is not going to be "
+                        "processed.\n")
+                    continue
+                temp_pT_input.append(f"{os.path.basename(spec)}, {p}, 0.0")
             spectra_pT_input.append(temp_pT_input)
 
         return spectra_pT_input

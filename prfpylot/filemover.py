@@ -176,7 +176,8 @@ class FileMover(Preparation):
                                   f"{sfile}. Errormessage: {e}")
 
         # move invparms.dat .spc and version.dat
-        for date in self.meas_dates:
+        for date in self.local_dates:
+            # TODO: Check with Lena if local_dates is correct
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
@@ -184,7 +185,8 @@ class FileMover(Preparation):
                 source = os.path.join(source_folder, file)
                 sourcefiles = glob(source)
                 if len(sourcefiles) == 0:
-                    self.logger.warning(f"No file {file} was not found!")
+                    self.logger.warning(
+                        f"No file matchin the pattern {file} was not found!")
 
                 for sfile in sourcefiles:
                     target = os.path.join(

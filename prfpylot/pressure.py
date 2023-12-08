@@ -71,6 +71,7 @@ class PressureHandler():
         self.dates = copy.deepcopy(dates)
         self.logger = logger
         self.pressure_path = pressure_path
+        
         self.interpolation_failed_at = []
 
         with open(pressure_type_file, "r") as f:
@@ -132,7 +133,7 @@ class PressureHandler():
             self.dates = list(set(self.dates))
             self.dates.sort()
         self.logger.debug(
-            "Date to load pressure files for:"
+            "Dates to load pressure files for:"
             "\n".join([x.strftime("%Y-%m-%d") for x in self.dates]))
 
         self.p_df = pd.DataFrame()
@@ -182,6 +183,14 @@ class PressureHandler():
     def get_pressure_at(self, pressure_time):
         """Return the interpolated pressure at a given time.
 
+        The returned pressure is 0 if no pressure data is available or an 
+        interpolation error occured.
+        Spectra with a pressure of 0 will NOT be processed. This is checked in
+        prepare.get_spectra_pT_input()
+
+        If the pressure measurements for a whole day is missing, the whole
+        day is deleted from the processing list in `TODO` 
+
         Parameters:
             pressure_time (datetime:datetime):
                 time in timezone of the pressure file
@@ -192,19 +201,37 @@ class PressureHandler():
         # calculate differences to current value:
         diff = \
             (self.p_df[self.parsed_dtcol] - pressure_time).dt.total_seconds()
-        diff = abs(diff).sort_values()
+        diff = abs(diff).sort_values()  # sort the two nearest to the top
         inds = diff.index[:2].to_list()
         inds.sort()
         i1 = inds[0]
         i2 = inds[1]
         t1 = self.p_df.loc[i1][self.parsed_dtcol]
         t2 = self.p_df.loc[i2][self.parsed_dtcol]
+        
+        error_fac = 1 #
+        # error_fac is multiplied later with pressure. Used to zero p value.
+
         if not (t1 < pressure_time and t2 > pressure_time):
-            if i1 == 0 or i2 == len(self.p_df) - 1:
-                # at the beginning of the dataseries, data will be extrapolated
+            # in the brackets the normal case is given. Only execute this is 
+            # this is not the case!
+            if i1 == 0:
+                # at the beginning of the p records data is missing!
                 self.logger.warning(
-                    f"No pressure data available for {pressure_time}."
-                    "Pressure data will be linear extrapolated!")
+                    f"For the measurement at time {pressure_time} (in the "
+                    "timezone of the pressure records), no pressure data is "
+                    f"available.\nThe pressure records starts at {t1}."
+                    "The spectra without valid pressure measurements will "
+                    "be skipped. (See next message!)")
+                error_fac = 0
+            elif i2 == len(self.p_df) - 1:
+                self.logger.warning(
+                    f"For the measurement at time {pressure_time} (in the "
+                    "timezone of the pressure records), no pressure data is "
+                    f"available.\nThe pressure records ends at {t2}."
+                    "The spectra without valid pressure measurements will "
+                    "be skipped. (See next message!)")
+                error_fac = 0
             else:
                 # for not equistant data this case can happen
                 if t2 < pressure_time:
@@ -215,25 +242,19 @@ class PressureHandler():
                     i2 -= 1
                 t1 = self.p_df.loc[i1][self.parsed_dtcol]
                 t2 = self.p_df.loc[i2][self.parsed_dtcol]
-        if abs((t2 - t1).total_seconds()) / 3600 > 6:
-            self.logger.warning(
-                "Pressure is interpolated for a time range larger than 6 h "
-                f"for date {pressure_time} (pressure time)."
-                "This might give wrong results!"
-                "Please check the input data for this day."
-            )
 
         m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
             / abs((t2 - t1).total_seconds())
 
         if np.isnan(m):
             m = 0
+            error_fac = 0
             self.interpolation_failed_at.append(pressure_time)
-
-        p = m * \
-            (pressure_time - t1).total_seconds()\
-            + self.p_df.loc[i1][pkey]
-        return p
+        
+        p = self.p_df.loc[i1][pkey]\
+            + m * (pressure_time - t1).total_seconds()
+        
+        return p * error_fac
 
     def _read_subdaily_files(self):
         """Reads the subdaily AND daily files into the internal p_df
@@ -242,18 +263,24 @@ class PressureHandler():
 
             daily_df = pd.DataFrame()
             filename = self._get_filename(day)
-            dataloggerFileList = glob.glob(
+            file_list = glob.glob(
                 os.path.join(self.pressure_path, filename))
             # print("Files to read in: ", dataloggerFileList)
-            dataloggerFileList.sort()
-            # get all files of one day and concat them:
-            for file in dataloggerFileList:
-                self.logger.debug(f"Read in file {file}")
-                temp = pd.read_csv(
-                    file,
-                    usecols=self.cols_to_use,
-                    **(self.dataframe_parameters["csv_kwargs"]))
-                daily_df = pd.concat([daily_df, temp])
+            if len(file_list) == 0:
+                # no pressure file is available for this day!
+                self.logger.warning(
+                    f"No pressure file could be found at day {day}.")
+            else:
+                # get all files of one day and concat them:
+                file_list.sort()
+                for file in file_list:
+                    self.logger.debug(f"Read in file {file}")
+                    temp = pd.read_csv(
+                        file,
+                        usecols=self.cols_to_use,
+                        **(self.dataframe_parameters["csv_kwargs"]))
+                    daily_df = pd.concat([daily_df, temp])
+            
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
         self.p_df.reset_index(drop=True, inplace=True)
@@ -296,6 +323,11 @@ class PressureHandler():
         file_list = glob.glob(os.path.join(self.pressure_path, filename))        
 
         df = pd.DataFrame()
+        if len(file_list) == 0:
+            self.logger.critical(
+                f"No pressure data could be found in {self.presure_path}! "
+                "Terminating PROFFASTpylot.")
+            exit()
         for file in file_list:
             temp = pd.read_csv(
                 file,

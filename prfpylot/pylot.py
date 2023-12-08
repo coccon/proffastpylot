@@ -204,9 +204,26 @@ class Pylot(FileMover):
         self.pressure_handler.prepare_pressure_df()
 
         all_inputfiles = []
-        for local_date in self.local_dates:
+        temp_list = self.local_dates.copy()
+        for local_date in temp_list:
             input_files = self.generate_invers_input(local_date)
-            all_inputfiles.extend(input_files)
+            no_pData = all([infile is None for infile in input_files])
+            if no_pData:
+                self.logger.warning(
+                    f"For date {local_date} no pressure data was available"
+                    ". Hence, this day is skipped."
+                )
+                self.local_dates.remove(local_date)
+            else:
+                for input_file in input_files:
+                    if input_file is None:
+                        # only a subset of the input file is none.
+                        #self.logger.warning(
+                        #    f"For date {local_date} no pressure data was "
+                        #    "available. Hence, this day is skipped.")
+                        continue
+                else:
+                        all_inputfiles.append(input_file)
 
         output = []
         inv_exe = self._get_executable("inv")
