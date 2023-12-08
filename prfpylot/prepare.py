@@ -70,7 +70,6 @@ class Preparation():
         "start_with_spectra": False,
         "note": None,
         "delete_abscosbin_files": False,
-        "delete_pT_VMR_files": False,
         "delete_input_files": False,
         "ils_parameters": None,
         "ignore_interpolation_error": None,

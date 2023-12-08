@@ -178,7 +178,7 @@ class Pylot(FileMover):
             temp = pool.map(subs_method, inputfile_list)
             output.extend(temp)
         self._write_logfile("pcxs", output)
-        self.executed_preprocess = True
+        self.executed_pcxs = True
         self.logger.info("Finished pcxs.\n")
 
     def run_inv(self, n_processes=1):
