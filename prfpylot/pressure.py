@@ -45,7 +45,9 @@ class PressureHandler():
         "utc_offset": 0.0,
         "pressure_factor": 1.0,
         "pressure_offset": 0.0,
-        "data_parameters": {}
+        "data_parameters": {},
+        "max_interpolation_time": 2,  # in hours
+        "max_extrapolation_time": 1,  # in hours
     }
 
     parsed_dtcol = "parsed_datetime"
@@ -197,6 +199,31 @@ class PressureHandler():
 
         """
         pkey = self.dataframe_parameters["pressure_key"]
+        def do_interpolation(t1, t2, i1, i2):
+            """A helper method which does the actual interpolation"""
+            # first check if interpolation time is too large:
+            if (t1 - t2).total_seconds() > \
+                    self.max_interpolation_time * 3600:
+                self.logger.debug(
+                    f"Interpolation time for requested time {pressure_time} "
+                    "was larger than the threshold. Will skip the processing "
+                    "of the spectra corresponding to this time. "
+                    "(See next message!)"
+                )
+                return 0
+            else:
+                m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
+                    / abs((t2 - t1).total_seconds())
+
+                if np.isnan(m):
+                    m = 0
+                    error_fac = 0
+                    self.interpolation_failed_at.append(pressure_time)
+                
+                p = self.p_df.loc[i1][pkey]\
+                    + m * (pressure_time - t1).total_seconds()
+                return p
+
         # get the two closest entries:
         # calculate differences to current value:
         diff = \
@@ -208,30 +235,53 @@ class PressureHandler():
         i2 = inds[1]
         t1 = self.p_df.loc[i1][self.parsed_dtcol]
         t2 = self.p_df.loc[i2][self.parsed_dtcol]
-        
-        error_fac = 1 #
-        # error_fac is multiplied later with pressure. Used to zero p value.
+
+        p_val = 0
+
+        # this message is needed at several places. Hence define it here.
+        extrapolation_message = (
+            "For the measurement at time {} (in the timezone of the pressure "
+            "records), the pressure value was extrapolated, by assuming a "
+            "constant pressure. I.e. we are using the same pressure value as "
+            "the nearest available one, which is: {} at {}.")
 
         if not (t1 < pressure_time and t2 > pressure_time):
             # in the brackets the normal case is given. Only execute this is 
             # this is not the case!
             if i1 == 0:
                 # at the beginning of the p records data is missing!
-                self.logger.warning(
-                    f"For the measurement at time {pressure_time} (in the "
-                    "timezone of the pressure records), no pressure data is "
-                    f"available.\nThe pressure records starts at {t1}."
-                    "The spectra without valid pressure measurements will "
-                    "be skipped. (See next message!)")
-                error_fac = 0
+                # we need to `extrapolate` if the next p record is closer than
+                # self.max_extrapolation_time.
+                if abs((t1 - pressure_time).total_seconds()) <= \
+                        self.max_extrapolation_time * 3600:
+                    
+                    p_val = self.p_df.loc[i1][pkey]
+                    self.logger.debug(extrapolation_message.format(
+                        pressure_time, p_val, t1
+                        ))
+                else:
+                    self.logger.debug(
+                        f"For the measurement at time {pressure_time} (in the "
+                        "timezone of the pressure records), no pressure data "
+                        f"is available.\nThe pressure records starts at {t1}."
+                        "The spectra without valid pressure measurements will "
+                        "be skipped. (See next message!)")
+                    p_val = 0
             elif i2 == len(self.p_df) - 1:
-                self.logger.warning(
-                    f"For the measurement at time {pressure_time} (in the "
-                    "timezone of the pressure records), no pressure data is "
-                    f"available.\nThe pressure records ends at {t2}."
-                    "The spectra without valid pressure measurements will "
-                    "be skipped. (See next message!)")
-                error_fac = 0
+                if abs((pressure_time - t2).total_seconds()) <= \
+                        self.max_extrapolation_time * 3600:
+                    p_val = self.p_df.loc[i2][pkey]
+                    self.logger.debug(extrapolation_message.format(
+                        pressure_time, p_val, t2
+                        ))
+                else:
+                    self.logger.debug(
+                        f"For the measurement at time {pressure_time} (in the "
+                        "timezone of the pressure records), no pressure data "
+                        f"is available.\nThe pressure records ends at {t2}."
+                        "The spectra without valid pressure measurements will "
+                        "be skipped. (See next message!)")
+                    p_val = 0
             else:
                 # for not equistant data this case can happen
                 if t2 < pressure_time:
@@ -242,19 +292,12 @@ class PressureHandler():
                     i2 -= 1
                 t1 = self.p_df.loc[i1][self.parsed_dtcol]
                 t2 = self.p_df.loc[i2][self.parsed_dtcol]
+                # now the normal interpolation can be executed:
+                p_val = do_interpolation(t1, t2, i1, i2)
 
-        m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
-            / abs((t2 - t1).total_seconds())
-
-        if np.isnan(m):
-            m = 0
-            error_fac = 0
-            self.interpolation_failed_at.append(pressure_time)
-        
-        p = self.p_df.loc[i1][pkey]\
-            + m * (pressure_time - t1).total_seconds()
-        
-        return p * error_fac
+        else:
+            p_val = do_interpolation(t1, t2, i1, i2)
+        return p_val
 
     def _read_subdaily_files(self):
         """Reads the subdaily AND daily files into the internal p_df

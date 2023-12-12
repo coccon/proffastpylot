@@ -196,7 +196,6 @@ class FileMover(Preparation):
 
         # move invparms.dat .spc and version.dat
         for date in self.local_dates:
-            # TODO: Check with Lena if local_dates is correct
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
