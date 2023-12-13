@@ -142,8 +142,12 @@ class FileMover(Preparation):
     def move_results(self):
         """Move the gererated files to the result folder.
 
-        The colsens.dat, invparms_?.dat, job_?.spc and version_?.dat files
-        are searched.
+        The following files are searched:
+            - `colsens.dat`
+            - `invparms_?.dat`
+            - `job_?.spc`
+            - `version_?.dat`
+
         If files are not found, a warning is issued."""
 
         suffix_list = [

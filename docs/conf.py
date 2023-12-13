@@ -13,9 +13,10 @@ sys.path.insert(0, os.path.abspath('../prfpylot'))
 
 
 project = 'PROFFASTpylot'
-copyright = '2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology'
+copyright = (
+    '2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology')
 author = 'Lena Feld, Benedikt Herkommer'
-release = 'v1.2'
+release = 'v1.3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,11 +35,9 @@ def setup(app):
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    # "myst_parser",
     'sphinx_mdinclude',
     ]
 
-# source_suffix = ['.rst', '.md']
 napoleon_use_rtype = False
 autodoc_default_options = {
     "members": True,
@@ -53,14 +52,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'haiku'
+html_theme = 'alabaster'
+html_theme_options = {
+    "caption_font_family": "Roboto",
+    "head_font_family": "Roboto",
+}
 
 html_static_path = ['_static']
-
-# With the following code the KIT logo can be included.
-# However, this is not working properly with the current custom CSS file!.
-# html_logo= '_static/images/kitlogo_200dpi.png'
-# html_theme_options = {
-#     'full_logo': False}
-
 html_css_files = ['css/custom.css']
