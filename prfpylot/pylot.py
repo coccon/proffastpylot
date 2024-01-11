@@ -196,7 +196,7 @@ class Pylot(FileMover):
         if not hasattr(self, "local_dates"):
             self.localdate_spectra = self.get_localdate_spectra()
             self.local_dates = list(self.localdate_spectra.keys())
-           
+
         output = []
 
         # the interpolated pressure is stored and can be
@@ -223,7 +223,7 @@ class Pylot(FileMover):
                         #    "available. Hence, this day is skipped.")
                         continue
                 else:
-                        all_inputfiles.append(input_file)
+                    all_inputfiles.append(input_file)
 
         output = []
         inv_exe = self._get_executable("inv")

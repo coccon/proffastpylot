@@ -145,7 +145,7 @@ class FileMover(Preparation):
         The invparms_?.dat, job_?.spc and version_?.dat files
         are searched and moved to the result folder.
         If files are not found, a warning is printed.
-        
+
         The colsens.dat are produced by PXCS and
             - moved if `delete_abscosbin_files` is True
             - copied if `delete_abscosbin_files` is False.
@@ -172,8 +172,10 @@ class FileMover(Preparation):
             sfile = os.path.join(source_folder, file)
             target = os.path.join(self.raw_output_prf_folder, file)
 
-            if self.delete_abscosbin_files: action = "moved"
-            else: action = "copied"
+            if self.delete_abscosbin_files: 
+                action = "moved"
+            else: 
+                action = "copied"
 
             try:
                 if self.delete_abscosbin_files:
@@ -196,7 +198,6 @@ class FileMover(Preparation):
 
         # move invparms.dat .spc and version.dat
         for date in self.local_dates:
-            # TODO: Check with Lena if local_dates is correct
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
@@ -221,21 +222,22 @@ class FileMover(Preparation):
                                           f"{sfile}. Errormessage: {e}")
 
     def handle_pT_VMR_files(self):
-        """Delete or move the pT and VMR files created by pcxs.
-        
+        """Copy or move the pT and VMR files created by pcxs.
+
         If `delete-abscosbin_files` is True, the pT and VMR are MOVED to the
         result folder.
-        If `delete-abscosbin_files` is False, the pT and VMR are copied to the
+        If `delete-abscosbin_files` is False, the pT and VMR are COPIED to the
         result folder.
 
-        This is, because they are needed for the execution and must not be
-        missing when executing invers. Furthermore, they are an important part
-        or the result and hence are wanted to show up in the result folder
+        They contain the prior information and are therefore an important part
+        or the result. Hence, they are wanted to show up in the result folder
         in any case.
         """
+        # Comment: This function could be handeld together with the
+        # colsens files in move_results
+
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         for date in self.local_dates:
-            # TODO: check with lena if local_date is correct.
             pTFile =\
                 f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
             VMRFile =\
