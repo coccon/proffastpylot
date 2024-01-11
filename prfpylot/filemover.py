@@ -184,11 +184,11 @@ class FileMover(Preparation):
                     shutil.copy(sfile, target)
             except FileNotFoundError:
                 self.logger.warning(
-                    f"File {sfile} was not found and could not be {action} to "
-                    "the result folder.\nThis is probably due to an manual "
-                    "manipulation of the `prf/out_fast` folder.\nTo solve this "
-                    "warning, try to delete als *.abscos.bin files and rerun "
-                    "pcxs.")
+                    f"File {sfile} was not found in `prf/out_fast` "
+                    f"and could not be {action} to "
+                    "the result folder.\n"
+                    "To solve this warning, try to delete "
+                    "all *.abscos.bin files and rerun pcxs.")
             except PermissionError:
                 self.logger.error(f"Could not write {target} due to "
                                   "permission issues.")
@@ -246,20 +246,24 @@ class FileMover(Preparation):
                 for file in [pTFile, VMRFile]:
                     filepath = os.path.join(wrk_fast_folder, file)
                     if self.delete_abscosbin_files:
-                        action_string = f"move {file} to result folder!"
+                        action = "moved"
                         shutil.move(
                             filepath,
                             os.path.join(self.raw_output_prf_folder, file)
                             )
                     else:
-                        action_string = f"copy {file} to result folder!"
+                        action = "copied"
                         shutil.copy(
                             filepath,
                             os.path.join(self.raw_output_prf_folder, file)
                             )
             except FileNotFoundError:
-                self.logger.error(
-                    f"File not Found: Could not {action_string}")
+                self.logger.warning(
+                    f"File {file} was not found in `prf/wrk_fast` "
+                    f"and could not be {action} to "
+                    "the result folder.\n"
+                    "To solve this warning, try to delete "
+                    "all *.abscos.bin files and rerun pcxs.")
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files created by pcxs."""
