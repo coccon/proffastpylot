@@ -335,11 +335,11 @@ class PressureHandler():
 
     def _parse_datetime_col(self, df, date=None):
         """Parse the dataframe for a suitable datetime.
-        
+
         Add the column 'parsed_datecol' to the dataframe
         Depending on the options given, the datetime column is constructed f
         rom the combination of the separate time and date columns.
-        
+
         Parameters:
             df (pandas.DataFrame): pressure dataframe containing time 
                 information in arbitrary format.

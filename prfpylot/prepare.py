@@ -26,7 +26,7 @@ from prfpylot.pressure import PressureHandler
 import os
 import sys
 import yaml
-from datetime import datetime as dt
+import datetime as dt
 from datetime import timedelta
 import pandas as pd
 from glob import glob
@@ -177,9 +177,9 @@ class Preparation():
         start_date = args.get("start_date")
         end_date = args.get("end_date")
         if isinstance(start_date, str):
-            start_date = dt.strptime(start_date, "%Y-%m-%d").date()
+            start_date = dt.datetime.strptime(start_date, "%Y-%m-%d").date()
         if isinstance(end_date, str):
-            end_date = dt.strptime(end_date, "%Y-%m-%d").date()
+            end_date = dt.datetime.strptime(end_date, "%Y-%m-%d").date()
         self.meas_dates = self.get_meas_dates(
                 start_date=start_date,
                 end_date=end_date
@@ -384,7 +384,7 @@ class Preparation():
                     "No Directory!")
                 continue
             try:
-                date = dt.strptime(date_str, "%y%m%d")
+                date = dt.datetime.strptime(date_str, "%y%m%d")
             except ValueError:
                 self.logger.debug(
                     f"Skipping invalid element in datelist: {date_str}. "
@@ -407,14 +407,14 @@ class Preparation():
         """Return path to the corresponding prf_input_file."""
         if template_type in ["pcxs", "inv"]:
             folder_path = os.path.join(self.proffast_path, "inp_fast")
-            date_str = dt.strftime(date, "%y%m%d")
+            date_str = dt.datetime.strftime(date, "%y%m%d")
             filename = "".join(
                 [self.template_types[template_type],
                     f"{self.site_name}_{date_str}.inp"]
             )
         elif template_type == "prep":
             folder_path = os.path.join(self.proffast_path, "preprocess")
-            date_str = dt.strftime(date, "%y%m%d")
+            date_str = dt.datetime.strftime(date, "%y%m%d")
             filename = "".join(
                 [self.template_types[template_type],
                     f"{self.site_name}_{date_str}",
@@ -444,7 +444,7 @@ class Preparation():
         prf_input_file = self.get_prf_input_path("prep", meas_date)
 
         if meas_date is not None:
-            date_str = dt.strftime(meas_date, "%y%m%d")
+            date_str = dt.datetime.strftime(meas_date, "%y%m%d")
         self.logger.debug(
             f"Generating preprocess inp file for {date_str}..")
         parameters = self.get_prep_parameters(meas_date)
@@ -470,7 +470,7 @@ class Preparation():
         # the name of the input file to be generated
         prf_input_file = self.get_prf_input_path("pcxs", local_date)
 
-        date_str = dt.strftime(local_date, "%y%m%d")
+        date_str = dt.datetime.strftime(local_date, "%y%m%d")
             
         parameters = self.get_pcxs_parameters(local_date)
         self.logger.debug(
@@ -496,7 +496,7 @@ class Preparation():
         """
         # the name of the input file to be generated
         prf_input_file = self.get_prf_input_path("inv", local_date)
-        date_str = dt.strftime(local_date, "%y%m%d")
+        date_str = dt.datetime.strftime(local_date, "%y%m%d")
         self.logger.debug(
             f"Generating {self.template_types['inv']}"
             f" inp file for {date_str}..")
@@ -545,7 +545,7 @@ class Preparation():
         """Return list of spectra for a given date (in measurement time).
 
         Params:
-            date (dt.date): in measurement time
+            date (dt.datetime): in measurement time
 
         Returns:
             spectra (list): 
@@ -595,12 +595,12 @@ class Preparation():
         Returns:
             times(dict):
                 A dict with the following keys:
-                    - meas_time (dt.DateTime): time parsed from the filename
-                    - local_time (dt.DateTime): calculated local time
-                    - utc_time (dt.DateTime): read from spectra header
+                    - meas_time (dt.datetime): time parsed from the filename
+                    - local_time (dt.datetime): calculated local time
+                    - utc_time (dt.datetime): read from spectra header
         """
         spectrum_name = os.path.basename(spectrum)
-        meas_time = dt.strptime(spectrum_name, "%y%m%d_%H%M%SSN.BIN")
+        meas_time = dt.datetime.strptime(spectrum_name, "%y%m%d_%H%M%SSN.BIN")
         local_time = meas_time + timedelta(hours=self._localtime_offset)
 
         # read UTC time from header
@@ -609,7 +609,8 @@ class Preparation():
             header = f.readlines(1)[:24]
         UTh = float(header[13].strip())
         UT_date = header[12].strip()
-        utc_time = dt.strptime(UT_date, "%y%m%d") + timedelta(hours=UTh)
+        utc_time = dt.datetime.strptime(UT_date, "%y%m%d") + timedelta(
+            hours=UTh)
 
         # check if times are consistent
         total_offset = self._localtime_offset + self.utc_offset
@@ -666,7 +667,7 @@ class Preparation():
         """Return Parameters to be replaced in the preprocess template.
 
         Parameters:
-            meas_date (dt.Datetime): date in measurement time
+            meas_date (dt.datetime): date in measurement time
 
         Returns:
             parameters (dict):
@@ -748,7 +749,7 @@ class Preparation():
         """Return parameters to fill the pcxs20.inp template.
 
         Parameters:
-            local_date (dt.Datetime): date in local time
+            local_date (dt.datetime): date in local time
 
         Returns:
             parameters (dict):
@@ -762,11 +763,14 @@ class Preparation():
         alt = self.coords["alt"]
         # prepare map file path
         if self.mapfile_format == "ggg2020":
+            local_noon_utc = self.get_local_noon_utc(local_date)
             map_file = os.path.join(
-                self.map_path,
-                f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}Z_"
-                "LocalTimeNoon.map"
+                self.result_folder,
+                "interpolated_mapfiles",
+                f"{self.site_abbrev}{local_noon_utc.strftime('%Y%m%d%H')}"
+                "_Z.map"
                 )
+
         elif self.mapfile_format == "ggg2014":
             map_file = os.path.join(
                 self.map_path,
@@ -872,12 +876,12 @@ class Preparation():
         spectra0 = []
         spectra1 = []
         first_spectrum_name = os.path.basename(spectra_list[0])
-        first_date = dt.strptime(first_spectrum_name[:6], "%y%m%d")
+        first_date = dt.datetime.strptime(first_spectrum_name[:6], "%y%m%d")
         spectra0.append(spectra_list[0])
         # compare the dates from filename with first filename in the list
         for spectrum in spectra_list[1:]:
             spectrum_name = os.path.basename(spectrum)
-            current_date = dt.strptime(spectrum_name[:6], "%y%m%d")
+            current_date = dt.datetime.strptime(spectrum_name[:6], "%y%m%d")
             if current_date != first_date:
                 spectra1.append(spectrum)
             else:
@@ -984,7 +988,7 @@ class Preparation():
     def _get_start_date_pos(self, start_date, dates):
         """Return position of the start date in dates."""
         self.logger.debug("Locating the first date in the given interval.")
-        start_date = dt.combine(start_date, dt.min.time())
+        start_date = dt.datetime.combine(start_date, dt.datetime.min.time())
 
         if start_date > dates[-1]:
             self.logger.error(
@@ -999,7 +1003,7 @@ class Preparation():
     def _get_end_date_pos(self, end_date, dates):
         """Return position of the end date in dates."""
         self.logger.debug("Locating the last date in the given interval.")
-        end_date = dt.combine(end_date, dt.min.time())
+        end_date = dt.datetime.combine(end_date, dt.datetime.min.time())
 
         if end_date < dates[0]:
             self.logger.error(
@@ -1023,7 +1027,7 @@ class Preparation():
         """Generate map file if GGG2020 map file are used.
 
         Parameters:
-            local_date (dt.Datetime): date in local time
+            local_date (dt.datetime): date in local time
 
         Returns:
             success (bool):
@@ -1039,7 +1043,7 @@ class Preparation():
             self.logger.debug("Detected GGG2020 map files!")
             # GGG2020map files found!
             self.mapfile_format = "ggg2020"
-            self._interpolate_map_files(local_date)
+            self.interpolate_map_files(local_date)
         else:
             srchstrg = f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}.map"
             mapfiles = glob(os.path.join(self.map_path, srchstrg))
@@ -1076,42 +1080,68 @@ class Preparation():
                 "The format of the mapfile was not determined."
                 )
 
-    def _interpolate_map_files(self, local_date):
-        """Interpolate GGG2020 map files.
+    def get_local_noon_utc(self, local_date):
+        """Return local noon in utc.
 
-        Generate a map file at 12:00 local time.
-        This method is only called for mapfiles of type GGG2020.
+        Local noon is referring to the 12:00 in the local time.
+        Daylight saving time is not considered for this transformation.
 
         Parameters:
-            local_date (dt.datetime): datetime in local time
+            local_date (dt.datetime):
+                date in local time
+
+        Returns:
+            local_noon_utc: 12:00 in local time converted to UTC
         """
-        # create a timestamp of local noon
-        noon_local = dt(
+        local_noon = dt.datetime(
             year=local_date.year,
             month=local_date.month,
             day=local_date.day, hour=12)
-
         total_localtime_utc_offset = timedelta(
             hours=(self.utc_offset + self._localtime_offset))
-        noon_utc = noon_local - total_localtime_utc_offset
+        local_noon_utc = local_noon - total_localtime_utc_offset
+        return local_noon_utc
 
-        # List of all *.map files of the needed date
+    def get_mapfiles(self, local_noon_utc):
+        """Return mapfiles of date and following date of the local noon in UTC.
+        """
+
         search_str = (
-            f"{self.site_abbrev}*{noon_utc.strftime('%Y%m%d')}*Z.map")
-
+            f"{self.site_abbrev}*{local_noon_utc.strftime('%Y%m%d')}*Z.map")
         mapfiles = glob(os.path.join(self.map_path, search_str))
+
         # add files of the following day
         # in case of interpolation between 21:00 and 00:00
-        next_day = noon_utc + timedelta(hours=24)
+        next_day = local_noon_utc + timedelta(hours=24)
         search_str = (
             f"{self.site_abbrev}_*_"
             f"{next_day.strftime('%Y%m%d')}*Z.map")
         mapfiles.extend(
              glob(os.path.join(self.map_path, search_str)))
         mapfiles.sort()
+        return mapfiles
+
+    def interpolate_map_files(self, local_date):
+        """Interpolate GGG2020 map files.
+
+        Generate a map file at 12:00 local time.
+        This method is only called for mapfiles of type GGG2020.
+        The mapfile is created in <result_folder>/interpolated_mapfiles
+
+        with the following filename:
+            "<site_abbrev><local_noon_utc>_Z.map"
+
+        The folder interpolated_mapfiles is created in this function.
+
+        Parameters:
+            local_date (dt.datetime): datetime in local time
+        """
+        local_noon_utc = self.get_local_noon_utc(local_date)
+        mapfiles = self.get_mapfiles(local_noon_utc)
+
         # find the correct map files: before and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
-        noon_hour = noon_utc.hour
+        noon_hour = local_noon_utc.hour
         for i, file in enumerate(mapfiles):
             hour_file = int(file[-7:-5])
             if hour_file > noon_hour:
@@ -1119,7 +1149,7 @@ class Preparation():
                 break
         if i_noon in [None, 0]:
             self.logger.critical(
-                f"Could not calculate mapfile for {noon_utc} UTC "
+                f"Could not calculate mapfile for {local_noon_utc} UTC "
                 "from the following files:\n"
                 f"{' '.join(mapfiles)}"
                 )
@@ -1140,18 +1170,23 @@ class Preparation():
         # difference between two file is always 3 hours
         tdiff = 3 * 60 * 60   # seconds
         # date of file 1 for the requested time diff
-        date_file1 = dt.strptime(
+        date_file1 = dt.datetime.strptime(
                     os.path.basename(mapfiles[i_noon-1])[-15:-5], "%Y%m%d%H")
         for i in range(file1.shape[0]):
             # do a linear interpolation, calculate everything in seconds:
             file1[i, :] = file1[i, :] + (file2[i, :] - file1[i, :]) / tdiff \
-                * (noon_utc - date_file1).total_seconds()
+                * (local_noon_utc - date_file1).total_seconds()
 
-        output_mapfile = (
-            f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}"
-            "Z_LocalTimeNoon.map"
+        output_folder = os.path.join(
+            self.result_folder, "interpolated_mapfiles")
+        os.makedirs(output_folder, exist_ok=True)
+
+        output_filename = (
+            f"{self.site_abbrev}"
+            f"{local_noon_utc.strftime('%Y%m%d%H')}_Z.map"
             )
-        output_mapfile = os.path.join(self.map_path, output_mapfile)
+
+        output_mapfile = os.path.join(output_folder, output_filename)
 
         # write header
         with open(mapfiles[0], "r") as f:
@@ -1211,7 +1246,7 @@ class Preparation():
             lng=self.coords["lon"])
         local_tz = pytz.timezone(local_tz_name)
         # Allways use winter time
-        date_winter = dt.strptime("2000-01-01", "%Y-%m-%d")
+        date_winter = dt.datetime.strptime("2000-01-01", "%Y-%m-%d")
         localtime_utc_timedelta = local_tz.utcoffset(date_winter)
         localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
         localtime_offset = localtime_utc_offset - self.utc_offset

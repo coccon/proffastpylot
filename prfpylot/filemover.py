@@ -45,16 +45,16 @@ class FileMover(Preparation):
         - result folder (backup of previous results)
         - logfiles
         """
-        self._create_analysis_subdirs()
+        self._create_analysis_cal_folders()
         self._create_result_dir()  # including the subdirs
 
-    def _create_analysis_subdirs(self):
-        """Create subdirs of the analysis folder.
+    def _create_analysis_cal_folders(self):
+        """Create the analysis and cal folder.
 
         Created folders:
-            - 'cal' (for the spectra),
-            - 'VMR-dim' (VMR-files),
-            - pT
+            - analysis/<Site>_<Instrument>
+            - analysis/<Site>_<Instrument>/<YYMMDD>/cal
+                for the spectra of all measurement days.
         """
         if os.path.exists(self.analysis_instrument_path):
             self.logger.warning(
@@ -62,7 +62,6 @@ class FileMover(Preparation):
                 "exists already! "
                 "The content may be overwritten.")
 
-        # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
         for date in self.meas_dates:
             datestring = date.strftime("%y%m%d")
             # create cal-folder
@@ -70,29 +69,17 @@ class FileMover(Preparation):
                 self.analysis_instrument_path, datestring, "cal")
             if not os.path.exists(calfolder):
                 os.makedirs(calfolder)
-            # create VMR_dim folder:
-            vmrfolder = os.path.join(
-                self.analysis_instrument_path, datestring, "VMR_dim")
-            if not os.path.exists(vmrfolder):
-                os.makedirs(vmrfolder)
-            self._create_pT_dir(date)
-
-    def _create_pT_dir(self, meas_date):
-        """Create pt directory."""
-        pt_path = os.path.join(
-            self.analysis_instrument_path,
-            meas_date.strftime("%y%m%d"),
-            "pT")
-        if not os.path.exists(pt_path):
-            os.makedirs(pt_path)
 
     def _create_result_dir(self):
         """Create the result directories and a backup if previous results exist.
 
-        Within this folder the subfolders 'input_files', 'logfiles' and
-        'raw_output_proffast' are created.
+        Within this folder the following subfolders are created:
+            - input_files, 
+            - logfiles
+            - raw_output_proffast
 
-        If backup_results: True is given and the result folder does exists,
+        Backup behavior:
+        If backup_results is True and the result folder does exist:
         the existing folder is renamed adding
         backupX where X increases if an other backup does already exists.
         After renaming, a new folder is created.
@@ -129,7 +116,7 @@ class FileMover(Preparation):
         """Create the subfolders in the result folder.
 
         The folders 'input_files', 'logfiles' and 'raw_output_proffast' 
-        are only created if not exitent.
+        are only created if not existent.
         """
         if not os.path.exists(self.input_files_folder):
             os.makedirs(self.input_files_folder)
