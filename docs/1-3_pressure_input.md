@@ -81,3 +81,11 @@ For more information you can look at the [pandas documentation](https://pandas.p
 - The `frequency` of your files can be defined. Currently the frequencies `"daily"`, `"subdaily"` and `"yearly"` are available.
 - The `pressure_factor` is multiplied to the pressure values. It can be used to correct for a height offset or a different unit. The pressure is expected to be given in hPa.
 - The `pressure_offset` is added to the pressure values. The pressure value is expected to be given in hPa.
+- The `max_interpolation_time` is the maximal timely distance between two pressure data points.
+  If the distance between two points is larger, the spectra which belongs to the corresponding time is skipped.
+  Can be set to a value in hours. Its default value is 2h.
+
+## Technical notes:
+TODO!!
+- Where is the pressure checked for valid values?
+- 
