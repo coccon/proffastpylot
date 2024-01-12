@@ -45,16 +45,16 @@ class FileMover(Preparation):
         - result folder (backup of previous results)
         - logfiles
         """
-        self._create_analysis_subdirs()
+        self._create_analysis_cal_folders()
         self._create_result_dir()  # including the subdirs
 
-    def _create_analysis_subdirs(self):
-        """Create subdirs of the analysis folder.
+    def _create_analysis_cal_folders(self):
+        """Create the analysis and cal folder.
 
         Created folders:
-            - 'cal' (for the spectra),
-            - 'VMR-dim' (VMR-files),
-            - pT
+            - analysis/<Site>_<Instrument>
+            - analysis/<Site>_<Instrument>/<YYMMDD>/cal
+                for the spectra of all measurement days.
         """
         if os.path.exists(self.analysis_instrument_path):
             self.logger.warning(
@@ -62,7 +62,6 @@ class FileMover(Preparation):
                 "exists already! "
                 "The content may be overwritten.")
 
-        # create folders 'YYMMDD/cal' and 'YYMMDD/VMR_dim'
         for date in self.meas_dates:
             datestring = date.strftime("%y%m%d")
             # create cal-folder
@@ -70,29 +69,17 @@ class FileMover(Preparation):
                 self.analysis_instrument_path, datestring, "cal")
             if not os.path.exists(calfolder):
                 os.makedirs(calfolder)
-            # create VMR_dim folder:
-            vmrfolder = os.path.join(
-                self.analysis_instrument_path, datestring, "VMR_dim")
-            if not os.path.exists(vmrfolder):
-                os.makedirs(vmrfolder)
-            self._create_pT_dir(date)
-
-    def _create_pT_dir(self, meas_date):
-        """Create pt directory."""
-        pt_path = os.path.join(
-            self.analysis_instrument_path,
-            meas_date.strftime("%y%m%d"),
-            "pT")
-        if not os.path.exists(pt_path):
-            os.makedirs(pt_path)
 
     def _create_result_dir(self):
         """Create the result directories and a backup if previous results exist.
 
-        Within this folder the subfolders 'input_files', 'logfiles' and
-        'raw_output_proffast' are created.
+        Within this folder the following subfolders are created:
+            - input_files, 
+            - logfiles
+            - raw_output_proffast
 
-        If backup_results: True is given and the result folder does exists,
+        Backup behavior:
+        If backup_results is True and the result folder does exist:
         the existing folder is renamed adding
         backupX where X increases if an other backup does already exists.
         After renaming, a new folder is created.
@@ -129,7 +116,7 @@ class FileMover(Preparation):
         """Create the subfolders in the result folder.
 
         The folders 'input_files', 'logfiles' and 'raw_output_proffast' 
-        are only created if not exitent.
+        are only created if not existent.
         """
         if not os.path.exists(self.input_files_folder):
             os.makedirs(self.input_files_folder)
@@ -142,13 +129,16 @@ class FileMover(Preparation):
     def move_results(self):
         """Move the gererated files to the result folder.
 
-        The following files are searched:
-            - `colsens.dat`
-            - `invparms_?.dat`
-            - `job_?.spc`
-            - `version_?.dat`
+        The `invparms_?.dat`, `job_?.spc` and `version_?.dat` files
+        are searched and moved to the result folder.
+        If files are not found, a warning is printed.
 
-        If files are not found, a warning is issued."""
+        The colsens.dat are produced by PXCS and
+            - moved if `delete_abscosbin_files` is True
+            - copied if `delete_abscosbin_files` is False.
+        This is to ensure that every run has them in the result folder,
+        independent if pcxs was executed or skipped in this run.
+        """
 
         suffix_list = [
             "invparms_?.dat",
@@ -161,26 +151,40 @@ class FileMover(Preparation):
         ]
         source_folder = os.path.join(self.proffast_path, "out_fast")
 
-        # move colsens files
+        # move/copy colsens files
         for local_date in self.local_dates:
             datestr = local_date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             file = prefix + "colsens.dat"
             sfile = os.path.join(source_folder, file)
             target = os.path.join(self.raw_output_prf_folder, file)
+
+            if self.delete_abscosbin_files: 
+                action = "moved"
+            else: 
+                action = "copied"
+
             try:
-                shutil.move(sfile, target)
+                if self.delete_abscosbin_files:
+                    shutil.move(sfile, target)
+                else:
+                    shutil.copy(sfile, target)
             except FileNotFoundError:
-                self.logger.warning(f"File {sfile} was not found!")
+                self.logger.warning(
+                    f"File {sfile} was not found in `prf/out_fast` "
+                    f"and could not be {action} to "
+                    "the result folder.\n"
+                    "To solve this warning, try to delete "
+                    "all *.abscos.bin files and rerun pcxs.")
             except PermissionError:
                 self.logger.error(f"Could not write {target} due to "
                                   "permission issues.")
             except OSError as e:
-                self.logger.error("OSError while movig file "
+                self.logger.error("OSError while moving file "
                                   f"{sfile}. Errormessage: {e}")
 
         # move invparms.dat .spc and version.dat
-        for date in self.meas_dates:
+        for date in self.local_dates:
             datestr = date.strftime("%y%m%d")
             prefix = self.site_name + datestr + "-"
             for suffix in suffix_list:
@@ -188,7 +192,8 @@ class FileMover(Preparation):
                 source = os.path.join(source_folder, file)
                 sourcefiles = glob(source)
                 if len(sourcefiles) == 0:
-                    self.logger.warning(f"No file {file} was not found!")
+                    self.logger.warning(
+                        f"No file matchin the pattern {file} was not found!")
 
                 for sfile in sourcefiles:
                     target = os.path.join(
@@ -204,14 +209,22 @@ class FileMover(Preparation):
                                           f"{sfile}. Errormessage: {e}")
 
     def handle_pT_VMR_files(self):
-        """Delete or move the pT and VMR files created by pcxs.
+        """Copy or move the pT and VMR files created by pcxs.
 
-        If 'delete_pT_VMR_files' is True (default), the files are removed.
-        If 'delete_pT_VMR_files' as False the files are copied (moved) if
-        'delete_abscos_bin' is False (True).
+        If `delete-abscosbin_files` is True, the pT and VMR are MOVED to the
+        result folder.
+        If `delete-abscosbin_files` is False, the pT and VMR are COPIED to the
+        result folder.
+
+        They contain the prior information and are therefore an important part
+        or the result. Hence, they are wanted to show up in the result folder
+        in any case.
         """
+        # Comment: This function could be handeld together with the
+        # colsens files in move_results
+
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
-        for date in self.meas_dates:
+        for date in self.local_dates:
             pTFile =\
                 f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
             VMRFile =\
@@ -219,24 +232,25 @@ class FileMover(Preparation):
             try:
                 for file in [pTFile, VMRFile]:
                     filepath = os.path.join(wrk_fast_folder, file)
-                    if self.delete_pT_VMR_files:
-                        action_string = f"delete {file}"
-                        os.remove(filepath)
+                    if self.delete_abscosbin_files:
+                        action = "moved"
+                        shutil.move(
+                            filepath,
+                            os.path.join(self.raw_output_prf_folder, file)
+                            )
                     else:
-                        action_string = f"move {file} to result folder!"
-                        if self.delete_abscos_files:
-                            shutil.move(
-                                filepath,
-                                os.path.join(self.raw_output_prf_folder, file)
-                                    )
-                        else:
-                            shutil.copy(
-                                filepath,
-                                os.path.join(self.raw_output_prf_folder, file)
-                                    )
+                        action = "copied"
+                        shutil.copy(
+                            filepath,
+                            os.path.join(self.raw_output_prf_folder, file)
+                            )
             except FileNotFoundError:
-                self.logger.error(
-                    f"File not Found: Could not {action_string}")
+                self.logger.warning(
+                    f"File {file} was not found in `prf/wrk_fast` "
+                    f"and could not be {action} to "
+                    "the result folder.\n"
+                    "To solve this warning, try to delete "
+                    "all *.abscos.bin files and rerun pcxs.")
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files created by pcxs."""

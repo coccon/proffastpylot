@@ -108,6 +108,7 @@ class Pylot(FileMover):
             output = pool.map(subs_method, all_inputfiles)
         self._write_logfile("preprocess", output)
 
+        self.executed_preprocess = True
         self.logger.info("Finished preprocessing.\n")
 
     def run_pcxs(self, n_processes=1):
@@ -126,6 +127,7 @@ class Pylot(FileMover):
                 If n_processes == 1, `run_pcxs_at` is called directly.
                 Otherwise it is called via run_parallel.
         """
+        self.executed_pcxs = True        
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
         output = []
         self.logger.debug("Get localdate spectra...")
@@ -189,6 +191,7 @@ class Pylot(FileMover):
                 If n_processes == 1, `run_inv_at` is called directly.
                 Otherwise it is called via run_parallel.        
         """
+        self.executed_invers = True
         self.logger.info(f"Running invers with {n_processes} task(s) ...")
         # needed if run_pcxs was not executed before
         if not hasattr(self, "local_dates"):
@@ -200,11 +203,42 @@ class Pylot(FileMover):
         # the interpolated pressure is stored and can be
         # accesed from self.pressure_handler
         self.pressure_handler.prepare_pressure_df()
+        
+        p_data_warnings = {}
 
         all_inputfiles = []
-        for local_date in self.local_dates:
-            input_files = self.generate_invers_input(local_date)
-            all_inputfiles.extend(input_files)
+        temp_list = self.local_dates.copy()
+        for local_date in temp_list:
+            input_files, skipped_spectra = \
+                self.generate_invers_input(local_date)
+            no_pData = all([infile is None for infile in input_files])
+            if no_pData:
+                self.logger.debug(
+                    f"For date {local_date} no pressure data was available"
+                    ". Hence, this day is skipped."
+                )
+                p_data_warnings[local_date] = "All spectra of this local day!"
+                self.local_dates.remove(local_date)
+            else:
+                if len(skipped_spectra) != 0:
+                    p_data_warnings[local_date] = skipped_spectra
+                for input_file in input_files:
+                    if input_file is None:
+                        # only a subset of the input file is none.
+                        continue
+                else:
+                    all_inputfiles.append(input_file)
+        if len(p_data_warnings) != 0:
+            warn_strg = (
+                "Due to missing pressure data the following spectra were "
+                "skipped:")
+            for date, status in p_data_warnings.items():
+                datestr = date.strftime("%Y-%m-%d")
+                if type(status) == str:
+                    warn_strg += f"\n{datestr}: {status}"
+                else:
+                    warn_strg += f"\n{datestr}: {'; '.join(status)}"
+            self.logger.info(warn_strg + "\n")
 
         output = []
         inv_exe = self._get_executable("inv")
@@ -228,7 +262,7 @@ class Pylot(FileMover):
                 "pressure data. The interpolation failed at the following "
                 "times:\n"
                 f"{failed_list_print}.\n"
-                "If this is due to unaivaoidable overlap from different "
+                "If this is due to unavoidable overlap from different "
                 "pressure files and only occured in limited time ranges, "
                 "there is an option to continue execution. Set\n"
                 "ignore_interpolation_error: True\n"
@@ -270,9 +304,16 @@ class Pylot(FileMover):
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""
+        if not self.executed_invers:
+            self.logger.warning(
+                "The method `combine_results` was called but invers was not "
+                "executed. Therefore `combine_results has nothing to do. "
+                "Please do not execute this function without executing "
+                "`run_invers`."
+            )
+            return
         self.logger.debug("Moving results to final output folder ...")
         self.move_results()
-
         df = self._get_merged_df()
         df = self._add_timezones_to(df)
         df = self._select_rename_cols(df)
@@ -334,18 +375,20 @@ class Pylot(FileMover):
         self.logger.info("Removing temporary files ...")
 
         self.logger.debug("Handling pT and VMR files...")
-        self.handle_pT_VMR_files()
+        if self.executed_pcxs:
+            self.handle_pT_VMR_files()
 
         # handling abscosbin
-        if self.delete_abscosbin_files:
-            self.logger.debug("Deleting abscos.bin files ...")
-            self.delete_abscos_files()
-        else:
-            self.logger.info(
-                "Keeping abscos.bin files ...\n"
-                "They are located in "
-                f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
-            self.check_abscosbin_summed_size()
+        if self.executed_pcxs:
+            if self.delete_abscosbin_files:
+                self.logger.debug("Deleting abscos.bin files ...")
+                self.delete_abscos_files()
+            else:
+                self.logger.info(
+                    "Keeping abscos.bin files ...\n"
+                    "They are located in "
+                    f"{os.path.join(self.proffast_path, 'wrk-fast')}.")
+                self.check_abscosbin_summed_size()
 
         # handling input files
         if self.delete_input_files:
