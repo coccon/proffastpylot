@@ -83,9 +83,6 @@ For more information you can look at the [pandas documentation](https://pandas.p
 - The `pressure_offset` is added to the pressure values. The pressure value is expected to be given in hPa.
 - The `max_interpolation_time` is the maximal timely distance between two pressure data points.
   If the distance between two points is larger, the spectra which belongs to the corresponding time is skipped.
-  Can be set to a value in hours. Its default value is 2h.
+  Can be set to a value in hours. Its default value is 2 hours.
+  If the time is outside the range of the given pressure values, the nearest value will be used up to a time difference of `max_interpolation_time`.
 
-## Technical notes:
-TODO!!
-- Where is the pressure checked for valid values?
-- 

@@ -47,7 +47,6 @@ class PressureHandler():
         "pressure_offset": 0.0,
         "data_parameters": {},
         "max_interpolation_time": 2,  # in hours
-        "max_extrapolation_time": 1,  # in hours
     }
 
     parsed_dtcol = "parsed_datetime"
@@ -169,6 +168,10 @@ class PressureHandler():
             raise ValueError(f"Unknown frequency {frequency}.")
 
         self._apply_pressure_offset_and_factor()
+
+        # sort values (needed for correct interpolation)
+        self.p_df.sort_values(self.parsed_dtcol)
+
         # Reset index to let in be unique
         self.p_df.reset_index(drop=True, inplace=True)
 
@@ -185,119 +188,47 @@ class PressureHandler():
     def get_pressure_at(self, pressure_time):
         """Return the interpolated pressure at a given time.
 
-        The returned pressure is 0 if no pressure data is available or an 
-        interpolation error occured.
-        Spectra with a pressure of 0 will NOT be processed. This is checked in
-        prepare.get_spectra_pT_input()
+        If the value is rejected or an interpolation error occured p=0
+        is returned.The corresponding spectra will not be processed.
+        This is determined in prepare.get_spectra_pT_input().
 
         If the pressure measurements for a whole day is missing, the whole
-        day is deleted from the processing list in `TODO` 
+        day is deleted from the processing list in pylot.run_inv().
 
         Parameters:
             pressure_time (datetime:datetime):
                 time in timezone of the pressure file
-
         """
+        tkey = self.parsed_dtcol
         pkey = self.dataframe_parameters["pressure_key"]
-        def do_interpolation(t1, t2, i1, i2):
-            """A helper method which does the actual interpolation"""
-            # first check if interpolation time is too large:
-            if (t1 - t2).total_seconds() > \
-                    self.max_interpolation_time * 3600:
-                self.logger.debug(
-                    f"Interpolation time for requested time {pressure_time} "
-                    "was larger than the threshold. Will skip the processing "
-                    "of the spectra corresponding to this time. "
-                    "(See next message!)"
-                )
-                return 0
-            else:
-                m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
-                    / abs((t2 - t1).total_seconds())
 
-                if np.isnan(m):
-                    m = 0
-                    error_fac = 0
-                    self.interpolation_failed_at.append(pressure_time)
-                
-                p = self.p_df.loc[i1][pkey]\
-                    + m * (pressure_time - t1).total_seconds()
-                return p
-
-        # get the two closest entries:
-        # calculate differences to current value:
+        # reject if time difference to closed value is greater than threshhold
+        # get the two closest entry by calculating differences to current value
         diff = \
-            (self.p_df[self.parsed_dtcol] - pressure_time).dt.total_seconds()
-        diff = abs(diff).sort_values()  # sort the two nearest to the top
-        inds = diff.index[:2].to_list()
-        inds.sort()
-        i1 = inds[0]
-        i2 = inds[1]
-        t1 = self.p_df.loc[i1][self.parsed_dtcol]
-        t2 = self.p_df.loc[i2][self.parsed_dtcol]
+            (self.p_df[tkey] - pressure_time).dt.total_seconds()
+        diff = abs(diff).sort_values()
+        i_nearest = diff.index[0]  # sort the two nearest to the top
 
-        p_val = 0
+        t_nearest = self.p_df.loc[i_nearest][tkey]
+        print(t_nearest)
 
-        # this message is needed at several places. Hence define it here.
-        extrapolation_message = (
-            "For the measurement at time {} (in the timezone of the pressure "
-            "records), the pressure value was extrapolated, by assuming a "
-            "constant pressure. I.e. we are using the same pressure value as "
-            "the nearest available one, which is: {} at {}.")
+        threshold = self.max_interpolation_time * 3600
 
-        if not (t1 < pressure_time and t2 > pressure_time):
-            # in the brackets the normal case is given. Only execute this is 
-            # this is not the case!
-            if i1 == 0:
-                # at the beginning of the p records data is missing!
-                # we need to `extrapolate` if the next p record is closer than
-                # self.max_extrapolation_time.
-                if abs((t1 - pressure_time).total_seconds()) <= \
-                        self.max_extrapolation_time * 3600:
-                    
-                    p_val = self.p_df.loc[i1][pkey]
-                    self.logger.debug(extrapolation_message.format(
-                        pressure_time, p_val, t1
-                        ))
-                else:
-                    self.logger.debug(
-                        f"For the measurement at time {pressure_time} (in the "
-                        "timezone of the pressure records), no pressure data "
-                        f"is available.\nThe pressure records starts at {t1}."
-                        "The spectra without valid pressure measurements will "
-                        "be skipped. (See next message!)")
-                    p_val = 0
-            elif i2 == len(self.p_df) - 1:
-                if abs((pressure_time - t2).total_seconds()) <= \
-                        self.max_extrapolation_time * 3600:
-                    p_val = self.p_df.loc[i2][pkey]
-                    self.logger.debug(extrapolation_message.format(
-                        pressure_time, p_val, t2
-                        ))
-                else:
-                    self.logger.debug(
-                        f"For the measurement at time {pressure_time} (in the "
-                        "timezone of the pressure records), no pressure data "
-                        f"is available.\nThe pressure records ends at {t2}."
-                        "The spectra without valid pressure measurements will "
-                        "be skipped. (See next message!)")
-                    p_val = 0
-            else:
-                # for not equistant data this case can happen
-                if t2 < pressure_time:
-                    i2 += 1
-                    i1 += 1
-                if t1 > pressure_time:
-                    i1 -= 1
-                    i2 -= 1
-                t1 = self.p_df.loc[i1][self.parsed_dtcol]
-                t2 = self.p_df.loc[i2][self.parsed_dtcol]
-                # now the normal interpolation can be executed:
-                p_val = do_interpolation(t1, t2, i1, i2)
+        if abs((t_nearest - pressure_time).total_seconds()) > threshold:
+            self.logger.debug(
+                f"Interpolation time for requested time {pressure_time} "
+                "was larger than the threshold. Will skip the processing "
+                "of the spectra corresponding to this time. "
+                "(See next message!)")
+            return 0
 
-        else:
-            p_val = do_interpolation(t1, t2, i1, i2)
-        return p_val
+        p = np.interp(
+            np.datetime64(pressure_time, "ns"),
+            self.p_df[tkey].astype("datetime64[ns]"),
+            self.p_df[pkey].values)
+
+        return p
+
 
     def _read_subdaily_files(self):
         """Reads the subdaily AND daily files into the internal p_df
