@@ -121,13 +121,13 @@ class Pylot(FileMover):
               from self.local_dates.
             - generate the input file.
             - run pcxs(in parallel).
-        
-        Params:
+
+        Parameters:
             n_processes(int) = 1: 
                 If n_processes == 1, `run_pcxs_at` is called directly.
                 Otherwise it is called via run_parallel.
         """
-        self.executed_pcxs = True        
+        self.executed_pcxs = True
         self.logger.info(f"Running pcxs with {n_processes} task(s) ...")
         output = []
         self.logger.debug("Get localdate spectra...")
@@ -140,7 +140,8 @@ class Pylot(FileMover):
         temp = deepcopy(self.local_dates)
         for local_date in temp:
             # Check if absos file is there, skip
-            srchstrg = f"{self.site_name}{local_date.strftime('%y%m%d')}-abscos.bin"
+            srchstrg = (
+                f"{self.site_name}{local_date.strftime('%y%m%d')}-abscos.bin")
             if os.path.exists(os.path.join(wrk_fast_path, srchstrg)):
                 message = (
                     f"*.abscos.bin file for day {local_date} exists already."
@@ -186,7 +187,7 @@ class Pylot(FileMover):
 
         Loops over localdates, generates the input files and runs invers.
 
-        Params:
+        Parameters:
             n_processes(int) = 1: 
                 If n_processes == 1, `run_inv_at` is called directly.
                 Otherwise it is called via run_parallel.        
@@ -197,13 +198,13 @@ class Pylot(FileMover):
         if not hasattr(self, "local_dates"):
             self.localdate_spectra = self.get_localdate_spectra()
             self.local_dates = list(self.localdate_spectra.keys())
-           
+
         output = []
 
         # the interpolated pressure is stored and can be
         # accesed from self.pressure_handler
         self.pressure_handler.prepare_pressure_df()
-        
+
         p_data_warnings = {}
 
         all_inputfiles = []
@@ -505,7 +506,7 @@ class Pylot(FileMover):
     def _get_executable(self, program):
         """Return PROFFAST executable of the given program part.
 
-        Params:
+        Parameters:
             program (str): can be "prep", "pcxs" and "inv"
 
         Returns:

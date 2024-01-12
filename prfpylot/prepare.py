@@ -290,7 +290,7 @@ class Preparation():
     def get_meas_dates(self, start_date=None, end_date=None):
         """
         Return a list of dates in measurement time for the site + instrument.
-        
+
         Truncate the list if start_date and end_date are given.
 
         Parameters:
@@ -468,18 +468,18 @@ class Preparation():
             local_date (dt.datetime):
                 the date in local time to be processed
 
-        Return:
+        Returns:
             prf_input_file (str): Path to the input file.
         """
         # the name of the input file to be generated
         prf_input_file = self.get_prf_input_path("pcxs", local_date)
 
         date_str = dt.datetime.strftime(local_date, "%y%m%d")
-            
+
         parameters = self.get_pcxs_parameters(local_date)
         self.logger.debug(
             f"Generating {self.template_types['pcxs']}"
-            f" inp file for {date_str}..")            
+            f" inp file for {date_str}..")
 
         self.replace_params_in_template(
             parameters, "pcxs", prf_input_file)
@@ -495,13 +495,15 @@ class Preparation():
             local_date (dt.datetime):
                 the date in local time to be processed
 
-        Return:
-            prf_input_files (list): A list of paths to the input files.
-
-            skipped_spectra (list):
-                List containing all spectra skipped at this day, due to missing
-                pressure values. This list is provided by
-                `get_spectra_pT_input` called in `get_inv_parameters`.
+        Returns:
+            prf_input_files, skipped_spectra:
+                - prf_input_files (list):
+                    A list of paths to the input files.
+                - skipped_spectra (list):
+                    List containing all spectra skipped 
+                    at this day, due to missing pressure values. 
+                    This list is provided by `get_spectra_pT_input` called in 
+                    `get_inv_parameters`.
         """
         # the name of the input file to be generated
         prf_input_file = self.get_prf_input_path("inv", local_date)
@@ -559,11 +561,11 @@ class Preparation():
     def get_spectra(self, meas_date):
         """Return list of spectra for a given date (in measurement time).
 
-        Params:
+        Parameters:
             date (dt.datetime): in measurement time
 
         Returns:
-            spectra (list): 
+            spectra (list):
                 with full path to all spectra of measurement date
                 ["path_to/YYMMDD_HHMMSSSN.BIN", ...]
 
@@ -581,8 +583,12 @@ class Preparation():
 
     def get_localdate_spectra(self):
         """Return dict linking all spectra to local dates.
-        returns:
-            {local_date: ["path/YYMMDD_HHMMSSSN.BIN", ...]}
+
+        Returns:
+            localdate_spectra (dict):
+                containing the a list of full pathes to the spectra for each 
+                local date in the format
+                `{local_date: ["path/YYMMDD_HHMMSSSN.BIN", ...]}`
         """
         all_spectra = []
         for date in self.meas_dates:
@@ -654,7 +660,7 @@ class Preparation():
     def replace_params_in_template(
             self, parameters, template_type, prf_input_file):
         """Generate a site specific input file by using a template.
-        
+
         Parameters:
             parameters (dict): Containing keys which match the variable
                 names in the template file. They are replaced by the entries.
@@ -827,14 +833,13 @@ class Preparation():
             local_date (dt.datetime): date in local time
 
         Returns:
-            parameters (list):
-                Contains one or two dict objects, depending
-                if all spectra of the local date are stored in the same
-                YYMMDD folder.
-            skipped_spectra (list):
-                List containing all spectra skipped at this day, due to missing
-                pressure values. This list is provided by
-                `get_sepctra_pT_input`.
+            parameters, skipped_spectra:
+                - parameters (list): Contains one or two dict objects, 
+                    depending if all spectra of the local date are stored in
+                    the same YYMMDD folder.
+                - skipped_spectra (list): List containing all spectra skipped 
+                    at this day, due to missing pressure values. This list is
+                    provided by `get_sepctra_pT_input`.
         """
         spectra_pT_input, skipped_spectra = \
             self.get_spectra_pT_input(local_date)
@@ -888,15 +893,14 @@ class Preparation():
         Note that T_PBL is currently set to 0.0.
 
         Parameters:
-            date (dt.datetime): Date in measurement time
+            local_date (dt.datetime): Date in local time
 
         Returns:
-            spectra_pT_input (list): 
-                List containing a list of strings with spectra and pT infos.
-            skipped_spectra (list):
-                List containing all spectra skipped at this day, due to missing
-                pressure values.
-
+            spectra_pT_input (list), skipped_spectra (list):
+                - spectra_pT_input: List containing a list of strings with 
+                    spectra and pT infos.
+                - skipped_spectra (list): List containing all spectra skipped 
+                    at this day, due to missing pressure values.
         """
         # in case of two measurement days in a local date list, split them up:
         spectra_list = self.localdate_spectra[local_date]

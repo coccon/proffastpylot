@@ -10,7 +10,14 @@ Technically this is solved by adding new parameter in the PREPROCESS input file,
 which allows to adapt the behavior of the PREPROCESS to the instrument.
 
 PROFFASTpylot comes with several templates prepared already for the following instruments:   
- `em27`, `tccon_ka_hr`, `tccon_ka_lr`, `tccon_default_hr`, `tccon_default_lr`, `invenio`, `vertex`, `ircube`.
+    - `em27`
+    - `tccon_ka_hr`
+    - `tccon_ka_lr`
+    - `tccon_default_hr`
+    - `tccon_default_lr`
+    - `invenio`
+    - `vertex`
+    - `ircube`
 
 To use one of these instruments set the parameter `instrument_parameters` to one of the options above.
 

@@ -56,7 +56,7 @@ class PressureHandler():
             measurement_time=0):
         """
         Initialize the Pressure Handler.
-        Params:
+        Parameters:
             pressure_type_file(str): path to the pressure config file
             pressure_path(str): path to the folder where the pressure files
                                 are located.
@@ -226,7 +226,6 @@ class PressureHandler():
             self.p_df[pkey].values)
 
         return p
-
 
     def _read_subdaily_files(self):
         """Reads the subdaily AND daily files into the internal p_df
