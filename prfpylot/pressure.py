@@ -210,8 +210,6 @@ class PressureHandler():
         i_nearest = diff.index[0]  # sort the two nearest to the top
 
         t_nearest = self.p_df.loc[i_nearest][tkey]
-        print(t_nearest)
-
         threshold = self.max_interpolation_time * 3600
 
         if abs((t_nearest - pressure_time).total_seconds()) > threshold:
