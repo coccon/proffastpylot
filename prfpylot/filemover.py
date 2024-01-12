@@ -79,10 +79,10 @@ class FileMover(Preparation):
             - raw_output_proffast
 
         Backup behavior:
-        If backup_results is True and the result folder does exist:
-        the existing folder is renamed adding
-        backupX where X increases if an other backup does already exists.
-        After renaming, a new folder is created.
+            If backup_results is True and the result folder does exist:
+            the existing folder is renamed adding
+            backupX where X increases if an other backup does already exists.
+            After renaming, a new folder is created.
         """
 
         # specification of self.result_folder in prepare
@@ -136,6 +136,7 @@ class FileMover(Preparation):
         The colsens.dat are produced by PXCS and
             - moved if `delete_abscosbin_files` is True
             - copied if `delete_abscosbin_files` is False.
+
         This is to ensure that every run has them in the result folder,
         independent if pcxs was executed or skipped in this run.
         """
@@ -308,10 +309,11 @@ class FileMover(Preparation):
                     f" {inp_file}.")
 
     def _move_generallogfile_to_logdir(self):
-        """Move the general logfile to the logdir"""
+        """Move the general logfile to the logdir.
 
-        # This have to be done at the end, since the folder is createt by the
-        # program itself.
+        This needs to be done at the end, since the folder is created by the
+        program itself."""
+
         for i, handler in enumerate(self.logger.handlers[:]):
             if i == 1:
                 handler.close()
