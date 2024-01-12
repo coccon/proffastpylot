@@ -439,7 +439,7 @@ class Pylot(FileMover):
         """Read all invparm.dat files as Dataframe and combine them."""
         search_str = os.path.join(
             self.raw_output_prf_folder, f"{self.site_name}*-invparms_?.dat")
-        invparms_filelist = glob(search_str)
+        invparms_filelist = sorted(glob(search_str))
         if len(invparms_filelist) == 0:
             raise RuntimeError(
                 "Retrieval did not produce any *invparms*.dat files")
