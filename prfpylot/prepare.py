@@ -89,8 +89,28 @@ class Preparation():
         "ircube": "ircube.yml"
     }
 
-    def __init__(self, input_file, logginglevel="info"):
-        self.logger = self.get_logger(logginglevel=logginglevel)
+    def __init__(
+            self, input_file, logginglevel="info",
+            external_logger=None, loggername=None):
+        """Initialize the PROFFASTpylot backbone.
+        
+        Params:
+            input_file (str): The path to a yaml input file.
+            logginglevel (str):
+                A string specifying the logging level (`debug`, `info`,
+                `warning`).
+            external_logger (None):
+                Optionally, an external logger can be given by providing an
+                instance of an logging.logger class. Note that to this logger,
+                the FileHandler and StreamHandler are added.
+            loggername (None):
+                Optionally, the name of the logger can be specified. This can be
+                usefull to access the logger outside of the PROFFASTpylot.
+                If loggername is None the default loggername is 'PROFFASTpylot'.
+        """
+        self.logger = self.create_logger(
+            logginglevel=logginglevel,
+            external_logger=external_logger, loggername=loggername)
         self.logger.info(
             "++++ Welcome to PROFFASTpylot ++++")
         self.logger.debug("Start reading input file...")
@@ -254,37 +274,62 @@ class Preparation():
         self.executed_pcxs = False
         self.executed_invers = False
 
-    def get_logger(self, logginglevel="info"):
+    def create_logger(
+            self, logginglevel="info", loggername=None, external_logger=None):
         """Create and return a logger."""
-        r = str(randint(10000, 99999))
-        logger = logging.getLogger(r)
-        # set logging to debug to record everything in the first place
-        logger.setLevel(logging.DEBUG)
-        StreamHandler = logging.StreamHandler()
-        cwd = os.getcwd()
-        logfile_name = f"pylot_{r}.log"
-        self.pylot_log = os.path.join(cwd, logfile_name)
+        # check if the log_info is a string or an logger instance
+        def test_log_level(level):
+            return level in ["debug", "info", "warning"]
+        assert test_log_level(logginglevel),\
+            ("log_info must be one of the following:"
+             f"`debug`, `info` or `warning`. Not {logginglevel}.")
+        self.logginglevel = logginglevel
+        num_level = {"debug": 10, "info": 20, "warning": 30}
+
+        # Use the current datetime as a unique identifier
+        self.startstrg_run = dt.datetime.now().strftime("%y%m%d%H%M%S%f")
+        logger = logging.getLogger(self.startstrg_run)
+
+        # create stream and file handlers:
+        logfile_name = f"pylot_{self.startstrg_run}.log"
+        self.global_log = os.path.join(os.getcwd(), logfile_name)
         FHandler = logging.FileHandler(logfile_name, mode='w')
+        FHandler.set_name("PRFpylotFileHandler")
+        StreamHandler = logging.StreamHandler()
+        for handler in [FHandler, StreamHandler]:
+            handler.setLevel(num_level[logginglevel])
 
-        if logginglevel == "debug":
-            StreamHandler.setLevel(logging.DEBUG)
-            FHandler.setLevel(logging.DEBUG)
-        elif logginglevel == "info":
-            StreamHandler.setLevel(logging.INFO)
-            FHandler.setLevel(logging.INFO)
-        elif logginglevel == "warning":
-            StreamHandler.setLevel(logging.WARNING)
-            FHandler.setLevel(logging.WARNING)
 
-        logger.addHandler(StreamHandler)
-        logger.addHandler(FHandler)
-        StreamFormat = logging.Formatter(
-            '{asctime}, {levelname}: {message}',
-            style='{')
-        StreamHandler.setFormatter(StreamFormat)
-        FHandler.setFormatter(StreamFormat)
+        # The format of the logging
+        self.format_styles = {
+            "debug": logging.Formatter(
+                "{asctime}, {levelname}({filename}): {message}", style="{"),
+            "info": logging.Formatter(
+                "{asctime}, {levelname}: {message}", style="{"),
+            "warning": logging.Formatter(
+                "{asctime}, {levelname}: {message}", style="{")
+        }
 
-        logger.debug(f"Initialized logger with random number {r}.")
+        if external_logger is None:
+            if loggername is None:
+                loggername = self.startstrg_run
+            logger = logging.getLogger(loggername)
+            logger.setLevel(logging.DEBUG)
+            for handler in [FHandler, StreamHandler]:
+                logger.addHandler(handler)
+                handler.setFormatter(self.format_styles[logginglevel])
+        else:
+            print("====== add handler ============")
+            logger = external_logger
+            logger.addHandler(FHandler)
+            FHandler.setFormatter(self.format_styles[logginglevel])
+            FHandler.addFilter(PylotOnly())
+            logger.debug("Found external logger.")
+        # set logging to debug to record everything in the first place
+        StreamHandler = logging.StreamHandler()
+        if external_logger is None:
+            logger.debug(
+                f"Initialized logger with datetime {self.startstrg_run}.")
         return logger
 
     def get_meas_dates(self, start_date=None, end_date=None):
@@ -1293,3 +1338,19 @@ class Preparation():
         localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
         localtime_offset = localtime_utc_offset - self.utc_offset
         return localtime_offset
+
+class PylotOnly(logging.Filter):
+    """
+    A filter which filters out all logs not originating from the pylot.
+
+    This is used when an external logger is provided, to prevent external
+    logging messages to show up in the PROFFASTpylot custom log file.
+    """
+    filenames = ["prepare.py", "filemover.py", "pylot.py", "pressure.py"]
+
+    def filter(self, record):
+        print(record.filename)
+        if record.filename in self.filenames:
+            return True
+        else:
+            return False

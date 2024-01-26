@@ -24,17 +24,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from glob import glob
 import shutil
+import logging
 from prfpylot.prepare import Preparation
-
-
 class FileMover(Preparation):
     """Copy, Move and remove temporary proffast Files."""
 
-    def __init__(self, input_file, logginglevel="info"):
+    def __init__(
+            self, input_file,
+            logginglevel="info", external_logger=None, loggername=None):
         super(FileMover, self).__init__(
-            input_file,  logginglevel=logginglevel)
+            input_file, logginglevel=logginglevel,
+            external_logger=external_logger, loggername=loggername)
         # create all folders
         self.init_folders()
+        # move the log file to the log-dir
+        self._move_logfile()
 
     def init_folders(self):
         """Create all relevant folders on startup if nonexistant.
@@ -307,6 +311,33 @@ class FileMover(Preparation):
                     "File not found: "
                     f"Could not move {type} input file"
                     f" {inp_file}.")
+
+    def _move_logfile(self):
+        """Move the logfile to the log-folder.
+        
+        For this it the file handler is closed, the file is moved and the 
+        handler is re-opend.
+        """
+        # First get the correct handler. For this 
+        for handler in self.logger.handlers:
+            if handler.get_name() == "PRFpylotFileHandler":
+                FHandler = handler
+
+        new_logfile = os.path.join(
+            self.logfile_folder, os.path.basename(self.global_log)
+        )
+        logging_level = FHandler.level
+        PylotOnly = FHandler.filter
+        FHandler.close()
+        self.logger.removeHandler(FHandler)
+        shutil.move(self.global_log, new_logfile)
+        
+        FHandler = logging.FileHandler(new_logfile, mode="a")
+        FHandler.addFilter(PylotOnly)
+        FHandler.setLevel(logging_level)
+        FHandler.setFormatter(self.format_styles[self.logginglevel])
+        self.logger.addHandler(FHandler)
+        self.logger.debug("Logfile was moved and relinked to the logger")
 
     def _move_generallogfile_to_logdir(self):
         """Move the general logfile to the logdir.
