@@ -58,7 +58,11 @@ User Information
    :maxdepth: 1
 
 .. toctree::
-   2-5_troubleshooting.md
+   2-5_logging.md
+   :maxdepth: 1
+
+.. toctree::
+   2-6_troubleshooting.md
    :maxdepth: 1
 
 

@@ -39,10 +39,13 @@ from copy import deepcopy
 class Pylot(FileMover):
     """Start all PROFFAST processes."""
 
-    def __init__(self, input_file, logginglevel="info"):
+    def __init__(
+            self, input_file, logginglevel="info",
+            external_logger=None, loggername=None):
         super(Pylot, self).__init__(
-            input_file, logginglevel=logginglevel)
-        self.logger.debug('Initialized the FileMover')
+            input_file, logginglevel=logginglevel,
+            external_logger=external_logger, loggername=loggername)
+        self.logger.debug("Initialized the FileMover")
 
         # a queue to save all days where all interferograms are bad
         self.bad_day_queue = multiprocessing.Manager().Queue()
@@ -399,7 +402,7 @@ class Pylot(FileMover):
             self.logger.debug("Moving input files ...")
             self.move_input_files()
 
-        self._move_generallogfile_to_logdir()
+        # self._move_generallogfile_to_logdir()
         self._move_prf_config_file()
         self.logger.info("Done.\n")
 

@@ -8,7 +8,6 @@
 2. Special case: Process spectra directly
 3. Folder Structure
 
-
 ## 1. General use
 
 **Ready-to-use Example**  
