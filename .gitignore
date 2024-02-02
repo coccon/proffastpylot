@@ -1,6 +1,7 @@
 *__pycache__*
 *.BIN
 prf/*
+prf*/*
 *subl*
 ./Logfile.txt
 *pT*
@@ -17,4 +18,3 @@ hdf_test
 KA_LongTerm/
 pressure_config_files/
 config_run_files/
-prfpylot/templates/instrument_templates/MyFiles/
