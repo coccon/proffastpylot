@@ -30,7 +30,7 @@ $
 %SITE%
 %DATE%
 .false.
-.false.
+.true.
 %MAPPATH_WITH_MAPFILE%
 .true.
 6
