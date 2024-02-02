@@ -352,6 +352,7 @@ class Pylot(FileMover):
             "%.5e",  # XAIR
             "%.5e",  # XCO2
             "%.5e",  # XCH4
+            "%.5e",  # XCO2_STR
             "%.5e",  # XCO
             "%.5e",  # XCH4_S5P
             "%.5e",  # H20
@@ -485,8 +486,9 @@ class Pylot(FileMover):
             'job02_gas07': 'O2',
             'job03_gas03': 'CO2',
             'job04_gas04': 'CH4',
-            'job05_gas06': 'CO',
-            'job05_gas04': 'CH4_S5P'
+            'job05_gas03': 'CO2_STR',
+            'job06_gas06': 'CO',
+            'job06_gas04': 'CH4_S5P'
         }
         df = df.rename(columns=rename)
 
@@ -498,6 +500,7 @@ class Pylot(FileMover):
             "appSZA", "azimuth",
             "XH2O", "XAIR",
             "XCO2", "XCH4",
+            "XCO2_STR",
             "XCO", "XCH4_S5P",
             "H2O", "O2",
             "CO2", "CH4",
