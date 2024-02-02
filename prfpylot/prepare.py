@@ -122,6 +122,8 @@ class Preparation():
         for option, value in args.items():
             self.__dict__[option] = value
 
+        if args.get("start_with_spectra") is True:
+            self.mandatory_options.remove("interferogram_path")
         for option in self.mandatory_options:
             if self.__dict__.get(option) is None:
                 self.logger.critical(
@@ -345,16 +347,19 @@ class Preparation():
         if self.start_with_spectra is False:
             self.logger.debug(
                 "Searching for all interferogram folders ...")
+            searched_filetype = "interferograms"
             datapath = os.path.join(self.interferogram_path, "*")
         elif self.start_with_spectra is True:
             self.logger.debug(
                 "Searching for all spectra folders ...")
+            searched_filetype = "spectra"
             datapath = os.path.join(self.analysis_instrument_path, "*")
 
         dates = self._create_datelist(datapath)
         if len(dates) == 0:
             self.logger.critical(
-                f"No interferograms were found at {self.interferogram_path}!")
+                f"No {searched_filetype} were found at "
+                f"{datapath}!")
             sys.exit()
 
         date_str_list = [date.strftime("%y-%m-%d") for date in dates]
