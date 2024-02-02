@@ -39,7 +39,7 @@ $
 solar spectrum file
 external FOV diameter as fraction of solar disc diameter
 $
-inp_fwd\hitran\solspec-jpl\solspec.dat
+inp_fwd\hitran\solspec-jpl\solspec-ver2.dat
 0.6
 
 
@@ -62,12 +62,12 @@ for each species (note: H2O must be at first position):
     line list
     isotope handle
 $
-inp_fwd\hitran\linedata\01_HIT20.par
+inp_fwd\hitran\linedata\01_HIT20-rev1.par
 3
 011
 012
 013
-inp_fwd\hitran\linedata\01_HIT20.par
+inp_fwd\hitran\linedata\01_HIT20-rev1.par
 1
 014
 inp_fwd\hitran\linedata\02_HIT20-LM+SDVmix.par
