@@ -326,6 +326,7 @@ class Preparation():
             logger = external_logger
             logger.addHandler(FHandler)
             FHandler.setFormatter(self.format_styles[logginglevel])
+            FHandler.setLevel(num_level(logginglevel))
             FHandler.addFilter(PylotOnly())
             logger.debug("Found external logger.")
         # set logging to debug to record everything in the first place
@@ -1355,7 +1356,6 @@ class PylotOnly(logging.Filter):
     filenames = ["prepare.py", "filemover.py", "pylot.py", "pressure.py"]
 
     def filter(self, record):
-        print(record.filename)
         if record.filename in self.filenames:
             return True
         else:
