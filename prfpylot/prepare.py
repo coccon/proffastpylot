@@ -322,7 +322,6 @@ class Preparation():
                 logger.addHandler(handler)
                 handler.setFormatter(self.format_styles[logginglevel])
         else:
-            print("====== add handler ============")
             logger = external_logger
             logger.addHandler(FHandler)
             FHandler.setFormatter(self.format_styles[logginglevel])
