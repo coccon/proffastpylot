@@ -71,6 +71,7 @@ class Preparation():
         "note": None,
         "delete_abscosbin_files": False,
         "delete_input_files": False,
+        "delete_spc_files": True,
         "ils_parameters": None,
         "ignore_interpolation_error": None,
         "backup_results": True,
