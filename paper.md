@@ -20,6 +20,8 @@ authors:
     equal-contrib: true
     affiliation: 1
     orcid: 0000-0001-5784-2127
+  - name: Jasmin Vestner
+    affiliation: 1
   - name: Darko Dubravica
     affiliation: 1
   - name: Carlos Alberti
