@@ -58,9 +58,6 @@ In this file all parameters are given and explained.
 - **delete_input_files**  
   `False` (default) or `True`  
   If False: The output of the PROFFAST programs will be moved to results folder.
-- **delete_spc_files**   
-  `False` or `True` (default)   
-  If False: The spc-files (spectral fit results) are deleted. Otherwise they are moved to the results folder.
 - **instrument_parameters**  
   To evaluate EM27/SUN data this parameter does not have to be given explicitly.  
   Possible values are: `em27`(default), `tccon_ka_hr`, `tccon_ka_lr`, `tccon_default_hr`, `tccon_default_lr`, `invenio`, `vertex`, `ircube` or a path to an instrument-config file.  
