@@ -26,6 +26,7 @@ from glob import glob
 import shutil
 import logging
 from prfpylot.prepare import Preparation
+
 class FileMover(Preparation):
     """Copy, Move and remove temporary proffast Files."""
 
@@ -268,6 +269,29 @@ class FileMover(Preparation):
                 self.logger.error(
                     "File not Found: "
                     f"Could not delete {filename}")
+
+    def handle_spc_files(self):
+        """Delete or move all spc files created by INVERS."""
+        filelist = glob(os.path.join(
+            self.proffast_path, "out_fast", f"{self.site_name}"))
+        if len(filelist) == 0:
+            self.logger.warning(
+                "No *.spc file was found. This inidacates an error in running "
+                "INVERS. Please check the logs.")
+        for file in filelist:
+            try:
+                if self.delete_spc_files:
+                    action = "deleting"
+                    os.remove(file)
+                else:
+                    action = "removing"
+                    target = os.path.join(
+                        self.result_folder, "raw_output_proffast",
+                        os.path.basename(file))
+                    shutil.move(file, target)
+            except:
+                self.logger.warning(
+                    f"An error occured when {action} {file}.")
 
     def check_abscosbin_summed_size(self):
         """Get size of all abscos.bin files. Give warning if too large."""

@@ -71,6 +71,7 @@ class Preparation():
         "note": None,
         "delete_abscosbin_files": False,
         "delete_input_files": False,
+        "delete_spc_files": True,
         "ils_parameters": None,
         "ignore_interpolation_error": None,
         "backup_results": True,
@@ -321,10 +322,10 @@ class Preparation():
                 logger.addHandler(handler)
                 handler.setFormatter(self.format_styles[logginglevel])
         else:
-            print("====== add handler ============")
             logger = external_logger
             logger.addHandler(FHandler)
             FHandler.setFormatter(self.format_styles[logginglevel])
+            FHandler.setLevel(num_level(logginglevel))
             FHandler.addFilter(PylotOnly())
             logger.debug("Found external logger.")
         # set logging to debug to record everything in the first place
@@ -1354,7 +1355,6 @@ class PylotOnly(logging.Filter):
     filenames = ["prepare.py", "filemover.py", "pylot.py", "pressure.py"]
 
     def filter(self, record):
-        print(record.filename)
         if record.filename in self.filenames:
             return True
         else:
