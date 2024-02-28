@@ -4,8 +4,8 @@ _The pressure input was reorganized in version 1.1_
 
 This article explains how to handle pressure data with PROFFASTpylot.
 To perform the retrieval PROFFAST needs pressure data from the measurement site.
-PROFFAST 2.2 reads in this data together with the spectra in the invers input file.
-A template for this file can be found in the `prfpylot/templates` folder.
+In PROFFAST 2.2 or newer, the pressure is read together with the spectra in the input file of invers.
+A template for this file can be found in `prfpylot/templates`.
 The `pT_intraday.inp` file is deprecated, the interpolation of the pressure is handled by PROFFASTpylot.
 
 
@@ -18,16 +18,17 @@ Two parameters in the main input file specify how the pressure is handled by PRO
 
 ## Pressure type file
 
-For users using the data format in the KIT-style, a example pressure type file is provided in `example/log_type_pressure.yml`
-The pressure files recorded by the KIT datalogger need to be placed inside the `pressure_path`.
+An example pressure type file is provided in `example/log_type_pressure.yml`, describing the KIT-style data format.
+The path to the pressure files recorded by the KIT datalogger need to be given as `pressure_path`.
 
-To adapt this file two your own type of files, the most important options are explained in the following.
+To adapt this file two your own file format, the options are explained in the following.
 
 
 
 ### Filename parameters
 
 The filename parameters define how the filename of the pressure file is constructed.
+The pressure module of PROFFASTpylot will search for files with the naming `<basename><time><ending>`.
 ```yaml
 filename_parameters:
   basename: ""
@@ -68,7 +69,7 @@ filename = "".join(
 
 df = pd.read_csv(filename, **csv_kwargs)
 ```
-For the date- and timestamp the datetime can be constructed from two separate columns (time_key and date_key) or one column (datetime_key). It will be parsed with the corresponding format string.
+For the date- and timestamp the datetime can be constructed from two separate columns (`time_key` and `date_key`) or one column (`datetime_key`). It will be parsed with the corresponding format string.
 In addition to the formats supported by the datetime package (see below) the key `POSIX-timestamp` can be used. This assumes the datetime column to be in seconds passed since the 1979-01-01 in UTC.
 `df[pressure_key]` should contain the corresponding pressure values.
 
@@ -81,3 +82,8 @@ For more information you can look at the [pandas documentation](https://pandas.p
 - The `frequency` of your files can be defined. Currently the frequencies `"daily"`, `"subdaily"` and `"yearly"` are available.
 - The `pressure_factor` is multiplied to the pressure values. It can be used to correct for a height offset or a different unit. The pressure is expected to be given in hPa.
 - The `pressure_offset` is added to the pressure values. The pressure value is expected to be given in hPa.
+- The `max_interpolation_time` is the maximal timely distance between two pressure data points.
+  If the distance between two points is larger, the spectra which belongs to the corresponding time is skipped.
+  Can be set to a value in hours. Its default value is 2 hours.
+  If the time is outside the range of the given pressure values, the nearest value will be used up to a time difference of `max_interpolation_time`.
+

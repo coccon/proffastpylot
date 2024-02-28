@@ -6,15 +6,19 @@
 Welcome to PROFFASTpylot's documentation!
 ==========================================
 
-At this documentation you can find all instructions on PROFFASTpylot.
 
-| PROFFASTpylot version 1.2 is an interface for PROFFAST 2.3. For more information about PROFFAST, see https://www.imk-asf.kit.edu/english/3225.php.     
-| The source code is available at gitlab (https://gitlab.eudat.eu/coccon-kit/proffastpylot). If you have any comments or questions, contact us at benedikt.herkommer@kit.edu and lena.feld@kit.edu. You are welcome to contribute.
+PROFFASTpylot version 1.3 is an interface for PROFFAST 2.4. For more information about PROFFAST, see https://www.imk-asf.kit.edu/english/3225.php.
+
+The PROFFASTpylot source code is available at https://gitlab.eudat.eu/coccon-kit/proffastpylot. If you have any comments or questions, contact us at benedikt.herkommer@kit.edu and lena.feld@kit.edu. You are welcome to contribute.
+
+This documentation and the PROFFASTpylot source code is licensed under GPLv3.
 
 
 
 User Guide
 ===========
+
+In the following, you can find all instructions on PROFFASTpylot.
 
 
 Getting Started
@@ -23,15 +27,12 @@ Getting Started
 .. toctree::
    1-1_installation.md
    :maxdepth: 1
-
 .. toctree::
    1-2_usage.md
    :maxdepth: 1
-
 .. toctree::
    1-3_pressure_input.md
    :maxdepth: 1
-
 .. toctree::
    1-4_folder_structure.md
    :maxdepth: 1
@@ -57,7 +58,11 @@ User Information
    :maxdepth: 1
 
 .. toctree::
-   2-5_troubleshooting.md
+   2-5_logging.md
+   :maxdepth: 1
+
+.. toctree::
+   2-6_troubleshooting.md
    :maxdepth: 1
 
 

@@ -8,11 +8,10 @@
 2. Special case: Process spectra directly
 3. Folder Structure
 
-
 ## 1. General use
 
 **Ready-to-use Example**  
-You can follow the usage of PROFFASTpylot with the help of an example from Sodankyla which is provided as `example/run.py`.
+You can follow the usage of PROFFASTpylot with the help of an example from Sodankylä which is provided as `example/run.py`.
 The example input data (i.e. the example interferogram, map- and pressure files) are downloaded automatically when running `run.py` the first time.
 The runscript needs to be executed inside the `example` folder.
 

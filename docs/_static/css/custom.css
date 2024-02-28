@@ -113,6 +113,7 @@ a:hover, a:active {
 /* Some headers act as anchors, don't give them a hover effect */
 
 h1 a:hover, a:active {
+    font-family: "Roboto";
     text-decoration: none;
     color: #404040;
 }
@@ -164,6 +165,7 @@ div.header {
     padding: 0 40px;
 }
 div.header h1 {
+    font-family: "Roboto";
     font-size: 2.3em;
     font-style: normal;
     font-weight: bold;
@@ -174,6 +176,7 @@ div.header h1 {
     padding-top: 15px;
 }
 div.header h1 a {
+    font-family: "Roboto";
     font-weight: bold;
     color: #404040;
 }
@@ -290,6 +293,7 @@ div.seealso {
 
 /* More layout and styles */
 h1 {
+    font-family: "Roboto";
     font-size: 1.5em;
     font-weight: bold;
     color: #404040;
@@ -298,6 +302,7 @@ h1 {
 }
 
 h2 {
+    font-family: "Roboto";
     font-size: 1.2em;
     font-weight: normal;
     color: #404040;
@@ -340,7 +345,7 @@ li {
     line-height: 1.3;
 }
 
-div.content ul > li {
+/*div.content ul > li {
     -moz-background-clip:border;
     -moz-background-inline-policy:continuous;
     -moz-background-origin:padding;
@@ -349,7 +354,7 @@ div.content ul > li {
     list-style-type: none;
     padding: 0 0 0 1.666em;
     margin-bottom: 3px;
-}
+}*/
 
 td {
     vertical-align: top;
