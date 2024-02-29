@@ -122,8 +122,8 @@ The _pylot_ interacts with the user: It contains methods to start the individual
 # Author contributions
 LF and BH developed the PROFFASTpylot, tested the interface and wrote the manuscript.
 FH developed PROFFAST and helped to design the interfaces to interact with the PROFFASTpylot.
-DD and CA tested the PROFFASTpylot and helped discussing the needed functionalities.
-DD is involved in implementing additional functionality for the following release.
+JV, DD and CA tested the PROFFASTpylot and helped discussing the needed functionalities.
+JV and DD are involved in implementing additional functionality.
 CA is continuously providing the empirical instrumental parameters, which are distributed as a part of the PROFFASTpylot.
 
 # Acknowledgements
