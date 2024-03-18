@@ -50,7 +50,7 @@ The Python interface PROFFASTpylot significantly reduces the workload during the
 
 The EM27/SUN solar Fourier-Transform Infrared (FTIR) spectrometer was developed by the Karlsruhe Institute of Technology (KIT) in collaboration with Bruker [@Gisi:2011; @Hase:2016], has been commercialized in 2014 and is in wide use today.
 GHG city emissions [@Hase:2015; @Vogel:2019; @Tu:2022; @Dietrich:2021], as well as long-term trends at selected sites [@Mermigkas:2021; @Frey:2021] have been investigated.
-A further goal is the validation of space borne GHG measurements [@Tu:2020; @Alberti:2021].
+A further goal is the validation of space borne GHG measurements [@Tu:2020; @Alberti:2022a].
 
 The publication by @Frey:2019 forms the starting point of instrumental quality assurance by COCCON's central facility at KIT. 
 Since then many more EM27/SUN spectrometers have been characterized.
@@ -107,7 +107,7 @@ The main functionalities are:
 ## Adaptability and error prevention
 To ensure a simple usage and a fast error detection by the user several measures have been taken:
 
-- The empirical instrumental parameters (ILS parameters) [@Alberti:2022] are taken automatically from an internal list.
+- The empirical instrumental parameters (ILS parameters) [@Alberti:2022b] are taken automatically from an internal list.
 - For auxiliary data, cross\-checks are implemented that generate a warning or a controlled program stop (e.g. checking the correct location of atmospheric a-priori files).
 - Automatic handling of different time zones in interferograms and auxiliary data.
 - Correct handling of various pressure records (different sampling intervals or data formats).
