@@ -45,15 +45,18 @@ class PressureHandler():
         "utc_offset": 0.0,
         "pressure_factor": 1.0,
         "pressure_offset": 0.0,
-        "data_parameters": {}
+        "data_parameters": {},
+        "max_interpolation_time": 2,  # in hours
     }
 
     parsed_dtcol = "parsed_datetime"
 
-    def __init__(self, pressure_type_file, pressure_path, dates, logger):
+    def __init__(
+            self, pressure_type_file, pressure_path, dates, logger,
+            measurement_time=0):
         """
         Initialize the Pressure Handler.
-        Params:
+        Parameters:
             pressure_type_file(str): path to the pressure config file
             pressure_path(str): path to the folder where the pressure files
                                 are located.
@@ -69,6 +72,7 @@ class PressureHandler():
         self.dates = copy.deepcopy(dates)
         self.logger = logger
         self.pressure_path = pressure_path
+        
         self.interpolation_failed_at = []
 
         with open(pressure_type_file, "r") as f:
@@ -92,7 +96,7 @@ class PressureHandler():
             else:
                 # fill defaults and check for missing values inside the dicts
                 self.__dict__[option] = self._set_defaults(option)
-                self._check_mandatory()
+        self._check_mandatory()
 
         # For a later read in of the pressure data frame it makes sense to only
         # read in the columns needed. In case of large meteo files, this can
@@ -103,15 +107,35 @@ class PressureHandler():
             if val != "":
                 self.cols_to_use.append(val)
 
-        # It can happen, that the pressure files are generated using local
-        # days, however, the timestamp inside them is in utc.
-        # This can lead to situtations, where pressure data of the first or the
-        # last day is missing.
-        # Therefore add a day before and a day after to the date list:
-        first_day = self.dates[0] - dt.timedelta(days=1)
-        last_day = self.dates[-1] + dt.timedelta(days=1)
-        self.dates.append(last_day)
-        self.dates.insert(0, first_day)
+        # to ensure the date-columns are read in as string format
+        self.dataframe_parameters["csv_kwargs"] = \
+            self._append_dtype_to_csv_kwargs()
+
+        # When the pressure data is recorded using a different time zone, than
+        # the FTIR data, this can lead to gaps in the data. Hence convert the
+        # date list to a datelist which matches with the pressure data
+        # time zone.
+        if abs(measurement_time - self.utc_offset) > 4:
+            temp = self.dates.copy()
+            for date in temp:
+                # measurement_time = UTC + UTC_offset_measurement
+                # p_time = UTC + UTC_offset_p
+                # Hence, if measurement_time > UTC_offset_p then we also need
+                # to load the date BEFORE the current pressure date:
+                if measurement_time > self.utc_offset:
+                    previous_day = date - dt.timedelta(days=1)
+                    self.dates.append(previous_day)
+                # when the measurement_time < UTC_offset_p then we also need
+                # to load the date AFTER the current pressure date
+                else:
+                    next_day = date + dt.timedelta(days=1)
+                    self.dates.append(next_day)
+            # delete the duplicate days:
+            self.dates = list(set(self.dates))
+            self.dates.sort()
+        self.logger.debug(
+            "Dates to load pressure files for:"
+            "\n".join([x.strftime("%Y-%m-%d") for x in self.dates]))
 
         self.p_df = pd.DataFrame()
 
@@ -137,13 +161,17 @@ class PressureHandler():
             self._read_unregular_files()
         elif frequency in ["monthly", "weekly"]:
             self.logger.warning(
-                "Using 'unregular' frequency, weekly and monthly are not yet "
-                "implemented seperately.")
+                "Please use 'unregular' frequency."
+                " weekly and monthly are not yet implemented seperately.")
             self._read_unregular_files()
         else:
             raise ValueError(f"Unknown frequency {frequency}.")
 
         self._apply_pressure_offset_and_factor()
+
+        # sort values (needed for correct interpolation)
+        self.p_df.sort_values(self.parsed_dtcol)
+
         # Reset index to let in be unique
         self.p_df.reset_index(drop=True, inplace=True)
 
@@ -157,55 +185,46 @@ class PressureHandler():
             f"{df_print.head()}\n"
             )
 
-    def get_pressure_at(self, timestamp):
-        """ Return the pressure at timestamp
-        params:
-            timestamp (datetime)
+    def get_pressure_at(self, pressure_time):
+        """Return the interpolated pressure at a given time.
+
+        If the value is rejected or an interpolation error occured p=0
+        is returned.The corresponding spectra will not be processed.
+        This is determined in prepare.get_spectra_pT_input().
+
+        If the pressure measurements for a whole day is missing, the whole
+        day is deleted from the processing list in pylot.run_inv().
+
+        Parameters:
+            pressure_time (datetime:datetime):
+                time in timezone of the pressure file
         """
+        tkey = self.parsed_dtcol
         pkey = self.dataframe_parameters["pressure_key"]
-        # get the two closest entries:
-        # calculate differences to current value:
-        diff = (self.p_df[self.parsed_dtcol] - timestamp).dt.total_seconds()
+
+        # reject if time difference to closed value is greater than threshhold
+        # get the two closest entry by calculating differences to current value
+        diff = \
+            (self.p_df[tkey] - pressure_time).dt.total_seconds()
         diff = abs(diff).sort_values()
-        inds = diff.index[:2].to_list()
-        inds.sort()
-        i1 = inds[0]
-        i2 = inds[1]
-        t1 = self.p_df.loc[i1][self.parsed_dtcol]
-        t2 = self.p_df.loc[i2][self.parsed_dtcol]
-        if not (t1 < timestamp and t2 > timestamp):
-            if i1 == 0 or i2 == len(self.p_df) - 1:
-                # at the beginning of the dataseries, data will be extrapolated
-                self.logger.warning(
-                    f"No pressure data available for {timestamp}."
-                    "Pressure data will be linear extrapolated!")
-            else:
-                # for not equistant data this case can happen
-                if t2 < timestamp:
-                    i2 += 1
-                    i1 += 1
-                if t1 > timestamp:
-                    i1 -= 1
-                    i2 -= 1
-                t1 = self.p_df.loc[i1][self.parsed_dtcol]
-                t2 = self.p_df.loc[i2][self.parsed_dtcol]
-        if abs((t2 - t1).total_seconds()) / 3600 > 6:
-            self.logger.warning(
-                "Pressure is interpolated for a time range larger than 6 h "
-                f"for date {timestamp}. This might give wrong results!"
-                "Please check the input data for this day."
-            )
+        i_nearest = diff.index[0]  # sort the two nearest to the top
 
-        m = (self.p_df.loc[i2][pkey] - self.p_df.loc[i1][pkey])\
-            / abs((t2 - t1).total_seconds())
+        t_nearest = self.p_df.loc[i_nearest][tkey]
+        threshold = self.max_interpolation_time * 3600
 
-        if np.isnan(m):
-            m = 0
-            self.interpolation_failed_at.append(timestamp)
+        if abs((t_nearest - pressure_time).total_seconds()) > threshold:
+            self.logger.debug(
+                f"Interpolation time for requested time {pressure_time} "
+                "was larger than the threshold. Will skip the processing "
+                "of the spectra corresponding to this time. "
+                "(See next message!)")
+            return 0
 
-        p = m * \
-            (timestamp - t1).total_seconds()\
-            + self.p_df.loc[i1][pkey]
+        p = np.interp(
+            np.datetime64(pressure_time, "ns"),
+            self.p_df[tkey].astype("datetime64[ns]"),
+            self.p_df[pkey].values)
+
         return p
 
     def _read_subdaily_files(self):
@@ -215,21 +234,26 @@ class PressureHandler():
 
             daily_df = pd.DataFrame()
             filename = self._get_filename(day)
-            dataloggerFileList = glob.glob(
+            file_list = glob.glob(
                 os.path.join(self.pressure_path, filename))
-
-            dataloggerFileList.sort()
-            # get all files of one day and concat them:
-            for file in dataloggerFileList:
-                self.logger.debug(f"Read in file {file}")
-                temp = pd.read_csv(
-                    file,
-                    usecols=self.cols_to_use,
-                    **(self.dataframe_parameters["csv_kwargs"]))
-                daily_df = pd.concat([daily_df, temp])
+            # print("Files to read in: ", dataloggerFileList)
+            if len(file_list) == 0:
+                # no pressure file is available for this day!
+                self.logger.warning(
+                    f"No pressure file could be found at day {day}.")
+            else:
+                # get all files of one day and concat them:
+                file_list.sort()
+                for file in file_list:
+                    self.logger.debug(f"Read in file {file}")
+                    temp = pd.read_csv(
+                        file,
+                        usecols=self.cols_to_use,
+                        **(self.dataframe_parameters["csv_kwargs"]))
+                    daily_df = pd.concat([daily_df, temp])
+            
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
-
         self.p_df.reset_index(drop=True, inplace=True)
         self._parse_pressure()
 
@@ -270,6 +294,11 @@ class PressureHandler():
         file_list = glob.glob(os.path.join(self.pressure_path, filename))        
 
         df = pd.DataFrame()
+        if len(file_list) == 0:
+            self.logger.critical(
+                f"No pressure data could be found in {self.presure_path}! "
+                "Terminating PROFFASTpylot.")
+            exit()
         for file in file_list:
             temp = pd.read_csv(
                 file,
@@ -308,9 +337,19 @@ class PressureHandler():
         self.p_df[pressure_key] += self.pressure_offset
 
     def _parse_datetime_col(self, df, date=None):
-        """
-        parse the dataframe for a suitable datetime.
+        """Parse the dataframe for a suitable datetime.
+
         Add the column 'parsed_datecol' to the dataframe
+        Depending on the options given, the datetime column is constructed f
+        rom the combination of the separate time and date columns.
+
+        Parameters:
+            df (pandas.DataFrame): pressure dataframe containing time 
+                information in arbitrary format.
+
+        Returns:
+            df (pandas.DataFrame): with an additional datetime column.
+
         """
         # give warning if an empty df is read in and this is not the first
         # or the last day of the list
@@ -365,14 +404,13 @@ class PressureHandler():
             try:
                 if dt_fmt == "POSIX-timestamp":
                     df[self.parsed_dtcol] = df[dt_key].apply(
-                        lambda x: dt.datetime.utcfromtimestamp(x))
+                        lambda x: dt.datetime.utcfromtimestamp(np.float64(x)))
                 else:
                     df[self.parsed_dtcol] = pd.to_datetime(
                         df[dt_key], format=dt_fmt)
             except KeyError:
                 self.logger.critical(
-                    f"Could not find key {dt_key} in "
-                    "pressure data."
+                    f"Could not find key {dt_key} in pressure data."
                     f"Pressure data are:\n{df}\n."
                     f"Pressure folder is: {self.pressure_path}\n"
                     "Exit Program.")
@@ -435,11 +473,16 @@ class PressureHandler():
         return d
 
     def _check_mandatory(self):
-        """Check in mandatory options if
-            - pressure key is given,
-            - time key XOR datetime key is given and
-            - filename is not empty.
-        raise Error if not fullfilled.
+        """Check mandatory options for completeness.
+
+        The options must satisfy the following:
+        - A pressure key is given,
+        - the time key XOR datetime key is given and
+        - the filename is not empty.
+
+        Raises:
+            RuntimeError: in case of a missing option.
+
         """
         # pressure key are given
         pressure_key = self.dataframe_parameters.get("pressure_key")
@@ -474,3 +517,17 @@ class PressureHandler():
                 "No filename is given! Give the start, time format (optional) "
                 "and ending of your filename as filename_parameters: "
                 "basename, time_format and ending.")
+
+    def _append_dtype_to_csv_kwargs(self):
+        """Return extended csv_kwargs to make sure the date and time column
+        are interpreted as string."""
+        csv_kwargs = self.dataframe_parameters["csv_kwargs"]
+        dtype = {
+            self.dataframe_parameters["date_key"]: str,
+            self.dataframe_parameters["time_key"]: str,
+            self.dataframe_parameters["datetime_key"]: str,
+        }
+        dtype.pop("", None)  # remove default empty string
+
+        csv_kwargs["dtype"] = dtype
+        return csv_kwargs

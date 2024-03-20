@@ -1,4 +1,4 @@
-# Structuring of the Retrieval
+# Folder Structure
 
 With PROFFASTpylot most of the folder structure can be chosen freely.
 This article gives an overview about the needed folders and files.
@@ -12,7 +12,7 @@ They can be divided into four categories:
  All paths can be chosen freely (e.g. input data can be located on an external hard disk).   
  **We recommend disentangling input data, output data and the program execution files from each other.**
 
-_Note: To run the example files using [`run.py`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) PROFFAST must be located inside the proffastpylot directory as described in [`docs/installation.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/installation.md)._
+_Note_: To run the example files using [run.py](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) PROFFAST must be located inside the `proffastpylot` directory as described in the **Installation** article.
 
 ## 1. Input data
 
@@ -43,7 +43,7 @@ interferogram_path
 ### Pressure input
 Inside the `pressure_path` pressure measurements for each measurement day should be provided.
 The frequency of the files (e.g. monthly or daily) and the formatting is flexible.
-In the `pressure_type_file` the file format can be defined. See [`docs/pressure_input.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/pressure_input.md), how the pressure type file is organized.
+In the `pressure_type_file` the file format can be defined. See the **Pressure Input** article, how the pressure type file is organized.
 
 
 ### Map Files
@@ -69,7 +69,7 @@ analysis_path
 ...
 ```
 Inside the `YYMMDD` folder the spectra, which are named `YYMMDD_HHMMSSSN.BIN` (or `SM.BIN`) will be located. Note that this timestamp as well as the folder name correspond to the measurement time. 
-The UTC time of the measurement, that is derived from the variable `utc_offset` in `preprocess`, is written to the header of the spectrum. For more information on time offsets, see [`docs/time_offsets.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/time_offsets.md).
+The UTC time of the measurement, that is derived from the variable `utc_offset` in `preprocess`, is written to the header of the spectrum. For more information on time offsets, see the **Time Offsets** article.
 
 The files that were located in `YYMMDD/pT` are handled elsewhere since version 1.1. 
 
@@ -91,7 +91,7 @@ The default is `proffastpylot/prf`
 The input files and python scripts that call proffastpylot do not need to be located inside the `proffastpylot` directory.
 
 
-# Example for a possible folder structure:
+## Example for a possible folder structure
 
 An example how a folder structure could look like is given below (most sub-directories are created automatically).
 ```

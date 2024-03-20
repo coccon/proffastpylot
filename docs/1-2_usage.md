@@ -8,11 +8,10 @@
 2. Special case: Process spectra directly
 3. Folder Structure
 
-
 ## 1. General use
 
 **Ready-to-use Example**  
-You can follow the usage of PROFFASTpylot with the help of an example from Sodankyla which is provided as `example/run.py`.
+You can follow the usage of PROFFASTpylot with the help of an example from Sodankylä which is provided as `example/run.py`.
 The example input data (i.e. the example interferogram, map- and pressure files) are downloaded automatically when running `run.py` the first time.
 The runscript needs to be executed inside the `example` folder.
 
@@ -39,7 +38,7 @@ if __name__ == "__main__":
     input_file = "input_sodankyla_example.yml"
     MyPylot = Pylot(input_file)
 ```
-Note that the `if __name__ == "__main__"` statement needs to be put before initialising the Pylot to prevent problems with the multiprocessing on Windows.
+Note that the `if __name__ == "__main__"` statement needs to be put before initializing the Pylot to prevent problems with the multiprocessing on Windows.
 
 Afterwards all steps of PROFFAST can be executed automatically one after the other:
 
@@ -73,4 +72,4 @@ Afterwards, `Pylot.run()` will not execute preprocess.
 
 ## 3. Folder structure
 
-The results will be created automatically. Please see [`docs/folder_structure.md`](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/docs/folder_structure.md) about how the results are organized.
+The results will be created automatically. Please see the **Folder structure** article about how the results are organized.
