@@ -403,9 +403,6 @@ class Pylot(FileMover):
             self.logger.debug("Moving input files ...")
             self.move_input_files()
 
-        if self.executed_invers:
-            self.handle_spc_files()
-
         self._move_prf_config_file()
         self.logger.info("Done.\n")
 
