@@ -117,9 +117,12 @@ class Preparation():
             "++++ Welcome to PROFFASTpylot ++++")
         self.logger.debug("Start reading input file...")
 
-        # read input file
-        with open(input_file, "r") as f:
-            args = yaml.load(f, Loader=yaml.FullLoader)
+        # read input file or parse dict directly:
+        if isinstance(input_file, dict):
+            args = input_file
+        elif os.path.isfile(input_file):
+            with open(input_file, "r") as f:
+                args = yaml.load(f, Loader=yaml.FullLoader)
 
         for option, value in args.items():
             self.__dict__[option] = value
@@ -326,7 +329,7 @@ class Preparation():
             logger = external_logger
             logger.addHandler(FHandler)
             FHandler.setFormatter(self.format_styles[logginglevel])
-            FHandler.setLevel(num_level(logginglevel))
+            FHandler.setLevel(num_level[logginglevel])
             FHandler.addFilter(PylotOnly())
             logger.debug("Found external logger.")
         # set logging to debug to record everything in the first place
