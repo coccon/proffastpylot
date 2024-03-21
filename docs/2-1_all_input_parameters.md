@@ -68,6 +68,12 @@ In this file all parameters are given and explained.
 - **mapfile_wetair_vmr**  
   default: `None` (determined during runtime)  
   _If you are using other mapfiles_ than the standard ggg2020 or ggg2014 files you can set if the columns are based on wet air (`True`) or dry air (`False`).
+- **custom_mapfile**   
+  default: `None`.
+  This parameter can be used in two ways:
+    1. Give a format specifier of the map-files you want to use. The names of the map-file must include a date string inclduing the year, month, day and the hour of the file. 
+    If your mapfiles are for example named like "MyCustomMapFiles_YYYYMMDDHH_lat_long.map" give  "MyCustomMapFiles_%Y%m%d%H*.map".
+    2. Give the path to a single file. Then, for all days of the processing this individual map-file is used. Note, that this not usefull for operational processing, but can be usefull for testing purposes.
 
 ## Path settings
 
