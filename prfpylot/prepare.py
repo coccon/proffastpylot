@@ -63,6 +63,7 @@ class Preparation():
     defaults = {
         "mapfile_wetair_vmr": None,  # this is determined automatically if
                                      # you use mapfiles from tccon
+        "custom_mapfile": None,  # use this to specify a custom map file naming
         "coords": {"lat": None, "lon": None, "alt": None},
         "coord_file": None,
         "utc_offset": 0.0,
@@ -239,7 +240,7 @@ class Preparation():
             self.logger.warning(
                 "The parameter `mapfile_wetair_vmr` was given in the "
                 "input file. Don't use this option if you are using ggg2020 "
-                "or ggg2014 mapfiles from TCCON!")
+                "or ggg2014 mapfiles provided by Caltech!")
 
         dt_format = "%y%m%d"
         result_foldername = "{}_{}_{}-{}".format(
@@ -842,12 +843,17 @@ class Preparation():
                 f"{self.site_abbrev}{local_noon_utc.strftime('%Y%m%d%H')}"
                 "_Z.map"
                 )
-
         elif self.mapfile_format == "ggg2014":
             map_file = os.path.join(
                 self.map_path,
                 f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}.map"
             )
+        elif self.mapfile_format == "fixed_mapfile":
+            map_file = self.custom_mapfile
+        elif self.mapfile_format == "custom":
+            srchstrg = local_date.strftime(self.custom_mapfile)
+            map_file = glob(os.path.join(self.map_path, srchstrg))[0]
+
         parameters = {
             "ALT": alt,
             "LAT": lat,
@@ -1127,6 +1133,34 @@ class Preparation():
                 True if map files were found and created
                 False if no files were found.
         """
+        if self.custom_mapfile is not None:
+            # custom map file can either be a path to a file
+            if os.path.isfile(self.custom_mapfile):
+                self.mapfile_format = "fixed_mapfile"
+                self.logger.warning(
+                    "A fixed map-file was given. This can give wrong results. "
+                    "Only use this option if you know what you are doing!")
+                return True
+            # or a format specifier:
+            else:
+                self.mapfile_format = "custom"
+                self.logger.warning(
+                    "A custom format for mapfiles was given. Using this "
+                    "setting will NOT produce validated COCCON results.")
+                srchstrg = local_date.strftime(self.custom_mapfile)
+                map_files = glob(os.path.join(self.map_path, srchstrg))
+                if len(map_files) > 1:
+                    self.logger.warning(
+                        "Too many map files were found. "
+                        f"Skip day {local_date}.")
+                    return False
+                elif len(map_files) < 1:
+                    self.logger.warning(
+                        f"No map file was found at {local_date}."
+                        " Skip this day!")
+                    return False
+                else:
+                    return True
         # search for GGG2020 map files:
         # This includes files produced by ginput as well as from a running
         # ggg2020 evaluation
