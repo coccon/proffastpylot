@@ -32,7 +32,7 @@ FILE_META_VERSION: '04R077;CUSTOM'
 PI_NAME: 'LastNamePI;FirstNamePI'
 PI_AFFILIATION: 'Karlsruhe Institute of Technology;KIT'
 PI_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
-PI_EMAIL: 'LastNamePI;FirstNamePI@kit.edu'
+PI_EMAIL: 'LastNamePI.FirstNamePI@kit.edu'
 
 # The DO is the Data Originator. See section 4.1.5 to 4.1.8
 # DO_NAME, DO_AFFILIATION, DO_ADDRESS, and DO_EMAIL.
