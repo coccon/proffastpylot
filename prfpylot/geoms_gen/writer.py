@@ -143,6 +143,8 @@ class GeomsGenWriter(GeomsGenHelper):
     def generate_GEOMS_at(self, day):
         """Create a HDF5geoms file for a specific day """
 
+        self.variables = []
+
         self.geomsgen_logger.info(
             "Generating a HDF5geoms file for {}.".format(
                 day.strftime("%Y-%m-%d")
@@ -178,6 +180,7 @@ class GeomsGenWriter(GeomsGenHelper):
         if df is None:
             self.logger.error(
                 'HDF file generation stopped while reading invparms file!')
+            self.MyHDF5.close()
             return
 
         # Get additional information from the colsens, pT_fast_out, and
@@ -192,6 +195,7 @@ class GeomsGenWriter(GeomsGenHelper):
             self.logger.error(
                 'HDF file generation stopped while reading VMR, pT, or '
                 'colsens file!')
+            self.MyHDF5.close()
             return
 
         # Write all variables for generating the GEOMS compliant HDF5 files.
@@ -462,7 +466,8 @@ class GeomsGenWriter(GeomsGenHelper):
 
         day_str = day.strftime("%y%m%d")
         colsens_filename = f"{self.site_name}{day_str}-colsens.dat"
-        path = os.path.join(self.result_folder, colsens_filename)
+      # path = os.path.join(self.result_folder, colsens_filename)
+        path = os.path.join(self.result_folder, "raw_output_proffast", colsens_filename)
 
         # Read pressure and sensitivities as function of the altitude and SZA.
 
@@ -743,8 +748,8 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "DOUBLE"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME"
-        self.hdf5_atts["VAR_DESCRIPTION"] = (
-            "MJD2K is 0.0 on January 1, 2000 at 00:00:00 UTC")
+        self.hdf5_atts["VAR_DESCRIPTION"] = \
+            "MJD2K is 0.0 on January 1, 2000 at 00:00:00 UTC"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
         # self.hdf5_atts["VAR_NOTES"] = ""
@@ -1154,14 +1159,15 @@ class GeomsGenWriter(GeomsGenHelper):
         elif cont == "CO_COL":
             # "CO_COL":  "CO.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR"
             data = df["XCO"].to_numpy() * 1000.0  # in ppbv
+            data[data < 0] = -900000.0 # default fill value
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-9;1"
             self.hdf5_atts["VAR_UNITS"] = "ppbv"
             self.hdf5_atts["units"] = "ppbv"
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME"
-        self.hdf5_atts["VAR_DESCRIPTION"] = (
-            "Column average dry air mole fraction")
+        self.hdf5_atts["VAR_DESCRIPTION"] = \
+            "Column average dry air mole fraction"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
         # self.hdf5_atts["VAR_NOTES"] = ""
@@ -1220,8 +1226,11 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME"
         self.hdf5_atts["VAR_DESCRIPTION"] = \
-            "Total random uncertainty on the retrieved total column \
-            (expressed in same units as the column)"
+            np.string_(
+                "Total random uncertainty on the retrieved total column "
+                "(expressed in same units as the column)")
+          # "Total random uncertainty on the retrieved total column \
+          # (expressed in same units as the column)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
         # self.hdf5_atts["VAR_NOTES"] = ""
@@ -1265,7 +1274,7 @@ class GeomsGenWriter(GeomsGenHelper):
             self.hdf5_atts["VAR_UNITS"] = "ppmv"
             self.hdf5_atts["units"] = "ppmv"
         elif cont == "CH4_APR":
-            # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIOR"
+            # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIORI"
             CH4_prior = vmr["CH4"] * 1000.0  # VMR prior for CH4
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
@@ -1310,6 +1319,7 @@ class GeomsGenWriter(GeomsGenHelper):
         self.variables.append(dataset_name)
 
         data_src = []
+        ggg_ver = self.input_args['APRIORI_SOURCE']
 
         for i in range(df['JulianDate'].shape[0]):
             if cont == "H2O_SRC":
@@ -1318,13 +1328,13 @@ class GeomsGenWriter(GeomsGenHelper):
                     "Total vertical column of H2O from NCEP at local noon")
             elif cont == "CO2_SRC":
                 # "CO2_SRC": "CO2.MIXING.RATIO.VOLUME.DRY_APRIORI.SOURCE"
-                data_src.append("Map file GFIT Code")
+                data_src.append("Map file GFIT Code ({})".format(ggg_ver))
             elif cont == "CH4_SRC":
                 # "CH4_SRC": "CH4.MIXING.RATIO.VOLUME.DRY_APRIORI.SOURCE"
-                data_src.append("Map file GFIT Code")
+                data_src.append("Map file GFIT Code ({})".format(ggg_ver))
             elif cont == "CO_SRC":
                 # "CO_SRC":  "CO.MIXING.RATIO.VOLUME.DRY_APRIORI.SOURCE"
-                data_src.append("Map file GFIT Code")
+                data_src.append("Map file GFIT Code ({})".format(ggg_ver))
 
         self.hdf5_atts_src["VAR_DATA_TYPE"] = "STRING"
         self.hdf5_atts_src["VAR_DEPEND"] = "DATETIME"
@@ -1371,9 +1381,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME;ALTITUDE"
-        self.hdf5_atts["VAR_DESCRIPTION"] = (
-            "Column sensitivity associated with the total vertical column of "
-            "the target gas")
+        self.hdf5_atts["VAR_DESCRIPTION"] = \
+            "Column sensitivity associated with the total vertical column " \
+            "of the target gas"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
         # self.hdf5_atts["VAR_NOTES"] = ""
@@ -1458,8 +1468,8 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME;ALTITUDE"
         self.hdf5_atts["VAR_DESCRIPTION"] = \
-            "Vertical profile of partial columns of air number densities \
-            (for conversion between VMR and partial column profile)"
+            "Vertical profile of partial columns of air number densities " \
+            "(for conversion between VMR and partial column profile)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
         # self.hdf5_atts["VAR_NOTES"] = ""
@@ -1576,7 +1586,8 @@ class GeomsGenWriter(GeomsGenHelper):
         self.MyHDF5.attrs['DATA_DESCRIPTION'] = \
             np.string_(
                 f"EM27/SUN ({self.instrument_number}) measurements"
-                f" from {self.site_name}.")
+                f" from {self.input_args['SITE_DESCRIPTION']}.")
+              # f" from {self.site_name}.")
 
         self.MyHDF5.attrs['DATA_DISCIPLINE'] = \
             np.string_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED")
@@ -1596,9 +1607,11 @@ class GeomsGenWriter(GeomsGenHelper):
             np.string_(
                 "ILS parms applied: "
                 f"{ME1} for ME, {PE1} for PE. "
-                "Calibration factors applied:: "
+                "Calibration factors applied: "
                 f"{corr_fac['XCO2_cal']} for XCO2, "
-                f"{corr_fac['XCH4_cal']} for XCH4.")
+                f"{corr_fac['XCH4_cal']} for XCH4, "
+                f"{corr_fac['XH2O_cal']} for XH2O, "
+                f"{corr_fac['XCO_cal']} for XCO.")
 
         # Get the start and stop datetime, that is also needed
         # for the file name.

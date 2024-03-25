@@ -26,6 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import yaml
 import sys
 import os
+import re
 import math
 import glob
 import datetime as dt
@@ -41,7 +42,7 @@ class GeomsGenHelper(Preparation):
         super(GeomsGenHelper, self).__init__(
             prfpylot_inputfile, logginglevel="warning")
 
-        self.geomsgen_logger = self.get_logger(logginglevel="info")
+        self.geomsgen_logger = self.create_logger(logginglevel="info")
 
         # Read the input file.
         # Contains additional information to create the geoms file
@@ -56,6 +57,15 @@ class GeomsGenHelper(Preparation):
             self.geoms_out_path = self.input_args["geoms_out_path"]
         else:
             self.geoms_out_path = os.getcwd()
+
+        if self.input_args["geoms_res_path"] is not None:
+            self.geoms_res_path = self.input_args["geoms_res_path"]
+        else:
+          # self.geoms_res_path = os.getcwd()
+            self.geoms_res_path = 'results' # ???
+
+        self.geoms_start_date = self.input_args["geoms_start_date"]
+        self.geoms_end_date = self.input_args["geoms_end_date"]
 
     def _get_correction_factors(self):
         """Returns a dict containing the correction factors for the gases"""
@@ -207,7 +217,8 @@ class GeomsGenHelper(Preparation):
 
         datestr = day.strftime("%y%m%d")
         file = os.path.join(
-            self.result_folder, "pT-VMR-files",
+          # self.result_folder, "pT-VMR-files",
+            self.result_folder, "raw_output_proffast",
             f"{self.site_name}{datestr}-{which}_fast_out.dat")
         return file
 
@@ -253,7 +264,7 @@ class GeomsGenHelper(Preparation):
 
     def apply_quality_checks(self, df):
 
-        # Check if the second CO channel exists.
+        # check if the second CO channel exists
         CO_avg = df["XCO"].mean()
         if CO_avg == 0.:
             df["XCO"] = [-900000.]*len(df)
@@ -268,42 +279,61 @@ class GeomsGenHelper(Preparation):
             if row["XAIR"] > self.input_args["QUALITY_FILTER_XAIR_MAX"]:
                 quality_check_passed = False
 
+          # for col in ["XH2O", "XCO2", "XCH4"]:
             for col in ["XH2O", "XCO2", "XCH4", "XCO"]:
                 if row[col] in [np.nan, 0.]:
                     quality_check_passed = False
+                    print ('line', index, 'removed:', col, '=', row[col])
 
             # remove row from df
             if quality_check_passed is False:
-                df.drop(index=index)
+                df = df.drop(index=index)
+                quality_check_passed = True
 
         # apply correction factors
         corr_fac = self._get_correction_factors()
         df["XCO2"] *= corr_fac["XCO2_cal"]
         df["XCH4"] *= corr_fac["XCH4_cal"]
+        df["XH2O"] *= corr_fac["XH2O_cal"]
+        df["XCO"] *= corr_fac["XCO_cal"]
         df["altim"] /= 1000.
 
         # write fill value to values out of bounds
-        df["XH2O"].mask(df["XH2O"] <= 0., inplace=True)
-        df["XH2O"].mask(df["XH2O"] >= 10000., inplace=True)
-        df["XCO2"].mask(df["XCO2"] <= 0., inplace=True)
-        df["XCO2"].mask(df["XCO2"] >= 10000., inplace=True)
-        df["XCH4"].mask(df["XCH4"] <= 0., inplace=True)
-        df["XCH4"].mask(df["XCH4"] >= 10., inplace=True)
-        df["XCO"].mask(df["XCO"] <= 0., inplace=True)
-        df["XCO"].mask(df["XCO"] >= 10000., inplace=True)
+        df["XH2O"] = df["XH2O"].mask(df["XH2O"] <= 0.)
+        df["XH2O"] = df["XH2O"].mask(df["XH2O"] >= 10000.)
+        df["XCO2"] = df["XCO2"].mask(df["XCO2"] <= 0.)
+        df["XCO2"] = df["XCO2"].mask(df["XCO2"] >= 10000.)
+        df["XCH4"] = df["XCH4"].mask(df["XCH4"] <= 0.)
+        df["XCH4"] = df["XCH4"].mask(df["XCH4"] >= 10.)
+        df["XCO"] = df["XCO"].mask(df["XCO"] <= 0.)
+        df["XCO"] = df["XCO"].mask(df["XCO"] >= 10000.)
 
         fill_value = -900000.
         df.replace(np.nan, fill_value, inplace=True)
 
         # return none if less than 11 lines
         if len(df) < 11:
-            raise RuntimeError("Less than 11 valid measurement points!")
+          # raise RuntimeError("Less than 11 valid measurement points!")
+            print ("Less than 11 valid measurement points!")
+            return None
         else:
             self.logger.debug('Data filter applied... ', 'file_len: ', len(df))
             return df
 
     def get_comb_invparms_df(self, day):
-        invparms_file = self._comb_invparms_file()
+        
+      # get the complete path to the combined invparms file
+        dt_format = "%y%m%d"
+        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
+            self.site_name,
+            self.instrument_number,
+            self.meas_dates[0].strftime(dt_format),
+            self.meas_dates[-1].strftime(dt_format)
+        )
+        invparms_file = os.path.join(
+            self.result_folder, resultfile)
+
+      # invparms_file = self._comb_invparms_file()
         cols = [
             "UTC",
             "LocalTime",
@@ -327,15 +357,16 @@ class GeomsGenHelper(Preparation):
             "CH4",
             "CO",
             "CH4_S5P",
-            "H2O_rms",
-            "CO2_rms",
-            "CH4_rms",
-            "CO_rms",
+          # "H2O_rms",
+          # "CO2_rms",
+          # "CH4_rms",
+          # "CO_rms",
         ]
         df = pd.read_csv(
             invparms_file, delimiter=",", skipinitialspace=True,
             parse_dates=["UTC", "LocalTime"]
             )
+      # print(list(df.keys()))
 
         df = df[cols]
         # drop all columns except the selected day
@@ -345,4 +376,31 @@ class GeomsGenHelper(Preparation):
                 df.drop(index=i, inplace=True)
 
         df = self.apply_quality_checks(df)
+      # print (df["XCH4"])
         return df
+
+    def get_datetimes(self):
+        list = []
+        out_path = self.geoms_out_path
+        inp_path = self.geoms_res_path
+      # print (out_path, inp_path)
+
+        inv_list = glob.glob(inp_path + '\\' + '*invparms*.dat') # invparms file list
+        for file in inv_list:
+            file = os.path.basename(file)
+            file = re.sub('\D', '', file)
+            date = dt.datetime.strptime("20"+file[0:2]+"-"+file[2:4]+"-"+file[4:6], "%Y-%m-%d")
+          # print (file, date)
+            list.append(date)
+
+        return list
+
+    def get_start_date(self):
+      # print (self.geoms_start_date)
+        date = dt.datetime.strptime(str(self.geoms_start_date), "%Y-%m-%d")
+        return date
+
+    def get_end_date(self):
+      # print (self.geoms_end_date)
+        date = dt.datetime.strptime(str(self.geoms_end_date), "%Y-%m-%d")
+        return date

@@ -1,56 +1,59 @@
 calibration_params_list: ../prfpylot/geoms_gen/calibration_parameters.csv
 
 # output of the GEOMS-files:
-geoms_out_path: geomsgen_results
+geoms_out_path: results_geoms
+geoms_res_path: results/Sodankyla_SN039_170608-170609/raw_output_proffast
 
+geoms_start_date: 2017-06-08
+geoms_end_date:   2017-06-09
 
-
-
-# Additional Infos needed for GEOMS:
-# ----------------------------------
-# I do not know which of these parameters are needed. For no I wrote out all
-# given in COCCONHDFtoGEOMS.py
-# ???????
+# Additional infos for GEOMS compliant HDF files
+# see tableattrvalue_04R083.dat and geoms-1.0.pdf
+# https://git.nilu.no/geoms/documentation
 
 DATA_FILE_VERSION: '001'
 DATA_SOURCE: FTIR.COCCON_KIT039
 DATA_LOCATION: 'SODANKYLA'
-DATA_PROCESSOR: 'PROFFAST Version 2.1.1'
+DATA_PROCESSOR: 'PROFFAST Version 2.4'
 DATA_QUALITY: 'Station data.'
 DATA_TEMPLATE: 'GEOMS-TE-FTIR-COCCON-001'
-#DATA_TEMPLATE: 'GEOMS-TE-FTIR-COCCON-001.csv'
 
-FILE_DOI: 'https://doi.org/10.48477/coccon.pf10.sodankyla.R01'
-FILE_META_VERSION: '04R052;CUSTOM'
+FILE_DOI: 'https://doi.org/10.48477/coccon.pf24.sodankyla.R01'
+FILE_META_VERSION: '04R077;CUSTOM'
 
-# The PI_NAME needs to be given like `LastName;FirstName`
-# The PI_AFFILIATION needs to be given like `Long name of Institute;Abbreviation`
-PI_NAME: 'Dubravica;Darko'
+# See document geom-1.0.pdf, section 4. Global Attributes
+# 4.1 Global Originator Attributes
+# The global originator attribute entries describe the ownership
+# of the data found in a given file.
+# Remember that all entries for person names are case-sensitive.
+
+# The PI is the data's Principal Investigator. See 4.1.1 to 4.1.4
+# PI_NAME, PI_AFFILIATION, PI_ADDRESS, and PI_EMAIL.
+PI_NAME: 'LastNamePI;FirstNamePI'
 PI_AFFILIATION: 'Karlsruhe Institute of Technology;KIT'
 PI_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
-PI_EMAIL: 'darko.dubravica@kit.edu'
+PI_EMAIL: 'LastNamePI;FirstNamePI@kit.edu'
 
-# The PO_NAME ...
-DO_NAME: 'LastNameDS;FirstNameDS'
+# The DO is the Data Originator. See section 4.1.5 to 4.1.8
+# DO_NAME, DO_AFFILIATION, DO_ADDRESS, and DO_EMAIL.
+DO_NAME: 'LastNameDO;FirstNameDO'
 DO_AFFILIATION: 'Karlsruhe Institute of Technology - Institute of Meteorology and Climate Research - Atmospheric Trace Gases and Remote Sensing;KIT.IMK.ASF'
 DO_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
 DO_EMAIL: 'FirstNameDO.LastNameDO@university.edu'
 
-# The DS_NAME ...
+# The DS is the Data Submitter. See section 4.1.9 to 4.1.12
+# DS_NAME, DS_AFFILIATION, DS_ADDRESS, and DS_EMAIL.
 DS_NAME: 'LastNameDS;FirstNameDS'
 DS_AFFILIATION: 'Karlsruhe Institute of Technology - Institute of Meteorology and Climate Research - Atmospheric Trace Gases and Remote Sensing;KIT.IMK.ASF'
 DS_ADDRESS: 'P.O. Box 3640;D-76021 Karlsruhe;GERMANY'
 DS_EMAIL: 'FirstNameDS.LastNameDS@university.edu'
-
 
 QUALITY_FILTER_SZA: 75.0
 QUALITY_FILTER_XAIR_MIN: 0.98
 QUALITY_FILTER_XAIR_MAX: 1.02
 
 PRESSURE_SOURCE: 'Datalogger'
-# PRESSURE_SOURCE: 'Local meteo station (Thessaloniki, Greece)'   # Thessaloniki local meteo station
-# PRESSURE_SOURCE: 'Local meteo station (Yekaterinburg, Russia)'  # Yekaterinburg local meteo station
-# PRESSURE_SOURCE: 'Local meteo station (St. Petersburg, Russia)' # St. Petersburg local meteo station
-# PRESSURE_SOURCE: 'AWS meteo station (Sodankyla, Finland)'       # Sodankyla local meteo station
-# PRESSURE_SOURCE: 'BSRN meteo station (Gobabeb, Namibia)'        # Gobabeb local meteo station
-# PRESSURE_SOURCE: 'DWD meteo station (Rheinstetten, Germany)'    # Karlsruhe local meteo station
+
+APRIORI_SOURCE: 'GGG2020'
+
+SITE_DESCRIPTION: 'KIT IMK-ASF CN (Karlsruhe, Germany)'
