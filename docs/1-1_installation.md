@@ -1,33 +1,39 @@
 # Installation
 
-**For using PROFFASTpylot you need Python 3.7 or newer.**
 
 ## Content
 
-1. Download the PROFFASTpylot repository
-2. Get PROFFAST and copy it to `proffastpylot`
-3. Create a virtual environment in python
-4. Install PROFFASTpylot
-5. Resulting folder structure
-6. Test the installation by running an example dataset
-7. Getting Updates
+1. Prerequisites
+2. Download the PROFFASTpylot repository
+3. Get PROFFAST and copy it to `proffastpylot`
+4. Create a virtual environment in python
+5. Install PROFFASTpylot
+6. Resulting folder structure
+7. Test the installation by running an example dataset
+8. Getting Updates
+
+
+## 1. Prerequisites
+
+For using PROFFASTpylot you need Python 3.7 or newer.
+The PROFFAST and PROFFASTpylot can be used in Windwos and Linux environments.
+A step-by-step installation instruction for both enviroments is given in the following.
+We did not test the software for Mac environments. 
 
 
 
-## 1. Download the PROFFASTpylot repository
 
-**We recommend downloading the files using git (https://www.git-scm.com).**   
-
-It will make future updates easier.
-
+## 2. Download the PROFFASTpylot repository
 
 ### Clone the PROFFASTpylot repository using git
+
+**We recommend downloading the files using git (https://www.git-scm.com).**   
+It will make future updates easier.
 
 ```
 git clone https://gitlab.eudat.eu/coccon-kit/proffastpylot.git
 ```
 A folder `proffastpylot` containing all program files will be created.
-
 
 ### Alternatively: Download the PROFFASTpylot repository as a zip file
 
@@ -38,24 +44,31 @@ Extracting it will create the folder `proffastpylot`.
 
 
 
-## 2. Get PROFFAST and copy it to the proffastpylot folder
+## 3. Get PROFFAST and copy it to the proffastpylot folder
 
 ### Download PROFFAST
 Download PROFFAST Version 2.4 from the KIT website:  
 https://www.imk-asf.kit.edu/english/3225.php
 
-**For Linux users**: Run the installation script to create the executables. 
+### Compile PROFFAST (only Linux)
+
+For Windows users, the executables are already provided, on Linux systems you need to create them from source.
+
+If not present on your system, first install the `gfortan` compiler.  
+
+Secondly, run the installation script for compilation from the `prf` folder.
 ```
+cd prf/
 bash install_proffast_linux.sh
 ```
-For Windows users, the executables are already provided.
-
 
 ### Copy the prf directory
 
 Copy the `prf` folder that was extracted from the zip file into `proffastpylot`.
 
-## 3. Create a virtual environment in python
+
+
+## 4. Create a virtual environment in python
 
 We recommend using a virtual environment (venv) to avoid conflicts between any other packages or Python modules.
 
@@ -74,7 +87,8 @@ In case of a problem, take a look at the **Troubelshooting** article of this doc
 You need to activate the virtual environment before each run of PROFFASTpylot by executing the command in step 3, the other steps need to be executed only the first time.
 
 
-## 4. Install the PROFFASTpylot repository
+
+## 5. Install the PROFFASTpylot repository
 
 Activate the virtual environment (see above).
 
@@ -83,9 +97,9 @@ Navigate to `proffastpylot` and enter
 pip install --editable .
 ```
 
-To test the installation execute the `run.py` script. For details see the **Usage** article of this documentation.
 
-## 5. Resulting folder structure
+
+## 6. Resulting folder structure
 
 If you follow exactly the installation guide your folder structure should look like the following:
 ```
@@ -111,17 +125,21 @@ proffastpylot
 └── setup.py
 ```
 
-## 6. Test the installation by running an example dataset
+
+
+## 7. Test the installation by running an example dataset
 
 To test the installation we provide example raw data and a reference result file to compare the file to.
 The example can be executed by navigating to the example folder and execute `python run.py`
 (please ensure that your virtual environment is activated).   
-When first running the program it will ask you to download the exampe file data to your local computer.
+When first running the program it will ask you to download the example file data to your local computer.
 
 After the run is complete, please compare your results to the data given in `example\Reference_Output_Example_Sodankyla.csv`.
 The deviations should be less than 0.1 ppm for XCO2, 0.1 ppb for XCH4 and 0.1 ppb for XCO.
 
-## 7. Getting Updates
+
+
+## 8. Getting Updates
 
 If you used git during installation, you can easily get updates by entering
 
