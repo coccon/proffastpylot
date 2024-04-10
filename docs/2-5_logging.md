@@ -1,9 +1,9 @@
 # Advanced Logging Options
 
-The PROFFASTpylot has an built-in logging functionality.
-By default the user do not have to care about this.
+The PROFFASTpylot has a built-in logging functionality.
+By default, the user do not have to care about this.
 This section is only intended for advanced usage of the PROFFASTpylot, e.g. when
-it is embedded into an larger environment.
+it is embedded into a larger environment.
 
 The PROFFASTpylot uses the standard Python [logging module](https://docs.python.org/3/library/logging.html).
 There are three possible use cases on how to use the logging functionality of PROFFASTpylot:
@@ -11,7 +11,7 @@ There are three possible use cases on how to use the logging functionality of PR
 1. **Default mode:**  
     As the PROFFASTpylot is mainly intended to be used as a standalone program,
     logging is configured such, that a custom logger object is created and stream and
-    file handlers are added to this logger. The logger instance is initialized using the current datetime in the format YYMMDDHHMMSSssss as the loggers name.
+    file handlers are added to this logger. The logger instance is initialized using the current datetime in the format YYMMDDHHMMSSssss as the logger's name.
     In this mode the logger is mainly encapsulated to the PROFFASTpylot and difficult to be accessed from the outside.
 2. **Submodule mode**:  
     The `submodule mode` is designed to use the Pylot as a submodule. This means that the logger instance is created outside of the PROFFASTpylot and passed to the Pylot as an argument. For this, the `Pylot` class has the argument `external_logger` to which an instance of the external logger is passed to.

@@ -13,7 +13,7 @@ We will update this documentation with the occurring problems.
 ### Problems creating a virtual environment
 
 If you have several python installations, and some are not included to your
-PATH variable it might happen that the creation of an virtual environment
+PATH variable it might happen that the creation of a virtual environment
 results in  `Error: [WinError 2] The system cannot find the file specified`.      
 
 In this case the solution can be to give to full path to your python
@@ -24,4 +24,4 @@ executable whilst creating the virtual environment: `C:\path\to\your\python\pyth
 
 ### Infinite Loop: General logfile is being used by another process
 
-Ensure if your runscript contains `if __name__ == "__main__"`. If this is missing, it can crash the multiprocessing in a Windows environment.
+Ensure if your run-script contains `if __name__ == "__main__"`. If this is missing, it can crash the multiprocessing in a Windows environment.
