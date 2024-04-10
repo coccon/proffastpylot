@@ -29,7 +29,7 @@ Adjust this file to your requirements.
 
 #### Starting the processing
 
-For starting the processing you need to create an instance of the Pylot class with an input file.
+For starting the processing, you need to create an instance of the Pylot class with an input file.
 
 ```python
 from prfpylot.pylot import Pylot
@@ -46,7 +46,7 @@ Afterwards all steps of PROFFAST can be executed automatically one after the oth
     MyPylot.run(n_processes)
 ```
 
-Alternatively you can run all steps of PROFFAST individually with the following commands:
+Alternatively, you can run all steps of PROFFAST individually with the following commands:
 
 ```python
     n_processes = 2

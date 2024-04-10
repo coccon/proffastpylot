@@ -22,6 +22,6 @@ PROFFASTpylot comes with several templates prepared already for the following in
 To use one of these instruments set the parameter `instrument_parameters` to one of the options above.
 
 Alternatively, it is possible to give the path to a so called `instrument-parameter-file`.
-This option is only recommended to be used by expert-users. Therefore no template for this case is given.
+This option is only recommended to be used by expert-users. Therefore, no template for this case is given.
 If you want to create your own `instrument-parameter-file` please adapt one of the prepared parameter files.  
 They are located in `prfpylot\templates\instrument_templates`

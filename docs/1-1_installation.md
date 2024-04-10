@@ -16,8 +16,8 @@
 ## 1. Prerequisites
 
 For using PROFFASTpylot you need Python 3.7 or newer.
-The PROFFAST and PROFFASTpylot can be used in Windwos and Linux environments.
-A step-by-step installation instruction for both enviroments is given in the following.
+The PROFFAST and PROFFASTpylot can be used in Windows and Linux environments.
+A step-by-step installation instruction for both environments is given in the following.
 We did not test the software for Mac environments. 
 
 
@@ -82,7 +82,7 @@ We recommend using a virtual environment (venv) to avoid conflicts between any o
 4. To deactivate the virtual environment you can run `deactivate`
 
 Note that all packages to be installed with `pip install` will only affect the virtual environment and not the local Python installation.  
-In case of a problem, take a look at the **Troubelshooting** article of this documentation.
+In case of a problem, take a look at the **Troubleshooting** article of this documentation.
 
 You need to activate the virtual environment before each run of PROFFASTpylot by executing the command in step 3, the other steps need to be executed only the first time.
 
@@ -129,10 +129,10 @@ proffastpylot
 
 ## 7. Test the installation by running an example dataset
 
-To test the installation we provide example raw data and a reference result file to compare the file to.
+To test the installation, we provide example raw data and a reference result file to compare the file to.
 The example can be executed by navigating to the example folder and execute `python run.py`
 (please ensure that your virtual environment is activated).   
-When first running the program it will ask you to download the example file data to your local computer.
+When first running the program, it will ask you to download the example file data to your local computer.
 
 After the run is complete, please compare your results to the data given in `example\Reference_Output_Example_Sodankyla.csv`.
 The deviations should be less than 0.1 ppm for XCO2, 0.1 ppb for XCH4 and 0.1 ppb for XCO.
