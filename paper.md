@@ -40,15 +40,16 @@ bibliography: paper.bib
 
 Measurements of atmospheric greenhouse gas (GHG) concentrations are important to assess the effect of climate change mitigation policies.
 Additionally, climate models depend on a precise knowledge of greenhouse gas abundances and emissions.
-A variety of measurement methods is addressing these needs.
-The Collaborative Carbon Column Observing Network (COCCON) was established in 2019, as a supporting framework for users of the portable Fourier-Transform spectrometers EM27/SUN, that measures precisely and accurately GHG column abundances from near-infrared solar absorption spectra.
+A variety of measurement methods are addressing these needs.
+The Collaborative Carbon Column Observing Network (COCCON) was established in 2019 as a supporting framework for users of the portable Fourier-Transform spectrometers EM27/SUN.
+The spectrometers measure precisely and accurately GHG column abundances from near-infrared solar absorption spectra.
 To ensure common quality standards across the COCCON, raw EM27/SUN measurements are processed with the PROFFAST Fortran routines.
 The Python interface PROFFASTpylot significantly reduces the workload during the processing of large sets of observational data and supports a network-wide consistent data processing.
 
 
 # Statement of Need
 
-The EM27/SUN solar Fourier-Transform Infrared (FTIR) spectrometer was developed by the Karlsruhe Institute of Technology (KIT) in collaboration with Bruker [@Gisi:2011; @Hase:2016], has been commercialized in 2014 and is in wide use today.
+The EM27/SUN solar Fourier-Transform Infrared (FTIR) spectrometer was developed by the Karlsruhe Institute of Technology (KIT) in collaboration with Bruker [@Gisi:2011; @Hase:2016], was commercialized in 2014 and is in wide use today.
 GHG city emissions [@Hase:2015; @Vogel:2019; @Tu:2022; @Dietrich:2021], as well as long-term trends at selected sites [@Mermigkas:2021; @Frey:2021] have been investigated.
 A further goal is the validation of space borne GHG measurements [@Tu:2020; @Alberti:2022a].
 
@@ -86,7 +87,7 @@ PROFFASTpylot has already been used by @Schmid:2023 and @Herkommer:2023.
 
 # Functionality and Design
 
-In the following, the main functionality and structuring of the program are explained.
+In this section the main functionality and structuring of the program are explained.
 
 ## Main functionality
 The program is an interface for PROFFAST.
@@ -105,7 +106,7 @@ The main functionalities are:
 - Concatenate the final data of all processed days to a single output file.
 
 ## Adaptability and error prevention
-To ensure a simple usage and a fast error detection by the user several measures have been taken:
+To ensure a simple user experience and fast error detection several measures have been taken:
 
 - The empirical instrumental parameters (ILS parameters) [@Alberti:2022b] are taken automatically from an internal list.
 - For auxiliary data, cross\-checks are implemented that generate a warning or a controlled program stop (e.g. checking the correct location of atmospheric a-priori files).
