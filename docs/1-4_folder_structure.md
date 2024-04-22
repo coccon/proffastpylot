@@ -75,9 +75,9 @@ The files that were located in `YYMMDD/pT` are handled elsewhere since version 1
 
 ### Result path
 In the result folder run-specific information is stored.
-In the folder the retrieval of all days are stored. Those files are merged to a
+In the folder the retrieval results of all days are stored. Those files are merged to a
 single file `comb_invparms_<site_name>_<instrument_nr>_<YYMMDD>-<YYMMDD>.csv`.
-Furthermore the logfiles of the runs are stored in `result_path/logfiles`.
+Furthermore, the logfiles of the runs are stored in `result_path/logfiles`.
 
 
 ## 3. Program Files
