@@ -6,12 +6,18 @@
 Welcome to PROFFASTpylot's documentation!
 ==========================================
 
+Measurements of atmospheric greenhouse gas (GHG) concentrations are important to assess the effect of climate change mitigation policies.
+Additionally, climate models depend on a precise knowledge of greenhouse gas abundances and emissions.
+A variety of measurement methods is addressing these needs.
+The Collaborative Carbon Column Observing Network (COCCON) was established in 2019, as a supporting framework for users of the portable Fourier-Transform spectrometers EM27/SUN, that measures precisely and accurately GHG column abundances from near-infrared solar absorption spectra.
+To ensure common quality standards across the COCCON, raw EM27/SUN measurements are processed with the PROFFAST Fortran routines.
+The Python interface PROFFASTpylot significantly reduces the workload during the processing of large sets of observational data and supports a network-wide consistent data processing.
 
-PROFFASTpylot version 1.3 is an interface for PROFFAST 2.4. For more information about PROFFAST, see https://www.imk-asf.kit.edu/english/3225.php.
 
+For more information about PROFFAST, see https://www.imk-asf.kit.edu/english/3225.php.
 The PROFFASTpylot source code is available at https://gitlab.eudat.eu/coccon-kit/proffastpylot. If you have any comments or questions, contact us at benedikt.herkommer@kit.edu and lena.feld@kit.edu. You are welcome to contribute.
 
-This documentation and the PROFFASTpylot source code is licensed under GPLv3.
+This documentation and the PROFFASTpylot source code is licensed under GPL-3.0.
 
 
 
