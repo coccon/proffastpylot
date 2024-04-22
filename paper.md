@@ -30,7 +30,7 @@ authors:
   - name: Frank Hase
     affiliation: 1
 affiliations:
- - name: Kalrsruhe Institute of Technology, Germany
+ - name: Karlsruhe Institute of Technology, Germany
    index: 1
 date: 
 bibliography: paper.bib
