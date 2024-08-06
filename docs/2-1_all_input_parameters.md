@@ -11,9 +11,9 @@ In this file all parameters are given and explained.
 - **site_name**  
   The name of the current measurement site.
 - **site_abbrev**  
-  A two letter abbreviation to assign your site to a map file.
+  A two-letter abbreviation to assign your site to a map file.
 - **coords**  
-  Coordinates of the measurement. Alternatively a coordinate file can be used (see below).
+  Coordinates of the measurement. Alternatively, a coordinate file can be used (see below).
     - **lat**: Latitude, degrees north in decimal format 
     - **lon**: Longitude, degrees east in decimal format
     - **alt**: Altitude, km over sea level
