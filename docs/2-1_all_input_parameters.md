@@ -72,6 +72,11 @@ In this file all parameters are given and explained.
     If your mapfiles are for example named like "MyCustomMapFiles_YYYYMMDDHH_lat_long.map" give  "MyCustomMapFiles_%Y%m%d%H*.map".
     2. Give the path to a single file. Then, for all days of the processing this individual map-file is used. Note, that this not usefull for operational processing, but can be usefull for testing purposes.
 
+- **use_measured_pressure_for_pcxs**    
+  default: `False`.
+  Normally, PROFFASTpcxs uses the surface pressrue retrieved from the model data.
+  When setting this parameter to `True` PROFFASTpcxs uses the pressure measured at local noon instead.
+
 ## Path settings
 
 - **proffast_path**  
