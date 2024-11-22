@@ -98,7 +98,10 @@ class Preparation():
         """Initialize the PROFFASTpylot backbone.
         
         Params:
-            input_file (str): The path to a yaml input file.
+            input_file (str|dict):
+                Can be either the path to a yaml input file or an dictionary,
+                containing all needed parameters as keys and the settings as
+                values.
             logginglevel (str):
                 A string specifying the logging level (`debug`, `info`,
                 `warning`).
