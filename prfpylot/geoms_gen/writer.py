@@ -30,10 +30,11 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 from prfpylot.geoms_gen.helper import GeomsGenHelper
+from prfpylot.prepare import Preparation
 
 
 class GeomsGenWriter(GeomsGenHelper):
-    def __init__(self, geomsgen_inputfile, prfpylot_inputfile):
+    def __init__(self, geomsgen_inputfile):
 
         """
         This init can probably be omitted completly once it gets a part
@@ -44,7 +45,7 @@ class GeomsGenWriter(GeomsGenHelper):
         # This provides some usefull data within this class.
 
         super(GeomsGenWriter, self).__init__(
-            geomsgen_inputfile, prfpylot_inputfile)
+            geomsgen_inputfile)
 
         # List of all variables for the GEOMS compliant HDF5 files.
         # For further information, see document "geoms-1.0.pdf":
@@ -145,7 +146,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.variables = []
 
-        self.geomsgen_logger.info(
+        self.logger.info(
             "Generating a HDF5geoms file for {}.".format(
                 day.strftime("%Y-%m-%d")
                 )
@@ -295,7 +296,7 @@ class GeomsGenWriter(GeomsGenHelper):
             os.remove(geoms_file_name)
             # delete file in case the file already exits
         os.rename(geoms_file, geoms_file_name)
-        self.geomsgen_logger.info(
+        self.logger.info(
             f"The HDF5geoms file was written to {geoms_file_name}")
 
     def get_start_stop_date_time(self, day, df):
@@ -1596,7 +1597,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         for attr in attribute_list:
             # H5Py needs to store the strings using this numpy method:
-            # see: https://docs.h5py.org/en/2.3/strings.html
+            # see: https://docs.h5py.org/en/2.4/strings.html
             # Furhtermore they have to be in edged brackets to provide
             # an array.
             self.MyHDF5.attrs[attr] = np.bytes_(self.input_args[attr]) # np.bytes_
@@ -1615,7 +1616,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
         # Get the ILS values from the ILSList.csv file.
 
-        ME1, PE1, ME2, PE2 = self.get_ils_from_file(day)
+        self.ils_file = os.path.join("..", "prfpylot", "ILSList.csv") # work around
+
+        ME1, PE1, ME2, PE2 = Preparation.get_ils_from_file(self, day)
 
         # Get the correction factors from the Calibration_Parameters.csv file.
 

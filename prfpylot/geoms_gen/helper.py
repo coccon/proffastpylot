@@ -32,23 +32,35 @@ import glob
 import datetime as dt
 import numpy as np
 import pandas as pd
-
-
 from prfpylot.prepare import Preparation
 
+class GeomsGenHelper():
+    def __init__(self, geomsgen_inputfile):
 
-class GeomsGenHelper(Preparation):
-    def __init__(self, geomsgen_inputfile, prfpylot_inputfile):
-        super(GeomsGenHelper, self).__init__(
-            prfpylot_inputfile, logginglevel="warning")
-
-        self.geomsgen_logger = self.create_logger(logginglevel="info")
+        self.logger = Preparation.create_logger(self, logginglevel="info")
 
         # Read the input file.
         # Contains additional information to create the geoms file
         with open(geomsgen_inputfile, "r") as f:
             self.input_args = yaml.load(f, Loader=yaml.FullLoader)
         self.input_file = geomsgen_inputfile
+
+        if self.input_args["prf_res_path"] is not None:
+            self.prf_res_path = self.input_args["prf_res_path"]
+        else:
+          # self.prf_res_path = os.getcwd()
+            self.prf_res_path = 'results' # ???
+
+        self.result_folder = self.prf_res_path
+        self.geoms_res_path = os.path.join(self.prf_res_path, "raw_output_proffast")
+
+        prf_input_filepath = os.path.join(self.prf_res_path, self.input_args["input_file_name"])
+
+        with open(prf_input_filepath, "r") as f:
+            prf_input_parms = yaml.safe_load(f)
+
+        self.instrument_number = prf_input_parms["instrument_number"]
+        self.site_name = prf_input_parms["site_name"]
 
         # Path of output files:
         self.geoms_out_filename = "_".join(
@@ -57,12 +69,7 @@ class GeomsGenHelper(Preparation):
             self.geoms_out_path = self.input_args["geoms_out_path"]
         else:
             self.geoms_out_path = os.getcwd()
-
-        if self.input_args["geoms_res_path"] is not None:
-            self.geoms_res_path = self.input_args["geoms_res_path"]
-        else:
-          # self.geoms_res_path = os.getcwd()
-            self.geoms_res_path = 'results' # ???
+        os.makedirs(self.geoms_out_path, exist_ok=True)
 
         self.geoms_start_date = self.input_args["geoms_start_date"]
         self.geoms_end_date = self.input_args["geoms_end_date"]
@@ -261,14 +268,8 @@ class GeomsGenHelper(Preparation):
         
       # get the complete path to the combined invparms file
         dt_format = "%y%m%d"
-        resultfile = "comb_invparms_{}_{}_{}-{}.csv".format(
-            self.site_name,
-            self.instrument_number,
-            self.meas_dates[0].strftime(dt_format),
-            self.meas_dates[-1].strftime(dt_format)
-        )
-        invparms_file = os.path.join(
-            self.result_folder, resultfile)
+
+        invparms_file = glob.glob(os.path.join(self.prf_res_path,"comb_invparms_*.csv"))[0]
 
       # invparms_file = self._comb_invparms_file()
         cols = [

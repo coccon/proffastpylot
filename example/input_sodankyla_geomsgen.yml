@@ -2,13 +2,15 @@ calibration_params_list: ../prfpylot/geoms_gen/calibration_parameters.csv
 
 # output of the GEOMS-files:
 geoms_out_path: results_geoms
-geoms_res_path: results/Sodankyla_SN039_170608-170609/raw_output_proffast
+prf_res_path: results/Sodankyla_SN039_170608-170609
+
+input_file_name: input_sodankyla_example.yml
 
 geoms_start_date: 2017-06-08
 geoms_end_date:   2017-06-09
 
 # Additional infos for GEOMS compliant HDF files
-# see tableattrvalue_04R083.dat and geoms-1.0.pdf
+# see tableattrvalue_04R088.dat and geoms-1.0.pdf
 # https://git.nilu.no/geoms/documentation
 
 DATA_FILE_VERSION: '001'
@@ -19,7 +21,7 @@ DATA_QUALITY: 'Station data.'
 DATA_TEMPLATE: 'GEOMS-TE-FTIR-COCCON-001'
 
 FILE_DOI: 'https://doi.org/10.48477/coccon.pf24.sodankyla.R01'
-FILE_META_VERSION: '04R077;CUSTOM'
+FILE_META_VERSION: '04R088;CUSTOM'
 
 # See document geom-1.0.pdf, section 4. Global Attributes
 # 4.1 Global Originator Attributes
