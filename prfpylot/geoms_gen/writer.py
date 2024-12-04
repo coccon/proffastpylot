@@ -314,19 +314,32 @@ class GeomsGenWriter(GeomsGenHelper):
         data = self._GEOMStoDateTime(
             np.round((data['JulianDate'] - 2451544.5) * 86400.0))  # ???
 
-        start_date = str(day)[0:10]
-        start_date = start_date + 'T'
-        start_date = start_date + str(data[0].time())
-        start_date = start_date + 'Z'
-        start_date = start_date.replace('-', '')
-        start_date = start_date.replace(':', '')
+      # print(data[0])
+      # print(data[0].strftime('%Y%m%dT%H%M%SZ'))
+      # print(data[-1])
+      # print(data[-1].strftime('%Y%m%dT%H%M%SZ'))
 
-        stop_date = str(day)[0:10]
-        stop_date = stop_date + 'T'
-        stop_date = stop_date + str(data[-1].time())
-        stop_date = stop_date + 'Z'
-        stop_date = stop_date.replace('-', '')
-        stop_date = stop_date.replace(':', '')
+      # start_date = str(day)[0:10]
+      # start_date = start_date + 'T'
+      # start_date = start_date + str(data[0].time())
+      # start_date = start_date + 'Z'
+      # start_date = start_date.replace('-', '')
+      # start_date = start_date.replace(':', '')
+
+        start_date = data[0].strftime('%Y%m%dT%H%M%SZ')
+
+        print (start_date)
+
+      # stop_date = str(day)[0:10]
+      # stop_date = stop_date + 'T'
+      # stop_date = stop_date + str(data[-1].time())
+      # stop_date = stop_date + 'Z'
+      # stop_date = stop_date.replace('-', '')
+      # stop_date = stop_date.replace(':', '')
+
+        stop_date = data[-1].strftime('%Y%m%dT%H%M%SZ')
+
+        print (stop_date)
 
         return (start_date, stop_date)
 
@@ -707,7 +720,8 @@ class GeomsGenWriter(GeomsGenHelper):
 
         return XH2O_err, XCO2_err, XCH4_err, XCO_err
 
-    def write_source(self, cont):  # "SRC_PRO": "SOURCE.PRODUCT"
+    def write_source(self, cont):
+        # "SRC_PRO": "SOURCE.PRODUCT"
 
         # Write information to the HDF5 file which is relevant to the
         # source history.
@@ -731,13 +745,16 @@ class GeomsGenWriter(GeomsGenHelper):
         self.SRC_dtst = self._write_dataset_src(
             data, dataset_name, self.hdf5_atts_src)
 
-    def write_datetime(self, df, cont):  # "DAT_TIM": "DATETIME"
+    def write_datetime(self, df, cont):
+        # "DAT_TIM": "DATETIME"
 
         # Write DateTime to the HDF5 file
         # (MJD2K is 0.0 on January 1, 2000 at 00:00:00 UTC).
 
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
+
+        datetime_notes = self.input_args['DATETIME_NOTES']
 
         data = df["JulianDate"].to_numpy()
 
@@ -752,7 +769,7 @@ class GeomsGenWriter(GeomsGenHelper):
             "MJD2K is 0.0 on January 1, 2000 at 00:00:00 UTC"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
-        # self.hdf5_atts["VAR_NOTES"] = ""
+        self.hdf5_atts["VAR_NOTES"] = datetime_notes
         self.hdf5_atts["VAR_SIZE"] = str(np.size(data))
         self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;86400.0;s"
         self.hdf5_atts["VAR_UNITS"] = "MJD2K"
@@ -765,7 +782,8 @@ class GeomsGenWriter(GeomsGenHelper):
         self.SRC_dtst = self._write_dataset_dt(
             data, dataset_name, self.hdf5_atts)
 
-    def write_altitude(self, df, ptf, cont):  # "ALT": "ALTITUDE"
+    def write_altitude(self, df, ptf, cont):
+        # "ALT": "ALTITUDE"
 
         # Write altitude information used in the a-priori profile matrix.
 
@@ -799,8 +817,8 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
-    # "SOL_ZEN": "ANGLE.SOLAR_ZENITH.ASTRONOMICAL"
     def write_solar_angle_zenith(self, df, cont):
+        # "SOL_ZEN": "ANGLE.SOLAR_ZENITH.ASTRONOMICAL"
 
         # Write solar zenith angle to the HDF5 file
         # (solar astronomical zenith angle).
@@ -1226,7 +1244,7 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME"
         self.hdf5_atts["VAR_DESCRIPTION"] = \
-            np.string_(
+            np.bytes_( # np.bytes_
                 "Total random uncertainty on the retrieved total column "
                 "(expressed in same units as the column)")
           # "Total random uncertainty on the retrieved total column \
@@ -1581,19 +1599,19 @@ class GeomsGenWriter(GeomsGenHelper):
             # see: https://docs.h5py.org/en/2.3/strings.html
             # Furhtermore they have to be in edged brackets to provide
             # an array.
-            self.MyHDF5.attrs[attr] = np.string_(self.input_args[attr])
+            self.MyHDF5.attrs[attr] = np.bytes_(self.input_args[attr]) # np.bytes_
 
         self.MyHDF5.attrs['DATA_DESCRIPTION'] = \
-            np.string_(
+            np.bytes_( # np.bytes_
                 f"EM27/SUN ({self.instrument_number}) measurements"
                 f" from {self.input_args['SITE_DESCRIPTION']}.")
               # f" from {self.site_name}.")
 
         self.MyHDF5.attrs['DATA_DISCIPLINE'] = \
-            np.string_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED")
+            np.bytes_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED") # np.bytes_
 
         self.MyHDF5.attrs['DATA_GROUP'] = \
-            np.string_("EXPERIMENTAL;PROFILE.STATIONARY")
+            np.bytes_("EXPERIMENTAL;PROFILE.STATIONARY") # np.bytes_
 
         # Get the ILS values from the ILSList.csv file.
 
@@ -1602,9 +1620,10 @@ class GeomsGenWriter(GeomsGenHelper):
         # Get the correction factors from the Calibration_Parameters.csv file.
 
         corr_fac = self._get_correction_factors()
+      # corr_fac = self._get_correction_factors(day)
 
         self.MyHDF5.attrs['DATA_MODIFICATIONS'] = \
-            np.string_(
+            np.bytes_( # np.bytes_
                 "ILS parms applied: "
                 f"{ME1} for ME, {PE1} for PE. "
                 "Calibration factors applied: "
@@ -1619,16 +1638,16 @@ class GeomsGenWriter(GeomsGenHelper):
         # start, stop = self.get_start_stop_date_time(day)
         start, stop = self.get_start_stop_date_time(day, df)
         # start, stop = self.get_start_stop_date_time_csv(day)
-        self.MyHDF5.attrs['DATA_START_DATE'] = np.string_(start)
-        self.MyHDF5.attrs['DATA_STOP_DATE'] = np.string_(stop)
+        self.MyHDF5.attrs['DATA_START_DATE'] = np.bytes_(start) # np.bytes_
+        self.MyHDF5.attrs['DATA_STOP_DATE'] = np.bytes_(stop) # np.bytes_
 
         self.MyHDF5.attrs['DATA_VARIABLES'] = \
-            np.string_(';'.join(self.variables))
+            np.bytes_(';'.join(self.variables)) # np.bytes_
 
-        self.MyHDF5.attrs['FILE_ACCESS'] = np.string_('COCCON')
+        self.MyHDF5.attrs['FILE_ACCESS'] = np.bytes_('COCCON') # np.bytes_
 
         self.MyHDF5.attrs['FILE_GENERATION_DATE'] = \
-            np.string_(dt.datetime.now().strftime('%Y%m%dT%H%M%SZ'))
+            np.bytes_(dt.datetime.now().strftime('%Y%m%dT%H%M%SZ')) # np.bytes_
 
         # Create the final file name of the GEOMS compliant HDF5 file.
 
@@ -1640,6 +1659,6 @@ class GeomsGenWriter(GeomsGenHelper):
             f"{self.input_args['DATA_FILE_VERSION']}"
             f".h5").lower()
 
-        self.MyHDF5.attrs['FILE_NAME'] = np.string_(self.file_name)
+        self.MyHDF5.attrs['FILE_NAME'] = np.bytes_(self.file_name) # np.bytes_
 
-        self.MyHDF5.attrs['FILE_PROJECT_ID'] = np.string_('COCCON')
+        self.MyHDF5.attrs['FILE_PROJECT_ID'] = np.bytes_('COCCON') # np.bytes_

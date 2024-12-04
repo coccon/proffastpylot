@@ -68,6 +68,7 @@ class GeomsGenHelper(Preparation):
         self.geoms_end_date = self.input_args["geoms_end_date"]
 
     def _get_correction_factors(self):
+  # def _get_correction_factors(self, day):
         """Returns a dict containing the correction factors for the gases"""
         # This dict is only a preliminary version.
         # In the final version it is read in from a file.
@@ -103,7 +104,7 @@ class GeomsGenHelper(Preparation):
             if key in keys:
                 dtst.attrs[key] = np.float32(value)
             else:
-                dtst.attrs[key] = np.string_(value)
+                dtst.attrs[key] = np.bytes_(value)
         return dtst
 
     def _write_dataset_src(self, data, dataset_name, attributes):
@@ -116,7 +117,7 @@ class GeomsGenHelper(Preparation):
         """
         dtst = self.MyHDF5.create_dataset(dataset_name, data=data)
         for key, value in attributes.items():
-            dtst.attrs[key] = np.string_(value)
+            dtst.attrs[key] = np.bytes_(value)
         return dtst
 
     def _write_dataset_dt(self, data, dataset_name, attributes):
@@ -138,73 +139,8 @@ class GeomsGenHelper(Preparation):
             if key in keys:
                 dtst.attrs[key] = np.float64(value)
             else:
-                dtst.attrs[key] = np.string_(value)
+                dtst.attrs[key] = np.bytes_(value)
         return dtst
-
-    def _find_csv_file(self, day):
-        """
-        Returns the csv file containing the correct data for the
-        requested day
-        Params:
-            day (dt.datetime) The day the data is requested
-        """
-        target_folder = self._find_correct_folder(day)
-        self.logger.debug(target_folder)
-        csv_file = glob.glob(os.path.join(
-            target_folder, f"combined_invparms_{self.site_name}*.csv"))
-        if len(csv_file) > 1:
-            self.logger.critical(
-                "To many csv files in result folder. Exiting..")
-            sys.exit(1)
-        return csv_file[0]
-
-    def _find_colsens_invparms_file(self, day, which):
-        """
-        Returns the path to the correct colsens/invparm file.
-        If colsen or invparms depends on the input of the argument `which`
-        """
-        if which not in ["colsens", "invparms"]:
-            self.logger.error("Give 'colsens' or 'invparms' for 'which'!")
-            return ""
-        target_folder = self._find_correct_folder(day)
-        filename = f"{self.site_name}{day.strftime('%y%m%d')}" + \
-                   f"-{which}_a.dat"
-        return os.path.join(target_folder, filename)
-
-    # why can self.result_folder not be used here instead?
-    def _find_correct_folder(self, day):
-        """
-        Returns the path to the folder providing the data of the day
-        Params:
-            day (dt.datetime): the day the data is requested
-        """
-        # parse the result folders to find the correct time span
-        # searchstrg = f"{self.site_name}_{self.instrument_number}_*"
-        # folder_list = glob.glob(
-        #     os.path.join(self.result_path, searchstrg))
-        # folder_list.sort()
-        # target_folder = ""
-        # for folder in folder_list:
-        #     if "_backup" in folder:
-        #         continue
-        #     folder_elements = folder.split("_")
-        #     processing_time = folder_elements[-1].split("-")
-
-        #     startdate = dt.datetime.strptime(
-        #         processing_time[0], "%y%m%d")
-        #     enddate = dt.datetime.strptime(
-        #         processing_time[1]+"T23:59",
-        #         "%y%m%dT%H:%M")
-
-        #     if day < startdate:
-        #         continue
-        #     if day > enddate:
-        #         continue
-        #     if day >= startdate and day <= enddate:
-        #         target_folder = folder
-        #         break
-
-        return self.result_folder
 
     def _get_pt_vmr_file(self, day, which):
         """
@@ -292,6 +228,7 @@ class GeomsGenHelper(Preparation):
 
         # apply correction factors
         corr_fac = self._get_correction_factors()
+      # corr_fac = self._get_correction_factors(day)
         df["XCO2"] *= corr_fac["XCO2_cal"]
         df["XCH4"] *= corr_fac["XCH4_cal"]
         df["XH2O"] *= corr_fac["XH2O_cal"]
@@ -356,6 +293,7 @@ class GeomsGenHelper(Preparation):
             "CO2",
             "CH4",
             "CO",
+          # "XCO2_STR",
             "CH4_S5P",
           # "H2O_rms",
           # "CO2_rms",
