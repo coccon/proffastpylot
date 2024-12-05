@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import h5py
 import os
+import shutil
 import re
 import math
 import datetime as dt
@@ -147,7 +148,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         self.variables = []
 
-        self.logger.info(
+        self.logger.debug(
             "Generating a HDF5geoms file for {}.".format(
                 day.strftime("%Y-%m-%d")
                 )
@@ -298,7 +299,8 @@ class GeomsGenWriter(GeomsGenHelper):
             # delete file in case the file already exits
         os.rename(geoms_file, geoms_file_name)
         self.logger.info(
-            f"The HDF5geoms file was written to {geoms_file_name}")
+            f"The HDF5geoms file for {day.strftime('%Y-%m-%d')} was written "
+            f"to {geoms_file_name}")
 
     def get_start_stop_date_time(self, day, df):
 
@@ -1715,3 +1717,24 @@ class GeomsGenWriter(GeomsGenHelper):
         self.MyHDF5.attrs['FILE_NAME'] = np.bytes_(self.file_name)
 
         self.MyHDF5.attrs['FILE_PROJECT_ID'] = np.bytes_('COCCON')
+
+    def generate_geoms_files(self):
+        datetimes = self.get_datetimes()
+        geoms_start_date = self.get_start_date()
+        geoms_end_date = self.get_end_date()
+
+        self.logger.info(
+            f"Generating HDF5geoms files between {self.geoms_start_date} "
+            f"and {self.geoms_end_date}.")
+
+        for date in datetimes:
+            if date < geoms_start_date:
+                continue
+            elif date > geoms_end_date:
+                break
+            else:
+                self.generate_GEOMS_at(day=date)
+
+        # move logfile
+        logfile_name = f"pylot_{self.startstrg_run}.log"
+        shutil.move(logfile_name, self.geoms_out_path)
