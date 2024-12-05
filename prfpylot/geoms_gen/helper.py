@@ -40,6 +40,7 @@ class GeomsGenHelper():
 
         self.logger = Preparation.create_logger(self, logginglevel="info")
 
+        self.n_removed_values = 0
         # Read the input file.
         # Contains additional information to create the geoms file
         with open(geomsgen_inputfile, "r") as f:
@@ -82,6 +83,7 @@ class GeomsGenHelper():
 
         self.geoms_start_date = self.input_args["geoms_start_date"]
         self.geoms_end_date = self.input_args["geoms_end_date"]
+        self.ils_filelist_warning = False
 
     def _get_correction_factors(self):
         """Returns a dict containing the correction factors for the gases"""
@@ -231,11 +233,13 @@ class GeomsGenHelper():
             for col in ["XH2O", "XCO2", "XCH4", "XCO"]:
                 if row[col] in [np.nan, 0.]:
                     quality_check_passed = False
-                    print('line', index, 'removed:', col, '=', row[col])
+                    self.logger.debug(
+                        'line', index, 'removed:', col, '=', row[col])
 
             # remove row from df
             if quality_check_passed is False:
                 df = df.drop(index=index)
+                self.n_removed_values += 1
                 quality_check_passed = True
 
         # apply correction factors

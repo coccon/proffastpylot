@@ -1634,10 +1634,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         if ils is None:
             ils = ils_from_file
-            self.logger.warning(
-                "The ILS was read from the ILS file {self.ils_file}. "
-                "Check if this is consitent to the ILS parameters in the "
-                "header of the .BIN files.")
+            self.ils_filelist_warning = True
 
         if ils is None:
             self.logger.error(
@@ -1734,3 +1731,15 @@ class GeomsGenWriter(GeomsGenHelper):
                 break
             else:
                 self.generate_GEOMS_at(day=date)
+
+        # run information
+        if self.ils_filelist_warning is True:
+            self.logger.warning(
+                f"The ILS was read from the ILS file {self.ils_file}. "
+                "Check if this is consistent to the ILS parameters in the "
+                "header of the .BIN files!")
+        if self.n_removed_values > 0:
+            self.logger.info(
+                f"The quality filter rejected {self.n_removed_values} values "
+                "during the processed period."
+                )
