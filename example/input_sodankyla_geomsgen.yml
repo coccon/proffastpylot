@@ -6,6 +6,8 @@ prf_res_path: results/Sodankyla_SN039_170608-170609
 
 input_file_name: input_sodankyla_example.yml
 
+ils_file: ../prfpylot/ILSList.csv
+
 geoms_start_date: 2017-06-08
 geoms_end_date:   2017-06-09
 

@@ -29,6 +29,7 @@ import math
 import datetime as dt
 import numpy as np
 import pandas as pd
+import glob
 from prfpylot.geoms_gen.helper import GeomsGenHelper
 from prfpylot.prepare import Preparation
 
@@ -1553,12 +1554,99 @@ class GeomsGenWriter(GeomsGenHelper):
         self.SRC_dtst = self._write_dataset_src(
             data_src, dataset_name, self.hdf5_atts_src)
 
-    def write_metadata(self, day, df):
+    def _get_ils_form_preprocess_inp(self, day):
+        """Return ILS from preprocess input file."""
+        yymmdd_str = day.strftime("%y%m%d")
+        search_path = os.path.join(
+            self.result_folder, "input_files", f"preprocess*{yymmdd_str}.inp")
+        file_list = glob.glob(search_path)
+        if len(file_list) == 0:
+            return  # no parameters from ils present
+        else:
+            preprocess_input_file = file_list[0]
 
+        with open(preprocess_input_file, "r") as f:
+            lines = f.readlines()
+
+        # go to second $ (counter i)
+        # and read the following two lines (counter j)
+        i = 0
+        j = 0
+        ils = []
+        for line in lines:
+            if line.startswith("$"):
+                i += 1
+                continue
+            if i == 2:
+                if j >= 2:
+                    break  # read only 2 lines
+                tmp_ils = np.array(line.split(" ")).astype(float)
+                ils.extend(tmp_ils)
+                j += 1
+        return tuple(ils)
+
+    def get_ils_parameters(self, day):
+        """Return ILS Parameters if possible.
+
+        ILS parameters are obtained in the following way:
+        1. if present the values are taken from the generated prf output
+            (since v1.4)
+        2. else, the values are taken from the preprocess input file
+        3. else, the values can be taken from a given ils-list
+            (e.g. from the default list shiped with proffastpylot) if the list
+            is given in the geoms input file.
+
+        If the values can be obtained from 1. or 2. and additionally from 3.
+        a cross-check is preformed.
+
+        Params:
+            day: day to be processed
+
+        Returns:
+            tuple (ME1, PE1, ME2, PE2)
+        """
+        ils_from_prf = None
+        # TODO: implent function in run_invers to read ils from .bin files
+        ils_from_prep = self._get_ils_form_preprocess_inp(day)
+        if self.ils_file is not None:
+            ils_from_file = Preparation.get_ils_from_file(self, day)
+        else:
+            ils_from_file = None
+
+        ils = None
+        if ils_from_prep is not None:  # second best ils source (2.)
+            ils = ils_from_prep
+        if ils_from_prf is not None:  # preferred ils source (1.)
+            ils = ils_from_prf
+
+        # compare ils with ils from file
+        if ils is not None and ils_from_file is not None:
+            if ils != ils_from_file:
+                self.logger.error(
+                    "Discrepancies in ILS! The ILS read from the ils_list "
+                    f"{self.ils_file} ({ils_from_file}) does not match the "
+                    f"ils read from the proffast output ({ils_from_prf})."
+                    )
+            else:
+                self.logger.debug("ILS from file and input file agree")
+
+        if ils is None:
+            ils = ils_from_file
+            self.logger.warning(
+                "The ILS was read from the ILS file {self.ils_file}. "
+                "Check if this is consitent to the ILS parameters in the "
+                "header of the .BIN files.")
+
+        if ils is None:
+            self.logger.error(
+                "No ILS could be determined. "
+                "Give ils file in the geoms input file.")
+        return ils
+
+    def write_metadata(self, day, df):
         """ Write metadata to the GEOMS file! """
 
         # Attribut list, which contains the variables given in the input files.
-
         attribute_list =\
             ["DATA_FILE_VERSION", "DATA_LOCATION", "DATA_PROCESSOR",
              "DATA_QUALITY", "DATA_SOURCE", "DATA_TEMPLATE",
@@ -1585,14 +1673,9 @@ class GeomsGenWriter(GeomsGenHelper):
         self.MyHDF5.attrs['DATA_GROUP'] = \
             np.bytes_("EXPERIMENTAL;PROFILE.STATIONARY")
 
-        # Get the ILS values from the ILSList.csv file.
-
-        self.ils_file = os.path.join("..", "prfpylot", "ILSList.csv")  # work around
-
-        ME1, PE1, ME2, PE2 = Preparation.get_ils_from_file(self, day)
+        ME1, PE1, ME2, PE2 = self.get_ils_parameters(day)
 
         # Get the correction factors from the Calibration_Parameters.csv file.
-
         corr_fac = self._get_correction_factors()
 
         self.MyHDF5.attrs['DATA_MODIFICATIONS'] = \
@@ -1621,7 +1704,6 @@ class GeomsGenWriter(GeomsGenHelper):
             np.bytes_(dt.datetime.now().strftime('%Y%m%dT%H%M%SZ'))
 
         # Create the final file name of the GEOMS compliant HDF5 file.
-
         self.file_name = (
             "groundbased_"
             f"{self.input_args['DATA_SOURCE']}_"
