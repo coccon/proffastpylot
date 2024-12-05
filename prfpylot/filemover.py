@@ -27,6 +27,7 @@ import shutil
 import logging
 from prfpylot.prepare import Preparation
 
+
 class FileMover(Preparation):
     """Copy, Move and remove temporary proffast Files."""
 
@@ -161,9 +162,9 @@ class FileMover(Preparation):
             sfile = os.path.join(source_folder, file)
             target = os.path.join(self.raw_output_prf_folder, file)
 
-            if self.delete_abscosbin_files: 
+            if self.delete_abscosbin_files:
                 action = "moved"
-            else: 
+            else:
                 action = "copied"
 
             try:
@@ -311,11 +312,11 @@ class FileMover(Preparation):
 
     def _move_logfile(self):
         """Move the logfile to the log-folder.
-        
-        For this it the file handler is closed, the file is moved and the 
+
+        For this it the file handler is closed, the file is moved and the
         handler is re-opend.
         """
-        # First get the correct handler. For this 
+        # First get the correct handler. For this
         for handler in self.logger.handlers:
             if handler.get_name() == "PRFpylotFileHandler":
                 FHandler = handler
@@ -328,39 +329,13 @@ class FileMover(Preparation):
         FHandler.close()
         self.logger.removeHandler(FHandler)
         shutil.move(self.global_log, new_logfile)
-        
+
         FHandler = logging.FileHandler(new_logfile, mode="a")
         FHandler.addFilter(PylotOnly)
         FHandler.setLevel(logging_level)
         FHandler.setFormatter(self.format_styles[self.logginglevel])
         self.logger.addHandler(FHandler)
         self.logger.debug("Logfile was moved and relinked to the logger")
-
-    def _move_generallogfile_to_logdir(self):
-        """Move the general logfile to the logdir.
-
-        This needs to be done at the end, since the folder is created by the
-        program itself."""
-
-        for i, handler in enumerate(self.logger.handlers[:]):
-            if i == 1:
-                handler.close()
-                self.logger.removeHandler(handler)
-                del handler
-            # self.logger.handlers[:][1].close()
-        target = os.path.join(self.logfile_folder,
-                              os.path.basename(self.pylot_log))
-        try:
-            shutil.move(self.pylot_log, target)
-            self.logger.debug(
-                "Moved the general logfile to the"
-                " result/logfiles folder.")
-        except (FileNotFoundError) as e:
-            self.logger.debug(f"\nsource: {self.pylot_log} "
-                              f"\ntarget: {target}")
-            self.logger.debug(e)
-            self.logger.error("Could not move logfile to new logfile dir! "
-                              f"File is located in: {self.pylot_log}")
 
     def _move_prf_config_file(self):
         """Copy the PROFFASTpylot input file to the result folder."""

@@ -24,7 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import yaml
-import sys
 import os
 import re
 import math
@@ -33,6 +32,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 from prfpylot.prepare import Preparation
+from prfpylot.filemover import FileMover
 
 
 class GeomsGenHelper():
@@ -43,7 +43,7 @@ class GeomsGenHelper():
         # Read the input file.
         # Contains additional information to create the geoms file
         with open(geomsgen_inputfile, "r") as f:
-            self.input_args = yaml.load(f, Loader=yaml.FullLoader)
+            self.input_args = yaml.safe_load(f)
         self.input_file = geomsgen_inputfile
 
         if self.input_args["prf_res_path"] is not None:
@@ -75,6 +75,11 @@ class GeomsGenHelper():
             self.geoms_out_path = os.getcwd()
         os.makedirs(self.geoms_out_path, exist_ok=True)
 
+        # move and relink logfile to result folder
+        self.logfile_folder = os.path.join(self.geoms_out_path, "logfiles")
+        os.makedirs(self.logfile_folder, exist_ok=True)
+        FileMover._move_logfile(self)
+
         self.geoms_start_date = self.input_args["geoms_start_date"]
         self.geoms_end_date = self.input_args["geoms_end_date"]
 
@@ -94,7 +99,6 @@ class GeomsGenHelper():
         df = df.loc[df["Instrument"] == self.instrument_number]
         return df.iloc[0].to_dict()
 
-    # def _write_dataset(self, data, dataset_name, attributes, dtype):
     def _write_dataset(self, data, dataset_name, attributes):
         """
         Helper method to write a dataset to the file.

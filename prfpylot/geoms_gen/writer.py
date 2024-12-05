@@ -1734,7 +1734,3 @@ class GeomsGenWriter(GeomsGenHelper):
                 break
             else:
                 self.generate_GEOMS_at(day=date)
-
-        # move logfile
-        logfile_name = f"pylot_{self.startstrg_run}.log"
-        shutil.move(logfile_name, self.geoms_out_path)
