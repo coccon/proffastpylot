@@ -19,5 +19,5 @@ The user has to provide the offset between UTC and measurement time in the input
 In case your computer clock was not accurate, `utc_offset` can also be set to non-integer values.
 
 In case of UTC measurements near the date line it splits the spectra of one local day into two independent processes for the corresponding location of the spectra in the folders that are sorted by measurement date. This is necessary since the map file corresponds to the local noon.  
-Nevertheless we strongly recommend you to use local time in case you are measuring near the date line. It makes handling of the data less confusing.
+Nevertheless, we strongly recommend you to use local time in case you are measuring near the date line. It makes handling of the data less confusing.
 E.g. the start- and end-date in the input file correspond to measurement time, not to local time.
