@@ -326,7 +326,7 @@ class GeomsGenHelper():
             os.path.join(inp_path, '*invparms*.dat'))  # invparms file list
         for file in inv_list:
             file = os.path.basename(file)
-            file = re.sub('\D', '', file)
+            file = re.sub(self.site_name, '', file)
             date = dt.datetime.strptime(
                 "20"+file[0:2]+"-"+file[2:4]+"-"+file[4:6], "%Y-%m-%d")
             datetime_list.append(date)
