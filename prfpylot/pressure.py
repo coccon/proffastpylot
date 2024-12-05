@@ -72,7 +72,7 @@ class PressureHandler():
         self.dates = copy.deepcopy(dates)
         self.logger = logger
         self.pressure_path = pressure_path
-        
+
         self.interpolation_failed_at = []
 
         with open(pressure_type_file, "r") as f:

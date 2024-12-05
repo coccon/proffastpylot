@@ -704,7 +704,7 @@ class Preparation():
         times = {
             "meas_time": meas_time,
             "local_time": local_time,
-            "utc_time": utc_time            
+            "utc_time": utc_time
         }
         return times
 
@@ -1023,11 +1023,14 @@ class Preparation():
             ils_df = ils_df.loc[self.instrument_number]
         except KeyError:
             self.logger.critical(
-                f"{self.instrument_number} is not in ILS-file.\n"
-                "Please ensure you are using the newest version of "
-                "PROFFASTpylot.\n"
+                f"{self.instrument_number} is not in ILS-file. "
+                "Give the ILS-parameters in the proffastpylot input "
+                "file instead!"
                 )
-            sys.exit()
+            raise KeyError(
+                f"{self.instrument_number} is not in ILS-file. "
+                "Give the ILS-parameters in the proffastpylot input "
+                "file instead!")
         if isinstance(ils_df, pd.Series):
             # this is the case, if only one entry per instrument is available
             MEChan1 = ils_df['Channel1ME']

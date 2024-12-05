@@ -182,7 +182,9 @@ class GeomsGenWriter(GeomsGenHelper):
 
         if df is None:
             self.logger.error(
-                'HDF file generation stopped while reading invparms file!')
+                f"HDF file generation stopped for {day.strftime('%Y-%m-%d')} "
+                "while reading invparms file! Less than 11 valid measurement "
+                "points.")
             self.MyHDF5.close()
             return
 
@@ -1611,7 +1613,10 @@ class GeomsGenWriter(GeomsGenHelper):
         # TODO: implent function in run_invers to read ils from .bin files
         ils_from_prep = self._get_ils_form_preprocess_inp(day)
         if self.ils_file is not None:
-            ils_from_file = Preparation.get_ils_from_file(self, day)
+            try:
+                ils_from_file = Preparation.get_ils_from_file(self, day)
+            except KeyError:
+                self.ils_not_in_file_warning = True
         else:
             ils_from_file = None
 
@@ -1634,12 +1639,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         if ils is None:
             ils = ils_from_file
-            self.ils_filelist_warning = True
 
-        if ils is None:
-            self.logger.error(
-                "No ILS could be determined. "
-                "Give ils file in the geoms input file.")
         return ils
 
     def write_metadata(self, day, df):
@@ -1672,7 +1672,10 @@ class GeomsGenWriter(GeomsGenHelper):
         self.MyHDF5.attrs['DATA_GROUP'] = \
             np.bytes_("EXPERIMENTAL;PROFILE.STATIONARY")
 
-        ME1, PE1, ME2, PE2 = self.get_ils_parameters(day)
+        ils = self.get_ils_parameters(day)
+        if ils is None:
+            ils = "(?, ?, ?, ?)"
+            self.ils_filelist_warning = True
 
         # Get the correction factors from the Calibration_Parameters.csv file.
         corr_fac = self._get_correction_factors()
@@ -1680,7 +1683,7 @@ class GeomsGenWriter(GeomsGenHelper):
         self.MyHDF5.attrs['DATA_MODIFICATIONS'] = \
             np.bytes_(
                 "ILS parms applied: "
-                f"{ME1} for ME, {PE1} for PE. "
+                f"{str(ils)} (ME1, PE1, ME2, PE2). "
                 "Calibration factors applied: "
                 f"{corr_fac['XCO2_cal']} for XCO2, "
                 f"{corr_fac['XCH4_cal']} for XCH4, "
@@ -1733,7 +1736,12 @@ class GeomsGenWriter(GeomsGenHelper):
                 self.generate_GEOMS_at(day=date)
 
         # run information
-        if self.ils_filelist_warning is True:
+        if self.ils_not_in_file_warning is True:
+            self.logger.warning(
+                "The ILS could not be determined and no values are "
+                "written to the geoms metadata."
+                )
+        elif self.ils_filelist_warning is True:
             self.logger.warning(
                 f"The ILS was read from the ILS file {self.ils_file}. "
                 "Check if this is consistent to the ILS parameters in the "

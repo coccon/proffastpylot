@@ -84,6 +84,7 @@ class GeomsGenHelper():
         self.geoms_start_date = self.input_args["geoms_start_date"]
         self.geoms_end_date = self.input_args["geoms_end_date"]
         self.ils_filelist_warning = False
+        self.ils_not_in_file_warning = False
 
     def _get_correction_factors(self):
         """Returns a dict containing the correction factors for the gases"""
@@ -265,8 +266,6 @@ class GeomsGenHelper():
 
         # return none if less than 11 lines
         if len(df) < 11:
-            # raise RuntimeError("Less than 11 valid measurement points!")
-            print("Less than 11 valid measurement points!")
             return None
         else:
             self.logger.debug('Data filter applied... ', 'file_len: ', len(df))
