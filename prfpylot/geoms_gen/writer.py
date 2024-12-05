@@ -1617,6 +1617,7 @@ class GeomsGenWriter(GeomsGenHelper):
                 ils_from_file = Preparation.get_ils_from_file(self, day)
             except KeyError:
                 self.ils_not_in_file_warning = True
+                ils_from_file = None
         else:
             ils_from_file = None
 
