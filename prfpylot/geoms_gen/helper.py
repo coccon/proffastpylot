@@ -324,7 +324,8 @@ class GeomsGenHelper():
         inp_path = self.geoms_res_path
       # print (out_path, inp_path)
 
-        inv_list = glob.glob(inp_path + '\\' + '*invparms*.dat') # invparms file list
+        inv_list = glob.glob(
+            os.path.join(inp_path, '*invparms*.dat'))  # invparms file list
         for file in inv_list:
             file = os.path.basename(file)
             file = re.sub('\D', '', file)
