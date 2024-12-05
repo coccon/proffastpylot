@@ -315,33 +315,8 @@ class GeomsGenWriter(GeomsGenHelper):
         data = self._GEOMStoDateTime(
             np.round((data['JulianDate'] - 2451544.5) * 86400.0))  # ???
 
-      # print(data[0])
-      # print(data[0].strftime('%Y%m%dT%H%M%SZ'))
-      # print(data[-1])
-      # print(data[-1].strftime('%Y%m%dT%H%M%SZ'))
-
-      # start_date = str(day)[0:10]
-      # start_date = start_date + 'T'
-      # start_date = start_date + str(data[0].time())
-      # start_date = start_date + 'Z'
-      # start_date = start_date.replace('-', '')
-      # start_date = start_date.replace(':', '')
-
         start_date = data[0].strftime('%Y%m%dT%H%M%SZ')
-
-        print (start_date)
-
-      # stop_date = str(day)[0:10]
-      # stop_date = stop_date + 'T'
-      # stop_date = stop_date + str(data[-1].time())
-      # stop_date = stop_date + 'Z'
-      # stop_date = stop_date.replace('-', '')
-      # stop_date = stop_date.replace(':', '')
-
         stop_date = data[-1].strftime('%Y%m%dT%H%M%SZ')
-
-        print (stop_date)
-
         return (start_date, stop_date)
 
     def get_start_stop_date_time_csv(self, day):
@@ -480,8 +455,8 @@ class GeomsGenWriter(GeomsGenHelper):
 
         day_str = day.strftime("%y%m%d")
         colsens_filename = f"{self.site_name}{day_str}-colsens.dat"
-      # path = os.path.join(self.result_folder, colsens_filename)
-        path = os.path.join(self.result_folder, "raw_output_proffast", colsens_filename)
+        path = os.path.join(
+            self.result_folder, "raw_output_proffast", colsens_filename)
 
         # Read pressure and sensitivities as function of the altitude and SZA.
 
@@ -1178,7 +1153,7 @@ class GeomsGenWriter(GeomsGenHelper):
         elif cont == "CO_COL":
             # "CO_COL":  "CO.COLUMN.MIXING.RATIO.VOLUME.DRY_ABSORPTION.SOLAR"
             data = df["XCO"].to_numpy() * 1000.0  # in ppbv
-            data[data < 0] = -900000.0 # default fill value
+            data[data < 0] = -900000.0  # default fill value
             self.hdf5_atts["VAR_SI_CONVERSION"] = "0.0;1.0E-9;1"
             self.hdf5_atts["VAR_UNITS"] = "ppbv"
             self.hdf5_atts["units"] = "ppbv"
@@ -1245,11 +1220,11 @@ class GeomsGenWriter(GeomsGenHelper):
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME"
         self.hdf5_atts["VAR_DESCRIPTION"] = \
-            np.bytes_( # np.bytes_
+            np.bytes_(
                 "Total random uncertainty on the retrieved total column "
                 "(expressed in same units as the column)")
-          # "Total random uncertainty on the retrieved total column \
-          # (expressed in same units as the column)"
+        # "Total random uncertainty on the retrieved total column \
+        # (expressed in same units as the column)"
         self.hdf5_atts["VAR_FILL_VALUE"] = -900000.0
         self.hdf5_atts["VAR_NAME"] = dataset_name
         # self.hdf5_atts["VAR_NOTES"] = ""
@@ -1264,11 +1239,8 @@ class GeomsGenWriter(GeomsGenHelper):
         self.SRC_dtst = self._write_dataset(data, dataset_name, self.hdf5_atts)
 
     def write_apr(self, df, ptf, vmr, cont):
-        # "XXX_APR": "XXX.MIXING.RATIO.VOLUME.DRY_APRIORI"
-
-        # Write a-prior total vertical column for each trace
-        # gas to the HDF5 file.
-
+        """Write prior total vertical column for each trace gas to the HDF5 file.
+        "XXX_APR": "XXX.MIXING.RATIO.VOLUME.DRY_APRIORI"""
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
 
@@ -1600,33 +1572,31 @@ class GeomsGenWriter(GeomsGenHelper):
             # see: https://docs.h5py.org/en/2.4/strings.html
             # Furhtermore they have to be in edged brackets to provide
             # an array.
-            self.MyHDF5.attrs[attr] = np.bytes_(self.input_args[attr]) # np.bytes_
+            self.MyHDF5.attrs[attr] = np.bytes_(self.input_args[attr])
 
         self.MyHDF5.attrs['DATA_DESCRIPTION'] = \
-            np.bytes_( # np.bytes_
+            np.bytes_(
                 f"EM27/SUN ({self.instrument_number}) measurements"
                 f" from {self.input_args['SITE_DESCRIPTION']}.")
-              # f" from {self.site_name}.")
 
         self.MyHDF5.attrs['DATA_DISCIPLINE'] = \
-            np.bytes_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED") # np.bytes_
+            np.bytes_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED")
 
         self.MyHDF5.attrs['DATA_GROUP'] = \
-            np.bytes_("EXPERIMENTAL;PROFILE.STATIONARY") # np.bytes_
+            np.bytes_("EXPERIMENTAL;PROFILE.STATIONARY")
 
         # Get the ILS values from the ILSList.csv file.
 
-        self.ils_file = os.path.join("..", "prfpylot", "ILSList.csv") # work around
+        self.ils_file = os.path.join("..", "prfpylot", "ILSList.csv")  # work around
 
         ME1, PE1, ME2, PE2 = Preparation.get_ils_from_file(self, day)
 
         # Get the correction factors from the Calibration_Parameters.csv file.
 
         corr_fac = self._get_correction_factors()
-      # corr_fac = self._get_correction_factors(day)
 
         self.MyHDF5.attrs['DATA_MODIFICATIONS'] = \
-            np.bytes_( # np.bytes_
+            np.bytes_(
                 "ILS parms applied: "
                 f"{ME1} for ME, {PE1} for PE. "
                 "Calibration factors applied: "
@@ -1638,19 +1608,17 @@ class GeomsGenWriter(GeomsGenHelper):
         # Get the start and stop datetime, that is also needed
         # for the file name.
 
-        # start, stop = self.get_start_stop_date_time(day)
         start, stop = self.get_start_stop_date_time(day, df)
-        # start, stop = self.get_start_stop_date_time_csv(day)
-        self.MyHDF5.attrs['DATA_START_DATE'] = np.bytes_(start) # np.bytes_
-        self.MyHDF5.attrs['DATA_STOP_DATE'] = np.bytes_(stop) # np.bytes_
+        self.MyHDF5.attrs['DATA_START_DATE'] = np.bytes_(start)
+        self.MyHDF5.attrs['DATA_STOP_DATE'] = np.bytes_(stop)
 
         self.MyHDF5.attrs['DATA_VARIABLES'] = \
-            np.bytes_(';'.join(self.variables)) # np.bytes_
+            np.bytes_(';'.join(self.variables))
 
-        self.MyHDF5.attrs['FILE_ACCESS'] = np.bytes_('COCCON') # np.bytes_
+        self.MyHDF5.attrs['FILE_ACCESS'] = np.bytes_('COCCON')
 
         self.MyHDF5.attrs['FILE_GENERATION_DATE'] = \
-            np.bytes_(dt.datetime.now().strftime('%Y%m%dT%H%M%SZ')) # np.bytes_
+            np.bytes_(dt.datetime.now().strftime('%Y%m%dT%H%M%SZ'))
 
         # Create the final file name of the GEOMS compliant HDF5 file.
 
@@ -1662,6 +1630,6 @@ class GeomsGenWriter(GeomsGenHelper):
             f"{self.input_args['DATA_FILE_VERSION']}"
             f".h5").lower()
 
-        self.MyHDF5.attrs['FILE_NAME'] = np.bytes_(self.file_name) # np.bytes_
+        self.MyHDF5.attrs['FILE_NAME'] = np.bytes_(self.file_name)
 
-        self.MyHDF5.attrs['FILE_PROJECT_ID'] = np.bytes_('COCCON') # np.bytes_
+        self.MyHDF5.attrs['FILE_PROJECT_ID'] = np.bytes_('COCCON')

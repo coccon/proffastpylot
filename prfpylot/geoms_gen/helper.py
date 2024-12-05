@@ -34,6 +34,7 @@ import numpy as np
 import pandas as pd
 from prfpylot.prepare import Preparation
 
+
 class GeomsGenHelper():
     def __init__(self, geomsgen_inputfile):
 
@@ -48,13 +49,14 @@ class GeomsGenHelper():
         if self.input_args["prf_res_path"] is not None:
             self.prf_res_path = self.input_args["prf_res_path"]
         else:
-          # self.prf_res_path = os.getcwd()
-            self.prf_res_path = 'results' # ???
+            self.prf_res_path = 'results'  # ???
 
         self.result_folder = self.prf_res_path
-        self.geoms_res_path = os.path.join(self.prf_res_path, "raw_output_proffast")
+        self.geoms_res_path = os.path.join(
+            self.prf_res_path, "raw_output_proffast")
 
-        prf_input_filepath = os.path.join(self.prf_res_path, self.input_args["input_file_name"])
+        prf_input_filepath = os.path.join(
+            self.prf_res_path, self.input_args["input_file_name"])
 
         with open(prf_input_filepath, "r") as f:
             prf_input_parms = yaml.safe_load(f)
@@ -75,7 +77,6 @@ class GeomsGenHelper():
         self.geoms_end_date = self.input_args["geoms_end_date"]
 
     def _get_correction_factors(self):
-  # def _get_correction_factors(self, day):
         """Returns a dict containing the correction factors for the gases"""
         # This dict is only a preliminary version.
         # In the final version it is read in from a file.
@@ -160,7 +161,6 @@ class GeomsGenHelper():
 
         datestr = day.strftime("%y%m%d")
         file = os.path.join(
-          # self.result_folder, "pT-VMR-files",
             self.result_folder, "raw_output_proffast",
             f"{self.site_name}{datestr}-{which}_fast_out.dat")
         return file
@@ -222,11 +222,10 @@ class GeomsGenHelper():
             if row["XAIR"] > self.input_args["QUALITY_FILTER_XAIR_MAX"]:
                 quality_check_passed = False
 
-          # for col in ["XH2O", "XCO2", "XCH4"]:
             for col in ["XH2O", "XCO2", "XCH4", "XCO"]:
                 if row[col] in [np.nan, 0.]:
                     quality_check_passed = False
-                    print ('line', index, 'removed:', col, '=', row[col])
+                    print('line', index, 'removed:', col, '=', row[col])
 
             # remove row from df
             if quality_check_passed is False:
@@ -235,7 +234,6 @@ class GeomsGenHelper():
 
         # apply correction factors
         corr_fac = self._get_correction_factors()
-      # corr_fac = self._get_correction_factors(day)
         df["XCO2"] *= corr_fac["XCO2_cal"]
         df["XCH4"] *= corr_fac["XCH4_cal"]
         df["XH2O"] *= corr_fac["XH2O_cal"]
@@ -257,21 +255,18 @@ class GeomsGenHelper():
 
         # return none if less than 11 lines
         if len(df) < 11:
-          # raise RuntimeError("Less than 11 valid measurement points!")
-            print ("Less than 11 valid measurement points!")
+            # raise RuntimeError("Less than 11 valid measurement points!")
+            print("Less than 11 valid measurement points!")
             return None
         else:
             self.logger.debug('Data filter applied... ', 'file_len: ', len(df))
             return df
 
     def get_comb_invparms_df(self, day):
-        
-      # get the complete path to the combined invparms file
-        dt_format = "%y%m%d"
+        """Get the complete path to the combined invparms file."""
+        invparms_file = glob.glob(
+            os.path.join(self.prf_res_path, "comb_invparms_*.csv"))[0]
 
-        invparms_file = glob.glob(os.path.join(self.prf_res_path,"comb_invparms_*.csv"))[0]
-
-      # invparms_file = self._comb_invparms_file()
         cols = [
             "UTC",
             "LocalTime",
@@ -294,18 +289,17 @@ class GeomsGenHelper():
             "CO2",
             "CH4",
             "CO",
-          # "XCO2_STR",
+            # "XCO2_STR",
             "CH4_S5P",
-          # "H2O_rms",
-          # "CO2_rms",
-          # "CH4_rms",
-          # "CO_rms",
+            # "H2O_rms",
+            # "CO2_rms",
+            # "CH4_rms",
+            # "CO_rms",
         ]
         df = pd.read_csv(
             invparms_file, delimiter=",", skipinitialspace=True,
             parse_dates=["UTC", "LocalTime"]
             )
-      # print(list(df.keys()))
 
         df = df[cols]
         # drop all columns except the selected day
@@ -315,32 +309,28 @@ class GeomsGenHelper():
                 df.drop(index=i, inplace=True)
 
         df = self.apply_quality_checks(df)
-      # print (df["XCH4"])
         return df
 
     def get_datetimes(self):
-        list = []
-        out_path = self.geoms_out_path
+        datetime_list = []
+        # out_path = self.geoms_out_path
         inp_path = self.geoms_res_path
-      # print (out_path, inp_path)
 
         inv_list = glob.glob(
             os.path.join(inp_path, '*invparms*.dat'))  # invparms file list
         for file in inv_list:
             file = os.path.basename(file)
             file = re.sub('\D', '', file)
-            date = dt.datetime.strptime("20"+file[0:2]+"-"+file[2:4]+"-"+file[4:6], "%Y-%m-%d")
-          # print (file, date)
-            list.append(date)
+            date = dt.datetime.strptime(
+                "20"+file[0:2]+"-"+file[2:4]+"-"+file[4:6], "%Y-%m-%d")
+            datetime_list.append(date)
 
-        return list
+        return datetime_list
 
     def get_start_date(self):
-      # print (self.geoms_start_date)
         date = dt.datetime.strptime(str(self.geoms_start_date), "%Y-%m-%d")
         return date
 
     def get_end_date(self):
-      # print (self.geoms_end_date)
         date = dt.datetime.strptime(str(self.geoms_end_date), "%Y-%m-%d")
         return date
