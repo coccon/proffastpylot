@@ -1632,8 +1632,8 @@ class GeomsGenWriter(GeomsGenHelper):
             if ils != ils_from_file:
                 self.logger.error(
                     "Discrepancies in ILS! The ILS read from the ils_list "
-                    f"{self.ils_file} ({ils_from_file}) does not match the "
-                    f"ils read from the proffast output ({ils_from_prf})."
+                    f"{self.ils_file} {ils_from_file} does not match the "
+                    f"ils read from the proffast output {ils}."
                     )
             else:
                 self.logger.debug("ILS from file and input file agree")

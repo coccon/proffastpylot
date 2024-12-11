@@ -59,7 +59,7 @@ class GeomsGenHelper():
         prf_input_filepath = os.path.join(
             self.prf_res_path, self.input_args["input_file_name"])
 
-        self.ils_file = self.input_args["ils_file"]
+        self.ils_file = self.input_args.get("ils_file")
 
         with open(prf_input_filepath, "r") as f:
             prf_input_parms = yaml.safe_load(f)
