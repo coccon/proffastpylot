@@ -862,27 +862,25 @@ class Preparation():
             map_file = glob(os.path.join(self.map_path, srchstrg))[0]
 
         if self.use_measured_pressure_for_pcxs:
-                # We want to use the local noon time for the calculation in
-                # pcxs --> calculate the UTC time corresponding to local noon
-                utc_noon = self.get_local_noon_utc(local_date)
-                # p-record can also have a time offset which is considered now:
-                pressure_offset = timedelta(
-                    hours=self.pressure_handler.utc_offset)
-                pressure_time = utc_noon + pressure_offset
-                # get pressure at local noon:
-                local_noon_pressure = \
-                    self.pressure_handler.get_pressure_at(pressure_time)
-                if local_noon_pressure < 1e-6:
-                    self.logger.warning(
-                        "The option `use_measured_pressure_for_pcxs` was set"
-                        "to True but an error occured when retrieving the "
-                        "pressure data. Set the value to the default-value.")
-                    local_noon_pressure = "9999.99"
+            # We want to use the local noon time for the calculation in
+            # pcxs --> calculate the UTC time corresponding to local noon
+            utc_noon = self.get_local_noon_utc(local_date)
+            # p-record can also have a time offset which is considered now:
+            pressure_offset = timedelta(
+                hours=self.pressure_handler.utc_offset)
+            pressure_time = utc_noon + pressure_offset
+            # get pressure at local noon:
+            local_noon_pressure = \
+                self.pressure_handler.get_pressure_at(pressure_time)
+            if local_noon_pressure < 1e-6:
+                self.logger.warning(
+                    "The option `use_measured_pressure_for_pcxs` was set"
+                    "to True but an error occured when retrieving the "
+                    "pressure data. Set the value to the default-value.")
+                local_noon_pressure = "9999.99"
         else:
             local_noon_pressure = "9999.99"
 
-
-            self.pressure_handler.get_pressure_at()
         parameters = {
             "ALT": alt,
             "LAT": lat,
