@@ -36,7 +36,7 @@ from prfpylot.pylot import Pylot
 
 if __name__ == "__main__":
     input_file = "input_sodankyla_example.yml"
-    MyPylot = Pylot(input_file)
+    MyPylot = Pylot(input_file=input_file)
 ```
 Note that the `if __name__ == "__main__"` statement needs to be put before initializing the Pylot to prevent problems with the multiprocessing on Windows.
 
@@ -61,6 +61,25 @@ Alternatively, you can run all steps of PROFFAST individually with the following
 
 You can execute `run.py` to test this with the example data provided.
 
+#### Alternative way of starting the processing
+In the case above, we loaded a yaml file to get the input parameters.
+However, when processing larger datasets or embedding PROFFASTpylot into an larger environment, it can be usefull
+to hand over the input parameters direclty as a dictionary instead of a file.
+
+In this case the initialization would look like:
+```python
+from prfpylot.pylot import Pylot
+
+input_dict = {
+    "instrument_number": "SN039",
+    "site_name": "Sodankyla",
+    "site_abbrev": "so",
+    # ... and all other needed parameters
+}
+
+if __name__ == "__main__":
+    MyPylot = Pylot(input_file=input_dict)
+```
 
 ## 2. Special case: Process spectra directly
 

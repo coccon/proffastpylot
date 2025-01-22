@@ -367,4 +367,17 @@ class FileMover(Preparation):
         self.logger.debug(
             "Copying the PROFFASTpylot input_file "
             f"{self.input_file} to {self.result_folder}")
-        shutil.copy(self.input_file, self.result_folder)
+        if isinstance(self.input_file, dict):
+            import yaml
+            output_file = os.path.join(
+                self.result_folder, "custom_input_file.yml")
+            with open(output_file, "w") as file:
+                file.write(
+                    "This is a automatically generated input file of"
+                    " PROFFASTpylot!\n"
+                    "It is created because you passed an dictionary to the "
+                    "PROFFASTpylot instead of an file.\nIn the following the "
+                    "used parameters are listed.\n")
+                yaml.dump(self.input_file, file)
+        else:
+            shutil.copy(self.input_file, self.result_folder)

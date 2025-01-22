@@ -63,6 +63,8 @@ class Preparation():
     defaults = {
         "mapfile_wetair_vmr": None,  # this is determined automatically if
                                      # you use mapfiles from tccon
+        "custom_mapfile": None,  # use this to specify a custom map file naming
+        "use_measured_pressure_for_pcxs": False,
         "coords": {"lat": None, "lon": None, "alt": None},
         "coord_file": None,
         "utc_offset": 0.0,
@@ -96,7 +98,10 @@ class Preparation():
         """Initialize the PROFFASTpylot backbone.
         
         Params:
-            input_file (str): The path to a yaml input file.
+            input_file (str|dict):
+                Can be either the path to a yaml input file or an dictionary,
+                containing all needed parameters as keys and the settings as
+                values.
             logginglevel (str):
                 A string specifying the logging level (`debug`, `info`,
                 `warning`).
@@ -116,9 +121,12 @@ class Preparation():
             "++++ Welcome to PROFFASTpylot ++++")
         self.logger.debug("Start reading input file...")
 
-        # read input file
-        with open(input_file, "r") as f:
-            args = yaml.load(f, Loader=yaml.FullLoader)
+        # read input file or parse dict directly:
+        if isinstance(input_file, dict):
+            args = input_file
+        elif os.path.isfile(input_file):
+            with open(input_file, "r") as f:
+                args = yaml.load(f, Loader=yaml.FullLoader)
 
         for option, value in args.items():
             self.__dict__[option] = value
@@ -239,7 +247,7 @@ class Preparation():
             self.logger.warning(
                 "The parameter `mapfile_wetair_vmr` was given in the "
                 "input file. Don't use this option if you are using ggg2020 "
-                "or ggg2014 mapfiles from TCCON!")
+                "or ggg2014 mapfiles provided by Caltech!")
 
         dt_format = "%y%m%d"
         result_foldername = "{}_{}_{}-{}".format(
@@ -325,7 +333,7 @@ class Preparation():
             logger = external_logger
             logger.addHandler(FHandler)
             FHandler.setFormatter(self.format_styles[logginglevel])
-            FHandler.setLevel(num_level(logginglevel))
+            FHandler.setLevel(num_level[logginglevel])
             FHandler.addFilter(PylotOnly())
             logger.debug("Found external logger.")
         # set logging to debug to record everything in the first place
@@ -842,16 +850,44 @@ class Preparation():
                 f"{self.site_abbrev}{local_noon_utc.strftime('%Y%m%d%H')}"
                 "_Z.map"
                 )
-
         elif self.mapfile_format == "ggg2014":
             map_file = os.path.join(
                 self.map_path,
                 f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}.map"
             )
+        elif self.mapfile_format == "fixed_mapfile":
+            map_file = self.custom_mapfile
+        elif self.mapfile_format == "custom":
+            srchstrg = local_date.strftime(self.custom_mapfile)
+            map_file = glob(os.path.join(self.map_path, srchstrg))[0]
+
+        if self.use_measured_pressure_for_pcxs:
+                # We want to use the local noon time for the calculation in
+                # pcxs --> calculate the UTC time corresponding to local noon
+                utc_noon = self.get_local_noon_utc(local_date)
+                # p-record can also have a time offset which is considered now:
+                pressure_offset = timedelta(
+                    hours=self.pressure_handler.utc_offset)
+                pressure_time = utc_noon + pressure_offset
+                # get pressure at local noon:
+                local_noon_pressure = \
+                    self.pressure_handler.get_pressure_at(pressure_time)
+                if local_noon_pressure < 1e-6:
+                    self.logger.warning(
+                        "The option `use_measured_pressure_for_pcxs` was set"
+                        "to True but an error occured when retrieving the "
+                        "pressure data. Set the value to the default-value.")
+                    local_noon_pressure = "9999.99"
+        else:
+            local_noon_pressure = "9999.99"
+
+
+            self.pressure_handler.get_pressure_at()
         parameters = {
             "ALT": alt,
             "LAT": lat,
             "LON": lon,
+            "PRESSURE_LOCALNOON": local_noon_pressure,
             "DATAPATH": self.analysis_instrument_path,
             "DATE": local_date.strftime("%y%m%d"),
             "SITE": self.site_name,
@@ -1127,6 +1163,34 @@ class Preparation():
                 True if map files were found and created
                 False if no files were found.
         """
+        if self.custom_mapfile is not None:
+            # custom map file can either be a path to a file
+            if os.path.isfile(self.custom_mapfile):
+                self.mapfile_format = "fixed_mapfile"
+                self.logger.warning(
+                    "A fixed map-file was given. This can give wrong results. "
+                    "Only use this option if you know what you are doing!")
+                return True
+            # or a format specifier:
+            else:
+                self.mapfile_format = "custom"
+                self.logger.warning(
+                    "A custom format for mapfiles was given. Using this "
+                    "setting will NOT produce validated COCCON results.")
+                srchstrg = local_date.strftime(self.custom_mapfile)
+                map_files = glob(os.path.join(self.map_path, srchstrg))
+                if len(map_files) > 1:
+                    self.logger.warning(
+                        "Too many map files were found. "
+                        f"Skip day {local_date}.")
+                    return False
+                elif len(map_files) < 1:
+                    self.logger.warning(
+                        f"No map file was found at {local_date}."
+                        " Skip this day!")
+                    return False
+                else:
+                    return True
         # search for GGG2020 map files:
         # This includes files produced by ginput as well as from a running
         # ggg2020 evaluation
