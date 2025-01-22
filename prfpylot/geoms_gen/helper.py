@@ -334,7 +334,7 @@ class GeomsGenHelper():
                 "20"+file[0:2]+"-"+file[2:4]+"-"+file[4:6], "%Y-%m-%d")
             datetime_list.append(date)
 
-        return datetime_list
+        return sorted(datetime_list)
 
     def get_start_date(self):
         date = dt.datetime.strptime(str(self.geoms_start_date), "%Y-%m-%d")
