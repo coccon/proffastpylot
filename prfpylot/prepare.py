@@ -117,8 +117,16 @@ class Preparation():
         self.logger = self.create_logger(
             logginglevel=logginglevel,
             external_logger=external_logger, loggername=loggername)
-        self.logger.info(
-            "++++ Welcome to PROFFASTpylot ++++")
+
+        welcome_text = "\n".join([
+            "++++ Welcome to PROFFASTpylot ++++",
+            "Cite this software as\n",
+            "Feld et al., (2024). PROFFASTpylot: Running PROFFAST with Python. "
+            "Journal of Open Source Software, 9(96), 6481, "
+            "https://doi.org/10.21105/joss.06481\n",
+            ])
+
+        self.logger.info(welcome_text)
         self.logger.debug("Start reading input file...")
 
         # read input file or parse dict directly:
