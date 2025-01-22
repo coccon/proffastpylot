@@ -60,7 +60,9 @@ PRESSURE_SOURCE: 'Datalogger'
 
 APRIORI_SOURCE: 'GGG2020'
 
-SITE_DESCRIPTION: 'KIT IMK-ASF CN (Karlsruhe, Germany)'
+# OPTIONAL
+# DEFAULT: 'EM27/SUN ({self.instrument_number}) measurements from {self.input_args['DATA_LOCATION']}.'
+DATA_DESCRIPTION: 'PROFFASTpylot example dataset.'
 
 # DateTime VAR_NOTES
 DATETIME_NOTES: ''
