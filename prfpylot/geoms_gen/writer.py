@@ -1662,10 +1662,13 @@ class GeomsGenWriter(GeomsGenHelper):
             # an array.
             self.MyHDF5.attrs[attr] = np.bytes_(self.input_args[attr])
 
-        self.MyHDF5.attrs['DATA_DESCRIPTION'] = \
-            np.bytes_(
-                f"EM27/SUN ({self.instrument_number}) measurements"
-                f" from {self.input_args['SITE_DESCRIPTION']}.")
+        if self.input_args.get("DATA_DESCRIPTION") is None:
+            self.MyHDF5.attrs['DATA_DESCRIPTION'] = np.bytes_(
+                    f"EM27/SUN ({self.instrument_number}) measurements"
+                    f" from {self.input_args['DATA_LOCATION']}.")
+        else:
+            self.MyHDF5.attrs["DATA_DESCRIPTION"] = np.bytes_(
+                self.input_args["DATA_DESCRIPTION"])
 
         self.MyHDF5.attrs['DATA_DISCIPLINE'] = \
             np.bytes_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED")
