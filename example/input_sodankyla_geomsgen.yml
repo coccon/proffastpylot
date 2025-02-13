@@ -4,7 +4,6 @@ calibration_params_list: ../prfpylot/geoms_gen/calibration_parameters.csv
 geoms_out_path: results_geoms
 prf_res_path: results/Sodankyla_SN039_170608-170609
 
-input_file_name: input_sodankyla_example.yml
 
 ils_file: ../prfpylot/ILSList.csv
 
@@ -64,5 +63,6 @@ APRIORI_SOURCE: 'GGG2020'
 # DEFAULT: 'EM27/SUN ({self.instrument_number}) measurements from {self.input_args['DATA_LOCATION']}.'
 DATA_DESCRIPTION: 'PROFFASTpylot example dataset.'
 
+# OPTIONAL
 # DateTime VAR_NOTES
-DATETIME_NOTES: ''
+# DATETIME_NOTES: ''

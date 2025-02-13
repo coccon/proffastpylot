@@ -36,30 +36,59 @@ from prfpylot.filemover import FileMover
 
 
 class GeomsGenHelper():
+    defaults = {
+        "n_removed_values": 0,
+        "input_file_name": "proffastpylot_parameters.yml",
+        "ils_file": None,
+        "ils_filelist_warning": False,  # do not give this in the input file
+        "ils_not_in_file_warning": False,  # do not give this in the input file
+        "DATA_DESCRIPTION": None,
+        "DATETIME_NOTES": "",
+    }
+
+    mandatory_options = [
+        "prf_res_path",
+        "geoms_out_path",
+        "geoms_start_date",
+        "geoms_end_date",
+    ]
+
     def __init__(self, geomsgen_inputfile):
 
         self.logger = Preparation.create_logger(self, logginglevel="info")
 
-        self.n_removed_values = 0
         # Read the input file.
         # Contains additional information to create the geoms file
         with open(geomsgen_inputfile, "r") as f:
-            self.input_args = yaml.safe_load(f)
+            input_args = yaml.safe_load(f)
+
         self.input_file = geomsgen_inputfile
 
-        if self.input_args["prf_res_path"] is not None:
-            self.prf_res_path = self.input_args["prf_res_path"]
-        else:
-            self.prf_res_path = 'results'  # ???
+        for option, value in input_args.items():
+            self.__dict__[option] = value
 
-        self.result_folder = self.prf_res_path
+        for option in self.mandatory_options:
+            if self.__dict__.get(option) is None:
+                self.logger.critical(
+                    f"Mandatory option {option} not given in the input file"
+                    f" file {geomsgen_inputfile}!")
+                raise RuntimeError(
+                    f"Mandatory option {option} not given in the input file"
+                    f" file {geomsgen_inputfile}!"
+                )
+
+        for option, value in self.defaults.items():
+            if input_args.get(option) is None:
+                self.__dict__[option] = value
+                self.logger.debug(
+                    f"{option} was set to default value: {value}."
+                    )
+
         self.geoms_res_path = os.path.join(
             self.prf_res_path, "raw_output_proffast")
 
         prf_input_filepath = os.path.join(
-            self.prf_res_path, self.input_args["input_file_name"])
-
-        self.ils_file = self.input_args.get("ils_file")
+            self.prf_res_path, self.input_file_name)
 
         with open(prf_input_filepath, "r") as f:
             prf_input_parms = yaml.safe_load(f)
@@ -70,10 +99,7 @@ class GeomsGenHelper():
         # Path of output files:
         self.geoms_out_filename = "_".join(
             [self.site_name, self.instrument_number, 'GEOMS_OUT.h5'])
-        if self.input_args["geoms_out_path"] is not None:
-            self.geoms_out_path = self.input_args["geoms_out_path"]
-        else:
-            self.geoms_out_path = os.getcwd()
+
         os.makedirs(self.geoms_out_path, exist_ok=True)
 
         # move and relink logfile to result folder
@@ -81,17 +107,12 @@ class GeomsGenHelper():
         os.makedirs(self.logfile_folder, exist_ok=True)
         FileMover._move_logfile(self)
 
-        self.geoms_start_date = self.input_args["geoms_start_date"]
-        self.geoms_end_date = self.input_args["geoms_end_date"]
-        self.ils_filelist_warning = False
-        self.ils_not_in_file_warning = False
-
     def _get_correction_factors(self):
         """Returns a dict containing the correction factors for the gases"""
         # This dict is only a preliminary version.
         # In the final version it is read in from a file.
         df = pd.read_csv(
-            self.input_args["calibration_params_list"],
+            self.calibration_params_list,
             skipinitialspace=True)
         # Strip the whitespaces from the column names:
         newCols = {}
@@ -170,7 +191,7 @@ class GeomsGenHelper():
 
         datestr = day.strftime("%y%m%d")
         file = os.path.join(
-            self.result_folder, "raw_output_proffast",
+            self.prf_res_path, "raw_output_proffast",
             f"{self.site_name}{datestr}-{which}_fast_out.dat")
         return file
 
@@ -224,11 +245,11 @@ class GeomsGenHelper():
         # quality checks
         quality_check_passed = True
         for index, row in df.iterrows():
-            if row["appSZA"] > self.input_args["QUALITY_FILTER_SZA"]:
+            if row["appSZA"] > self.QUALITY_FILTER_SZA:
                 quality_check_passed = False
-            if row["XAIR"] < self.input_args["QUALITY_FILTER_XAIR_MIN"]:
+            if row["XAIR"] < self.QUALITY_FILTER_XAIR_MIN:
                 quality_check_passed = False
-            if row["XAIR"] > self.input_args["QUALITY_FILTER_XAIR_MAX"]:
+            if row["XAIR"] > self.QUALITY_FILTER_XAIR_MAX:
                 quality_check_passed = False
 
             for col in ["XH2O", "XCO2", "XCH4", "XCO"]:

@@ -342,4 +342,7 @@ class FileMover(Preparation):
         self.logger.debug(
             "Copying the PROFFASTpylot input_file "
             f"{self.input_file} to {self.result_folder}")
-        shutil.copy(self.input_file, self.result_folder)
+        shutil.copy(
+            self.input_file,
+            os.path.join(self.result_folder, "proffastpylot_parameters.yml")
+        )

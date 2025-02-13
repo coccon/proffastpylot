@@ -461,7 +461,7 @@ class GeomsGenWriter(GeomsGenHelper):
         day_str = day.strftime("%y%m%d")
         colsens_filename = f"{self.site_name}{day_str}-colsens.dat"
         path = os.path.join(
-            self.result_folder, "raw_output_proffast", colsens_filename)
+            self.prf_res_path, "raw_output_proffast", colsens_filename)
 
         # Read pressure and sensitivities as function of the altitude and SZA.
 
@@ -735,7 +735,7 @@ class GeomsGenWriter(GeomsGenHelper):
         dataset_name = self.hdf5_vars[cont]
         self.variables.append(dataset_name)
 
-        datetime_notes = self.input_args['DATETIME_NOTES']
+        datetime_notes = self.DATETIME_NOTES
 
         data = df["JulianDate"].to_numpy()
 
@@ -994,7 +994,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         data = df["londeg"].to_numpy()
         data_size = data.size
-        data_src = [f"{self.input_args['PRESSURE_SOURCE']}"] * data_size
+        data_src = [f"{self.PRESSURE_SOURCE}"] * data_size
 
         self.hdf5_atts_src["VAR_DATA_TYPE"] = "STRING"
         self.hdf5_atts_src["VAR_DEPEND"] = "DATETIME"
@@ -1315,7 +1315,7 @@ class GeomsGenWriter(GeomsGenHelper):
         self.variables.append(dataset_name)
 
         data_src = []
-        ggg_ver = self.input_args['APRIORI_SOURCE']
+        ggg_ver = self.APRIORI_SOURCE
 
         for i in range(df['JulianDate'].shape[0]):
             if cont == "H2O_SRC":
@@ -1562,7 +1562,7 @@ class GeomsGenWriter(GeomsGenHelper):
         """Return ILS from preprocess input file."""
         yymmdd_str = day.strftime("%y%m%d")
         search_path = os.path.join(
-            self.result_folder, "input_files", f"preprocess*{yymmdd_str}.inp")
+            self.prf_res_path, "input_files", f"preprocess*{yymmdd_str}.inp")
         file_list = glob.glob(search_path)
         if len(file_list) == 0:
             return  # no parameters from ils present
@@ -1591,7 +1591,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
     def _get_ils_from_prf(self, local_date):
         """Read ILS from the ILS list"""
-        ils_path = os.path.join(self.result_folder, "ils_list.csv")
+        ils_path = os.path.join(self.prf_res_path, "ils_list.csv")
         df_ils = pd.read_csv(ils_path).set_index("LocalDate")
 
         date_str = local_date.strftime("%Y-%m-%d")
@@ -1672,15 +1672,15 @@ class GeomsGenWriter(GeomsGenHelper):
             # see: https://docs.h5py.org/en/2.4/strings.html
             # Furhtermore they have to be in edged brackets to provide
             # an array.
-            self.MyHDF5.attrs[attr] = np.bytes_(self.input_args[attr])
+            self.MyHDF5.attrs[attr] = np.bytes_(self.__dict__[attr])
 
-        if self.input_args.get("DATA_DESCRIPTION") is None:
+        if self.DATA_DESCRIPTION is None:
             self.MyHDF5.attrs['DATA_DESCRIPTION'] = np.bytes_(
                     f"EM27/SUN ({self.instrument_number}) measurements"
-                    f" from {self.input_args['DATA_LOCATION']}.")
+                    f" from {self.DATA_LOCATION}.")
         else:
             self.MyHDF5.attrs["DATA_DESCRIPTION"] = np.bytes_(
-                self.input_args["DATA_DESCRIPTION"])
+                self.DATA_DESCRIPTION)
 
         self.MyHDF5.attrs['DATA_DISCIPLINE'] = \
             np.bytes_("ATMOSPHERIC.CHEMISTRY;REMOTE.SENSING;GROUNDBASED")
@@ -1724,10 +1724,10 @@ class GeomsGenWriter(GeomsGenHelper):
         # Create the final file name of the GEOMS compliant HDF5 file.
         self.file_name = (
             "groundbased_"
-            f"{self.input_args['DATA_SOURCE']}_"
-            f"{self.input_args['DATA_LOCATION']}_"
+            f"{self.DATA_SOURCE}_"
+            f"{self.DATA_LOCATION}_"
             f"{start}_{stop}_"
-            f"{self.input_args['DATA_FILE_VERSION']}"
+            f"{self.DATA_FILE_VERSION}"
             f".h5").lower()
 
         self.MyHDF5.attrs['FILE_NAME'] = np.bytes_(self.file_name)
