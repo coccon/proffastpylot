@@ -24,7 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import h5py
 import os
-import shutil
 import re
 import math
 import datetime as dt

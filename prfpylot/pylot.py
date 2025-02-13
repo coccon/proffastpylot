@@ -37,7 +37,6 @@ from copy import deepcopy
 import codecs
 
 
-
 class Pylot(FileMover):
     """Start all PROFFAST processes."""
 
@@ -128,7 +127,7 @@ class Pylot(FileMover):
             - run pcxs(in parallel).
 
         Parameters:
-            n_processes(int) = 1: 
+            n_processes(int) = 1:
                 If n_processes == 1, `run_pcxs_at` is called directly.
                 Otherwise it is called via run_parallel.
         """
@@ -141,12 +140,12 @@ class Pylot(FileMover):
         # create a list out of the dictionary to increase code clarity
         self.local_dates = list(self.localdate_spectra.keys())
         wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
-        
+
         # If we want to add the meassured p-value for PCXS we have to create
         # the pressure_df already now.
         if self.use_measured_pressure_for_pcxs:
-            self.pressure_handler.prepare_pressure_df()    
-        
+            self.pressure_handler.prepare_pressure_df()
+
         inputfile_list = []
         temp = deepcopy(self.local_dates)
         for local_date in temp:
@@ -200,9 +199,9 @@ class Pylot(FileMover):
         Execute write_ils_list.
 
         Parameters:
-            n_processes(int) = 1: 
+            n_processes(int) = 1:
                 If n_processes == 1, `run_inv_at` is called directly.
-                Otherwise it is called via run_parallel.        
+                Otherwise it is called via run_parallel.
         """
         self.executed_invers = True
         self.logger.info(f"Running invers with {n_processes} task(s) ...")
@@ -224,7 +223,7 @@ class Pylot(FileMover):
             # apparently pcxs was executed. Check if the
             # `use_measured_pressure_for_pcxs` option is False, then create df
             if not self.use_measured_pressure_for_pcxs:
-               self.pressure_handler.prepare_pressure_df()             
+                self.pressure_handler.prepare_pressure_df()
 
         p_data_warnings = {}
 

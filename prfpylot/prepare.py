@@ -36,7 +36,6 @@ import pytz
 import fortranformat
 import inspect
 import codecs
-from random import randint
 
 
 class Preparation():
@@ -96,7 +95,7 @@ class Preparation():
             self, input_file, logginglevel="info",
             external_logger=None, loggername=None):
         """Initialize the PROFFASTpylot backbone.
-        
+
         Params:
             input_file (str|dict):
                 Can be either the path to a yaml input file or an dictionary,
@@ -110,9 +109,10 @@ class Preparation():
                 instance of an logging.logger class. Note that to this logger,
                 the FileHandler and StreamHandler are added.
             loggername (None):
-                Optionally, the name of the logger can be specified. This can be
-                usefull to access the logger outside of the PROFFASTpylot.
-                If loggername is None the default loggername is 'PROFFASTpylot'.
+                Optionally, the name of the logger can be specified. This
+                can be usefull to access the logger outside of the
+                PROFFASTpylot. If loggername is None the default loggername
+                is 'PROFFASTpylot'.
         """
         self.logger = self.create_logger(
             logginglevel=logginglevel,
@@ -121,8 +121,8 @@ class Preparation():
         welcome_text = "\n".join([
             "++++ Welcome to PROFFASTpylot ++++",
             "Cite this software as\n",
-            "Feld et al., (2024). PROFFASTpylot: Running PROFFAST with Python. "
-            "Journal of Open Source Software, 9(96), 6481, "
+            "Feld et al., (2024). PROFFASTpylot: Running PROFFAST with "
+            "Python. Journal of Open Source Software, 9(96), 6481, "
             "https://doi.org/10.21105/joss.06481\n",
             ])
 
@@ -317,7 +317,6 @@ class Preparation():
         StreamHandler = logging.StreamHandler()
         for handler in [FHandler, StreamHandler]:
             handler.setLevel(num_level[logginglevel])
-
 
         # The format of the logging
         self.format_styles = {
@@ -567,9 +566,9 @@ class Preparation():
                 - prf_input_files (list):
                     A list of paths to the input files.
                 - skipped_spectra (list):
-                    List containing all spectra skipped 
-                    at this day, due to missing pressure values. 
-                    This list is provided by `get_spectra_pT_input` called in 
+                    List containing all spectra skipped
+                    at this day, due to missing pressure values.
+                    This list is provided by `get_spectra_pT_input` called in
                     `get_inv_parameters`.
         """
         # the name of the input file to be generated
@@ -653,7 +652,7 @@ class Preparation():
 
         Returns:
             localdate_spectra (dict):
-                containing the a list of full pathes to the spectra for each 
+                containing the a list of full pathes to the spectra for each
                 local date in the format
                 `{local_date: ["path/YYMMDD_HHMMSSSN.BIN", ...]}`
         """
@@ -945,10 +944,10 @@ class Preparation():
 
         Returns:
             parameters, skipped_spectra:
-                - parameters (list): Contains one or two dict objects, 
+                - parameters (list): Contains one or two dict objects,
                     depending if all spectra of the local date are stored in
                     the same YYMMDD folder.
-                - skipped_spectra (list): List containing all spectra skipped 
+                - skipped_spectra (list): List containing all spectra skipped
                     at this day, due to missing pressure values. This list is
                     provided by `get_sepctra_pT_input`.
         """
@@ -1014,9 +1013,9 @@ class Preparation():
 
         Returns:
             spectra_pT_input (list), skipped_spectra (list):
-                - spectra_pT_input: List containing a list of strings with 
+                - spectra_pT_input: List containing a list of strings with
                     spectra and pT infos.
-                - skipped_spectra (list): List containing all spectra skipped 
+                - skipped_spectra (list): List containing all spectra skipped
                     at this day, due to missing pressure values.
         """
         # in case of two measurement days in a local date list, split them up:
@@ -1039,10 +1038,10 @@ class Preparation():
             split_spectra_list = [spectra0]
         else:
             split_spectra_list = [spectra0, spectra1]
-        
+
         # create a list of all spectra skipped at this LOCAL day
         skipped_spectra = []
-        
+
         spectra_pT_input = []
         for sublist in split_spectra_list:
             temp_pT_input = []
@@ -1441,6 +1440,7 @@ class Preparation():
         localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
         localtime_offset = localtime_utc_offset - self.utc_offset
         return localtime_offset
+
 
 class PylotOnly(logging.Filter):
     """

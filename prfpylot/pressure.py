@@ -145,7 +145,7 @@ class PressureHandler():
         The dataframe self.p_df is created as a object of the pressure_handler
         instance Containing the pressure and a datetime column.
 
-        The pressure column is multiplied by the pressure_factor given in the 
+        The pressure column is multiplied by the pressure_factor given in the
         pressure input file.
 
         """
@@ -251,7 +251,7 @@ class PressureHandler():
                         usecols=self.cols_to_use,
                         **(self.dataframe_parameters["csv_kwargs"]))
                     daily_df = pd.concat([daily_df, temp])
-            
+
             daily_df = self._parse_datetime_col(daily_df, day)
             self.p_df = pd.concat([self.p_df, daily_df])
         self.p_df.reset_index(drop=True, inplace=True)
@@ -291,7 +291,7 @@ class PressureHandler():
         """read unregular files. Save the result in self.p_df DataFrame"""
         params = self.filename_parameters
         filename = "".join([params["basename"], "*", params["ending"]])
-        file_list = glob.glob(os.path.join(self.pressure_path, filename))        
+        file_list = glob.glob(os.path.join(self.pressure_path, filename))
 
         df = pd.DataFrame()
         if len(file_list) == 0:
@@ -344,7 +344,7 @@ class PressureHandler():
         rom the combination of the separate time and date columns.
 
         Parameters:
-            df (pandas.DataFrame): pressure dataframe containing time 
+            df (pandas.DataFrame): pressure dataframe containing time
                 information in arbitrary format.
 
         Returns:
