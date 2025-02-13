@@ -141,6 +141,12 @@ class Pylot(FileMover):
         # create a list out of the dictionary to increase code clarity
         self.local_dates = list(self.localdate_spectra.keys())
         wrk_fast_path = os.path.join(self.proffast_path, "wrk_fast")
+        
+        # If we want to add the meassured p-value for PCXS we have to create
+        # the pressure_df already now.
+        if self.use_measured_pressure_for_pcxs:
+            self.pressure_handler.prepare_pressure_df()    
+        
         inputfile_list = []
         temp = deepcopy(self.local_dates)
         for local_date in temp:
@@ -207,9 +213,18 @@ class Pylot(FileMover):
 
         output = []
 
-        # the interpolated pressure is stored and can be
-        # accesed from self.pressure_handler
-        self.pressure_handler.prepare_pressure_df()
+        # The pressure_df is prepared already in PCXS when
+        # the option `use_measured_pressure_for_pcxs` is selected.
+        # When PCXS was not yet executed then prepare the df now::
+        if (not self.executed_pcxs):
+            # the interpolated pressure is stored and can be
+            # accesed from self.pressure_handler
+            self.pressure_handler.prepare_pressure_df()
+        else:
+            # apparently pcxs was executed. Check if the
+            # `use_measured_pressure_for_pcxs` option is False, then create df
+            if not self.use_measured_pressure_for_pcxs:
+               self.pressure_handler.prepare_pressure_df()             
 
         p_data_warnings = {}
 

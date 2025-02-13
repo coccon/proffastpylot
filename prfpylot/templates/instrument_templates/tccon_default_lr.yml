@@ -18,14 +18,14 @@ mpow_fft: 17
 # The preprocesser can handle recordings with two interferograms.
 # If this is the case, select True. Otherwise select false.
 # True/False
-dual_ifg_recording: True
+dual_ifg_recording: False
 
 # The preprocessor can swap the channels of the interferogram.
 # The first channel is the main channel and must cover wavenumber from ~12000 until ~5500 cm^-1
 # The second channel must cover wavenumbers from ~5500 to 4000 cm^-1
 # If this is vice versa, set swap_channels: True
 # In short: 1st channel SN, second channel SM - otherwise choose swap_channels: True
-swap_channels: True
+swap_channels: False
 
 # true/false
 use_analytical_phase: False

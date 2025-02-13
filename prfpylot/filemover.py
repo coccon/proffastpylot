@@ -26,6 +26,7 @@ from glob import glob
 import shutil
 import logging
 from prfpylot.prepare import Preparation
+import yaml
 
 
 class FileMover(Preparation):
@@ -342,7 +343,18 @@ class FileMover(Preparation):
         self.logger.debug(
             "Copying the PROFFASTpylot input_file "
             f"{self.input_file} to {self.result_folder}")
-        shutil.copy(
-            self.input_file,
-            os.path.join(self.result_folder, "proffastpylot_parameters.yml")
-        )
+
+        if isinstance(self.input_file, dict):
+            output_file = os.path.join(
+                self.result_folder, "proffastpylot_parameters.yml")
+            with open(output_file, "w") as file:
+                file.write(
+                    "# This proffastpylot_parameters.yml file was created "
+                    "automatically from the given dict.")
+                yaml.dump(self.input_file, file)
+        else:
+            shutil.copy(
+                        self.input_file,
+                        os.path.join(
+                            self.result_folder, "proffastpylot_parameters.yml")
+                    )
