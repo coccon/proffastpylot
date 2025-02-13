@@ -34,6 +34,8 @@ import pytz
 import numpy as np
 from functools import partial
 from copy import deepcopy
+import codecs
+
 
 
 class Pylot(FileMover):
@@ -195,6 +197,7 @@ class Pylot(FileMover):
         """Run inverse.
 
         Loops over localdates, generates the input files and runs invers.
+        Execute write_ils_list.
 
         Parameters:
             n_processes(int) = 1: 
@@ -306,6 +309,10 @@ class Pylot(FileMover):
             output = pool.map(subs_method, all_inputfiles)
 
         self._write_logfile("inv", output)
+
+        self.logger.debug("Write ot ILS file.")
+        self.write_ils_file()
+
         self.logger.info("Finished invers.\n")
 
     def run_prf_with_inputfile(
@@ -320,6 +327,46 @@ class Pylot(FileMover):
             out, err, str(return_val),\
             " ".join([executable, prf_inputfile])
         return outlist
+
+    def _read_ils_from_spectrum(self, spectrum):
+        """Open spectrum and return used ILS Parameters."""
+        with codecs.open(
+                spectrum, "r", encoding="utf-8", errors="ignore") as f:
+            header = f.readlines(1)[:40]
+        ils_str_list = header[34].strip().split(",")
+        ils = [float(ils_str) for ils_str in ils_str_list]
+        if len(ils) == 4:  # with second channel
+            return ils  # ME1, PE1, ME1, PE1
+        elif len(ils) == 2:
+            return [*ils, *ils]  # no second channel, ME1 = ME2 and PE1 = PE2
+
+    def write_ils_file(self):
+        """Write file containing ILS parameters.
+
+        Read all ILS parameters from the spectra file header.
+        Check if the ILS parameters are equal for the processing period.
+        """
+        ils_dict = {
+            "ME1": [],
+            "PE1": [],
+            "ME2": [],
+            "PE2": []
+        }
+
+        local_dates = []
+        for local_date, spectra in self.localdate_spectra.items():
+            # read ils form header
+            ils_params = self._read_ils_from_spectrum(spectra[0])
+            for ils_param, key in zip(ils_params, ils_dict.keys()):
+                ils_dict[key].append(ils_param)
+            local_dates.append(local_date)
+
+        ils_dict["LocalDate"] = local_dates
+        df_ils = pd.DataFrame(ils_dict).set_index("LocalDate")
+
+        ils_path = os.path.join(self.result_folder, "ils_list.csv")
+        df_ils.to_csv(ils_path)
+        return
 
     def combine_results(self):
         """Combine the generated result files and save as csv."""

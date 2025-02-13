@@ -17,6 +17,7 @@ setup(
         "requests",
         "tqdm",
         "numpy",
+        "h5py",
         ],
     license='GPLv3',
     )

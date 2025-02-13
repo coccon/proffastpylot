@@ -751,16 +751,21 @@ class Preparation():
         if template_type == "tccon":
             self.tccon_file = prf_input_file
 
-    def get_prep_parameters(self, meas_date):
-        """Return Parameters to be replaced in the preprocess template.
+    def get_ils(self, meas_date):
+        """Return ILS parameters from measurement date.
+
+        The ILS parameters are either taken from the input file, from the
+        ILS list. In case of processing a different instrument that the
+        EM27/SUN, unity ILS parameters of ME=0.983 and PE = 0.0 are assumed.
 
         Parameters:
             meas_date (dt.datetime): date in measurement time
 
         Returns:
-            parameters (dict):
-                dict with parameters to fill the preporcess template.
+            ME1, PE1, ME2, PE2 (tuple):
+                ILS parameters
         """
+
         if self.ils_parameters is not None:
             # the first priority is always the ILS params given in the the
             # general config file:
@@ -788,6 +793,19 @@ class Preparation():
                     "Using unity ILS parameter for non-em27 instruments as "
                     "default. If you want to use different, specify it in the "
                     "general input file.")
+        return ME1, PE1, ME2, PE2
+
+    def get_prep_parameters(self, meas_date):
+        """Return Parameters to be replaced in the preprocess template.
+
+        Parameters:
+            meas_date (dt.datetime): date in measurement time
+
+        Returns:
+            parameters (dict):
+                dict with parameters to fill the preporcess template.
+        """
+        ME1, PE1, ME2, PE2 = self.get_ils(meas_date)
 
         lat = self.coords["lat"]
         lon = self.coords["lon"]
@@ -1071,11 +1089,14 @@ class Preparation():
             ils_df = ils_df.loc[self.instrument_number]
         except KeyError:
             self.logger.critical(
-                f"{self.instrument_number} is not in ILS-file.\n"
-                "Please ensure you are using the newest version of "
-                "PROFFASTpylot.\n"
+                f"{self.instrument_number} is not in ILS-file. "
+                "Give the ILS-parameters in the proffastpylot input "
+                "file instead!"
                 )
-            sys.exit()
+            raise KeyError(
+                f"{self.instrument_number} is not in ILS-file. "
+                "Give the ILS-parameters in the proffastpylot input "
+                "file instead!")
         if isinstance(ils_df, pd.Series):
             # this is the case, if only one entry per instrument is available
             MEChan1 = ils_df['Channel1ME']
