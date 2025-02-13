@@ -720,7 +720,7 @@ class Preparation():
         times = {
             "meas_time": meas_time,
             "local_time": local_time,
-            "utc_time": utc_time            
+            "utc_time": utc_time
         }
         return times
 
@@ -956,13 +956,13 @@ class Preparation():
         for sub_pT_input, spectrum, suffix \
                 in zip(spectra_pT_input, representative_spectra, charlist):
             times = self.get_times_of(spectrum)
+            spectra_path = self.get_spectra_path(spectrum)
             if len(sub_pT_input) == 0:
                 # occurs if no pressure was found for all spectra
                 temp_parameters = None
             else:
                 temp_parameters = {
-                    "DATAPATH": self.analysis_instrument_path,
-                    "MEASUREMENT_DATE": times["meas_time"].strftime("%y%m%d"),
+                    "SPECTRA_PATH": spectra_path,
                     "LOCAL_DATE": times["local_time"].strftime("%y%m%d"),
                     "SITE": self.site_name,
                     "SUFFIX": suffix,
@@ -970,6 +970,12 @@ class Preparation():
                 }
             parameters.append(temp_parameters)
         return parameters, skipped_spectra
+
+    def get_spectra_path(self, spectrum):
+        full_path = os.path.dirname(spectrum)
+        # remove "cal/BIN" part
+        spectra_path = os.path.dirname(full_path)
+        return spectra_path
 
     def get_spectra_pT_input(self, local_date):
         """Return invers formatted pT infos for given local date.
