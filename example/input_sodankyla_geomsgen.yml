@@ -1,4 +1,4 @@
-calibration_params_list: ../prfpylot/geoms_gen/calibration_parameters.csv
+calibration_params_list: hdf_geoms_calibration_parameters.csv
 
 # output of the GEOMS-files:
 geoms_out_path: results_geoms
