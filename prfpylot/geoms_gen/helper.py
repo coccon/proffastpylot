@@ -321,13 +321,16 @@ class GeomsGenHelper():
         return df
 
     def get_datetimes(self):
+        """Return list of datetimes (local time)."""
         datetime_list = []
         # out_path = self.geoms_out_path
         inp_path = self.geoms_res_path
 
-        inv_list = glob.glob(
-            os.path.join(inp_path, '*invparms*.dat'))  # invparms file list
-        for file in inv_list:
+        # colsens to avoid duplicates for processing near the date line
+        colsens_files = glob.glob(
+            os.path.join(inp_path, '*colsens*.dat'))  # invparms file list
+
+        for file in colsens_files:
             file = os.path.basename(file)
             file = re.sub(self.site_name, '', file)
             date = dt.datetime.strptime(

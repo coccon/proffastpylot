@@ -735,16 +735,21 @@ class Preparation():
         if template_type == "tccon":
             self.tccon_file = prf_input_file
 
-    def get_prep_parameters(self, meas_date):
-        """Return Parameters to be replaced in the preprocess template.
+    def get_ils(self, meas_date):
+        """Return ILS parameters from measurement date.
+
+        The ILS parameters are either taken from the input file, from the
+        ILS list. In case of processing a different instrument that the
+        EM27/SUN, unity ILS parameters of ME=0.983 and PE = 0.0 are assumed.
 
         Parameters:
             meas_date (dt.datetime): date in measurement time
 
         Returns:
-            parameters (dict):
-                dict with parameters to fill the preporcess template.
+            ME1, PE1, ME2, PE2 (tuple):
+                ILS parameters
         """
+
         if self.ils_parameters is not None:
             # the first priority is always the ILS params given in the the
             # general config file:
@@ -772,6 +777,19 @@ class Preparation():
                     "Using unity ILS parameter for non-em27 instruments as "
                     "default. If you want to use different, specify it in the "
                     "general input file.")
+        return ME1, PE1, ME2, PE2
+
+    def get_prep_parameters(self, meas_date):
+        """Return Parameters to be replaced in the preprocess template.
+
+        Parameters:
+            meas_date (dt.datetime): date in measurement time
+
+        Returns:
+            parameters (dict):
+                dict with parameters to fill the preporcess template.
+        """
+        ME1, PE1, ME2, PE2 = self.get_ils(meas_date)
 
         lat = self.coords["lat"]
         lon = self.coords["lon"]

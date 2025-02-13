@@ -1589,7 +1589,19 @@ class GeomsGenWriter(GeomsGenHelper):
                 j += 1
         return tuple(ils)
 
-    def get_ils_parameters(self, day):
+    def _get_ils_from_prf(self, local_date):
+        """Read ILS from the ILS list"""
+        ils_path = os.path.join(self.result_folder, "ils_list.csv")
+        df_ils = pd.read_csv(ils_path).set_index("LocalDate")
+
+        date_str = local_date.strftime("%Y-%m-%d")
+        row = df_ils.loc[date_str]
+        ils = []
+        for key in ["ME1", "PE1", "ME2", "PE2"]:
+            ils.append(row[key])
+        return tuple(ils)
+
+    def get_ils_parameters(self, local_date):
         """Return ILS Parameters if possible.
 
         ILS parameters are obtained in the following way:
@@ -1609,12 +1621,12 @@ class GeomsGenWriter(GeomsGenHelper):
         Returns:
             tuple (ME1, PE1, ME2, PE2)
         """
-        ils_from_prf = None
+        ils_from_prf = self._get_ils_from_prf(local_date)
         # TODO: implent function in run_invers to read ils from .bin files
-        ils_from_prep = self._get_ils_form_preprocess_inp(day)
+        ils_from_prep = self._get_ils_form_preprocess_inp(local_date)
         if self.ils_file is not None:
             try:
-                ils_from_file = Preparation.get_ils_from_file(self, day)
+                ils_from_file = Preparation.get_ils_from_file(self, local_date)
             except KeyError:
                 self.ils_not_in_file_warning = True
                 ils_from_file = None
