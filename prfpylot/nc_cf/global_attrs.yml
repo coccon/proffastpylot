@@ -1,0 +1,7 @@
+source: Ground-based solar FTIR observation
+comment:
+  Raw data recorded with Bruker EM27/SUN; Retrival with PROFFAST
+history: 
+  netCDF generated with PROFFASTpylot
+# references: 
+Conventions: CF-1.8

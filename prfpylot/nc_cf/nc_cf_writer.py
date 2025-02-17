@@ -1,5 +1,24 @@
-""" Module for netcdf output."""
+"""nc_cf_writer is a module of PROFFASTpylot.
 
+Generate netcdf files following the cf conventions.
+
+License information:
+PROFFASTpylot - Running PROFFAST with Python
+Copyright (C)   2025    Lena Feld
+                        Karlsruhe Institut of Technology (KIT)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 3 as published by
+the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 import pandas as pd
 import numpy as np
 from glob import glob
@@ -7,8 +26,10 @@ import os
 import xarray as xr
 import datetime as dt
 import cftime
+import prfpylot
 from prfpylot.prepare import TimeHandler
 import yaml
+import inspect
 
 # Todos:
 # - Write ILS list to file
@@ -18,6 +39,7 @@ import yaml
 #     - information equivalent for all runs
 #     - information gaven in proffastpylot input file
 # - implement which version was used
+# - add scaling factors (SI units, following cf conventions!)
 
 
 class NcWriter(object):
@@ -231,13 +253,13 @@ class NcWriter(object):
             ]
 
         header_values_for_dfs = {
-            "h2o": 3,
-            "hdo": 56,
-            "co2": 109,
-            "ch4": 162,
-            "n2o": 215,
-            "co": 268,
-            "o2": 321,
+            "H2O": 3,
+            "HDO": 56,
+            "CO2": 109,
+            "CH4": 162,
+            "N2O": 215,
+            "CO": 268,
+            "O2": 321,
         }
 
         df = pd.read_csv(
@@ -275,7 +297,7 @@ class NcWriter(object):
     def add_avk(self, ds):
         """Add averaging kernel variables to dataset."""
         files_colsens = self.get_files_colsens()
-        list_species = ["h2o", "co2", "ch4", "co2"]
+        list_species = ["H2O", "HDO", "CO2", "CH4", "N2O", "CO", "O2"]
         for species in list_species:
             list_colsens = []
             for file in files_colsens:
@@ -286,7 +308,7 @@ class NcWriter(object):
                 list_colsens.append(colsens_array)
 
             avk_dims = self.get_avk_dims()
-            ds["avk_"+species] = xr.DataArray(
+            ds[species+"_avk"] = xr.DataArray(
                 np.array(list_colsens),
                 dims=avk_dims)
         return ds
@@ -296,7 +318,7 @@ class NcWriter(object):
         time_prior_cf = self.get_prior_time()
 
         path = self.get_files_colsens()[0]
-        df = self.get_colsens_for(path, "h2o")
+        df = self.get_colsens_for(path, "H2O")
         alt_prior = df["alt"].values
 
         prior_dims = {
@@ -320,13 +342,40 @@ class NcWriter(object):
 
         prior_dims = self.get_prior_dims()
         for key, prior_array in dict_priors.items():
-            ds["prior_"+key] = xr.DataArray(
+            ds[key+"_prior"] = xr.DataArray(
                 prior_array, dims=prior_dims)
 
         return ds
 
+    def rename_variables(self, ds):
+        name_dict = {
+            "latdeg": "lat",
+            "londeg": "lon",
+            'gndP': "p",
+            'gndT': "t",
+            'altim': "height",
+            'appSZA': "sza",
+        }
+        ds.rename(name_dict)
+        return ds
+
     def add_global_attrs(self, ds):
+        prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
+        path_global_atts = os.path.join(
+            prfpylot_path, "nc_cf", "global_attrs.yml")
+        with open(path_global_atts, "r") as f:
+            global_attrs = yaml.safe_load(f)
+        ds.attrs = global_attrs
         return ds
 
     def add_variable_attrs(self, ds):
+        prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
+        path_var_atts = os.path.join(
+            prfpylot_path, "nc_cf", "variable_attrs.yml")
+        with open(path_var_atts, "r") as f:
+            var_attrs = yaml.safe_load(f)
+
+        for key, var_attr in var_attrs.items():
+            if key in ds:
+                ds[key].attrs = var_attr
         return ds
