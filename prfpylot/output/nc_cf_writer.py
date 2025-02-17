@@ -111,7 +111,8 @@ class NcWriter(object):
         # apply filters
         ds = self.apply_filters(ds)
 
-        # write all metadata
+        # rename columns and write all metadata
+        ds = self.rename_variables(ds)
         ds = self.add_variable_attrs(ds)
         ds = self.add_global_attrs(ds)
         # implement setting/using fill values
@@ -356,7 +357,7 @@ class NcWriter(object):
             'altim': "height",
             'appSZA': "sza",
         }
-        ds.rename(name_dict)
+        ds = ds.rename_vars(name_dict)
         return ds
 
     def add_global_attrs(self, ds):
