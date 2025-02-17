@@ -362,7 +362,7 @@ class NcWriter(object):
     def add_global_attrs(self, ds):
         prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
         path_global_atts = os.path.join(
-            prfpylot_path, "nc_cf", "global_attrs.yml")
+            prfpylot_path, "output", "nc_cf_global_attrs.yml")
         with open(path_global_atts, "r") as f:
             global_attrs = yaml.safe_load(f)
         ds.attrs = global_attrs
@@ -371,7 +371,7 @@ class NcWriter(object):
     def add_variable_attrs(self, ds):
         prfpylot_path = os.path.dirname(inspect.getsourcefile(prfpylot))
         path_var_atts = os.path.join(
-            prfpylot_path, "nc_cf", "variable_attrs.yml")
+            prfpylot_path, "output", "nc_cf_variable_attrs.yml")
         with open(path_var_atts, "r") as f:
             var_attrs = yaml.safe_load(f)
 

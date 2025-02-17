@@ -1,4 +1,4 @@
-"""GeomsGenWriter is a module of PROFFASTpylot.
+"""hdf_geoms_writer is a module of PROFFASTpylot.
 
 Generate GEOMS HDF5 files.
 
@@ -30,7 +30,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 import glob
-from prfpylot.geoms_gen.helper import GeomsGenHelper
+from prfpylot.output.hdf_geoms_helper import GeomsGenHelper
 from prfpylot.prepare import Preparation
 
 

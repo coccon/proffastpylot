@@ -1,4 +1,4 @@
-from prfpylot.geoms_gen.writer import GeomsGenWriter
+from prfpylot.output.hdf_geoms_writer import GeomsGenWriter
 
 geomsgen_inputfile = "input_sodankyla_geomsgen.yml"
 print(geomsgen_inputfile)

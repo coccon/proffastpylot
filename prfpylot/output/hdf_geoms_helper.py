@@ -1,4 +1,4 @@
-"""GeomsGenHelper is a module of PROFFASTpylot.
+"""hdf_geoms_helper is a module of PROFFASTpylot.
 
 It contains several helper routines for the generation of
 hdf5 files.
