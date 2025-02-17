@@ -35,6 +35,7 @@ import numpy as np
 from functools import partial
 from copy import deepcopy
 import codecs
+from prfpylot.output.nc_cf_writer import NcWriter
 
 
 class Pylot(FileMover):
@@ -64,6 +65,10 @@ class Pylot(FileMover):
             self.combine_results()
         finally:
             self.clean_files()
+
+        # additionally generate netcdf output
+        writer = NcWriter(self.result_folder)
+        writer.write_nc()
 
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""

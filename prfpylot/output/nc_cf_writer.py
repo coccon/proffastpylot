@@ -80,12 +80,29 @@ class NcWriter(object):
             self.utc_offset = 0.
 
         self.site_name = proffastpylot_parameters["site_name"]
+        self.instrument_number = proffastpylot_parameters["instrument_number"]
 
         self.df_invparms = self.get_comb_invparms()
         self.coords = self.get_coords()
 
         self.time_handler = TimeHandler(
             coords=self.coords, utc_offset=self.utc_offset)
+
+    def write_nc(self, path=None):
+        """Write dataset to cf-conform netcdf file."""
+        ds = self.create_dataset()
+        year_str = self.get_year_str()
+        filename = "_".join([
+            "COCCON_",
+            self.instrument_number,
+            self.site_name,
+            year_str+".nc"
+        ])
+        if path is None:
+            path = os.path.join(
+                self.path_results,
+                filename)
+        ds.to_netcdf(path)
 
     def create_dataset(self):
         """Combine all proffast output in one ds.
@@ -101,6 +118,8 @@ class NcWriter(object):
         # combine all data
         ds = self.df_invparms.to_xarray()
         ds = self.modify_time(ds)
+        ds = self.modify_spectrum(ds)
+        ds = self.add_dimensions(ds)
         ds = self.add_avk(ds)
         ds = self.add_prior(ds)
 
@@ -116,8 +135,16 @@ class NcWriter(object):
         ds = self.add_variable_attrs(ds)
         ds = self.add_global_attrs(ds)
         # implement setting/using fill values
-
         return ds
+
+    def get_year_str(self):
+        """Return string with one year or year range."""
+        start = self.df_invparms.index[0].year
+        end = self.df_invparms.index[-1].year
+        if start == end:
+            return str(start)
+        else:
+            return f"{start}-{end}"
 
     def get_coords(self):
         """Read coords from first line of comb_invparms.
@@ -128,6 +155,12 @@ class NcWriter(object):
             "lon": self.df_invparms["londeg"].iloc[0],
         }
         return coords
+
+    def add_dimensions(self, ds):
+        avk_dims = self.get_avk_dims()
+        for dim, data in avk_dims.items():
+            ds[dim] = xr.Variable(dim, data)
+        return ds
 
     def modify_time(self, ds):
         """Rename, and make cf conform main time column."""
@@ -149,6 +182,11 @@ class NcWriter(object):
         ds = ds.rename_vars({"UTC": "time"})
         ds["time"] = cftime_data
         ds["time"].attrs = time_atts
+        return ds
+
+    def modify_spectrum(self, ds):
+        ds["spectrum"] = xr.DataArray(
+            ds["spectrum"].values.astype('|S20'), dims={"time": ds["time"]})
         return ds
 
     def add_local_noon_column(self, ds):
@@ -309,7 +347,7 @@ class NcWriter(object):
                 list_colsens.append(colsens_array)
 
             avk_dims = self.get_avk_dims()
-            ds[species+"_avk"] = xr.DataArray(
+            ds["X"+species+"_avk"] = xr.DataArray(
                 np.array(list_colsens),
                 dims=avk_dims)
         return ds
@@ -324,7 +362,7 @@ class NcWriter(object):
 
         prior_dims = {
             "time_prior": time_prior_cf,
-            "alt_prior": alt_prior,
+            "height_prior": alt_prior,
         }
         return prior_dims
 
@@ -352,8 +390,8 @@ class NcWriter(object):
         name_dict = {
             "latdeg": "lat",
             "londeg": "lon",
-            'gndP': "p",
-            'gndT': "t",
+            'gndP': "pres",
+            'gndT': "temp",
             'altim': "height",
             'appSZA': "sza",
         }
