@@ -85,16 +85,22 @@ class NcWriter(object):
         self.time_handler = TimeHandler(
             coords=self.coords, utc_offset=self.utc_offset)
 
+    def get_output_filename(self):
+        time_str = self.get_time_str()
+        filename = "_".join([
+            "COCCON",
+            self.site_name,
+            self.instrument_number,
+            time_str+".nc"
+        ])
+        return filename
+
     def write_nc(self, path=None):
         """Write dataset to cf-conform netcdf file."""
         ds = self.create_dataset()
-        year_str = self.get_year_str()
-        filename = "_".join([
-            "COCCON_",
-            self.instrument_number,
-            self.site_name,
-            year_str+".nc"
-        ])
+        self.get_output_filename()
+
+        filename = self.get_output_filename()
         if path is None:
             path = os.path.join(
                 self.path_results,
@@ -166,14 +172,15 @@ class NcWriter(object):
 
         return ds
 
-    def get_year_str(self):
+    def get_time_str(self):
         """Return string with one year or year range."""
-        start = self.df_invparms.index[0].year
-        end = self.df_invparms.index[-1].year
+        time_prior = self.get_prior_time(cf=False)
+        start = time_prior[0].strftime("%Y-%m-%d")
+        end = time_prior[-1].strftime("%Y-%m-%d")
         if start == end:
             return str(start)
         else:
-            return f"{start}-{end}"
+            return f"{start}_{end}"
 
     def get_coords(self):
         """Read coords from first line of comb_invparms.
@@ -338,7 +345,7 @@ class NcWriter(object):
             nrows=49)
         return df
 
-    def get_prior_time(self):
+    def get_prior_time(self, cf=True):
         """Return cf times."""
         files_colsens = self.get_files_colsens()
 
@@ -349,6 +356,8 @@ class NcWriter(object):
                 filename[-18:-12], "%y%m%d").date()
             local_date_utc = self.time_handler.get_local_noon_utc(local_date)
             time_prior.append(local_date_utc)
+        if cf is False:
+            return time_prior
 
         time_prior_cf = cftime.date2num(
             time_prior, units=self.cftime_unit, calendar=self.cftime_calendar)
