@@ -34,10 +34,7 @@ import inspect
 # Todos:
 # - Write ILS list to file
 # - implement filters
-# - implement attributes
-#     - information from separate file
-#     - information equivalent for all runs
-#     - information gaven in proffastpylot input file
+# - implement attributes given by user
 # - implement which version was used
 # - add scaling factors (SI units, following cf conventions!)
 
@@ -128,6 +125,7 @@ class NcWriter(object):
         ds = ds.drop(["LocalTime", "JulianDate", "UTtimeh"])
 
         # apply filters
+        ds = self.scale_columns(ds)
         ds = self.apply_filters(ds)
 
         # rename columns and write all metadata
@@ -135,6 +133,37 @@ class NcWriter(object):
         ds = self.add_variable_attrs(ds)
         ds = self.add_global_attrs(ds)
         # implement setting/using fill values
+        return ds
+
+    def scale_columns(self, ds):
+        """Apply scaling factors to match SI units."""
+
+        # scaling factors found by checking results ..
+        scaling_factors = {
+            'XH2O': 1e-6,  # ppm --> 1
+            'XAIR': 1,  # parts --> 1
+            'XCO2': 1e-6,  # ppm --> 1
+            'XCH4': 1e-6,  # ppm --> 1
+            'XCO2_STR': 1e-6,  # ppm --> 1
+            'XCO': 1e-6,  # ppm --> 1
+            'XCH4_S5P': 1e-6,  # ppm --> 1
+            'H2O_prior': 1e-6,  # ppm --> 1 ?
+            'HDO_prior': 1e-6,  # ppm --> 1 ?
+            'CO2_prior': 1,  # ?
+            'CH4_prior': 1e3,  # ??
+            'N2O_prior': 1e-6,  # ppm --> 1
+            'CO_prior': 1e3,  # ??
+            'O2_prior': 1e-6,  # parts --> 1
+            'HF_prior': 1e-6,  # ppt --> 1
+        }
+
+        # convert number content to mole content
+        c = PhysicsConstants()
+        for col in ['H2O', 'O2', 'CO2', 'CH4', 'CO', 'CH4_S5P']:
+            scaling_factors[col] = 1/c.N_a
+        for key, scaling_factor in scaling_factors.items():
+            ds[key] *= scaling_factor
+
         return ds
 
     def get_year_str(self):
@@ -418,3 +447,8 @@ class NcWriter(object):
             if key in ds:
                 ds[key].attrs = var_attr
         return ds
+
+
+class PhysicsConstants(object):
+    """Class to store Physics constants."""
+    N_a = 6.02214076e23
