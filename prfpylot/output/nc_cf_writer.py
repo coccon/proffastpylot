@@ -33,11 +33,7 @@ import inspect
 
 # Todos:
 # - Write ILS list to file
-# - implement filters
-# - implement attributes given by user
 # - implement which version was used
-# - add scaling factors (SI units, following cf conventions!)
-
 
 class NcWriter(object):
     """
@@ -150,22 +146,16 @@ class NcWriter(object):
             'XAIR': 1,  # parts --> 1
             'XCO2': 1e-6,  # ppm --> 1
             'XCH4': 1e-6,  # ppm --> 1
-            'XCO2_STR': 1e-6,  # ppm --> 1
             'XCO': 1e-6,  # ppm --> 1
-            'XCH4_S5P': 1e-6,  # ppm --> 1
             'H2O_prior': 1e-6,  # ppm --> 1 ?
-            'HDO_prior': 1e-6,  # ppm --> 1 ?
             'CO2_prior': 1,  # ?
             'CH4_prior': 1e3,  # ??
-            'N2O_prior': 1e-6,  # ppm --> 1
             'CO_prior': 1e3,  # ??
-            'O2_prior': 1e-6,  # parts --> 1
-            'HF_prior': 1e-6,  # ppt --> 1
         }
 
         # convert number content to mole content
         c = PhysicsConstants()
-        for col in ['H2O', 'O2', 'CO2', 'CH4', 'CO', 'CH4_S5P']:
+        for col in ['H2O', 'O2', 'CO2', 'CH4', 'CO']:
             scaling_factors[col] = 1/c.N_a
         for key, scaling_factor in scaling_factors.items():
             ds[key] *= scaling_factor
@@ -374,7 +364,7 @@ class NcWriter(object):
     def add_avk(self, ds):
         """Add averaging kernel variables to dataset."""
         files_colsens = self.get_files_colsens()
-        list_species = ["H2O", "HDO", "CO2", "CH4", "N2O", "CO", "O2"]
+        list_species = ["H2O", "CO2", "CH4", "CO"]
         for species in list_species:
             list_colsens = []
             for file in files_colsens:
@@ -409,7 +399,7 @@ class NcWriter(object):
         files_prior = self.get_files_prior()
         dict_priors = {
             k: [] for k
-            in ['H2O', 'HDO', 'CO2', 'CH4', 'N2O', 'CO', 'O2', 'HF']
+            in ['H2O', 'CO2', 'CH4', 'CO']
         }
         for file in files_prior:
             df_prior = self.get_prior(file)
