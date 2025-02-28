@@ -124,7 +124,7 @@ class NcWriter(object):
 
         # replace secondary time columns
         ds = self.add_local_noon_column(ds)
-        ds = ds.drop(["LocalTime", "JulianDate", "UTtimeh"])
+        ds = ds.drop(["LocalTime"])
 
         # apply filters
         ds = self.scale_columns(ds)
@@ -155,7 +155,7 @@ class NcWriter(object):
 
         # convert number content to mole content
         c = PhysicsConstants()
-        for col in ['H2O', 'O2', 'CO2', 'CH4', 'CO']:
+        for col in ['H2O', 'CO2', 'CH4', 'CO']:
             scaling_factors[col] = 1/c.N_a
         for key, scaling_factor in scaling_factors.items():
             ds[key] *= scaling_factor
@@ -262,7 +262,32 @@ class NcWriter(object):
             skipinitialspace=True,
             delimiter=",",
             parse_dates=["UTC", "LocalTime"])
+
+        # select relevant columns
+        cols = [
+            "UTC",
+            "LocalTime",
+            "spectrum",
+            "gndP",
+            "gndT",
+            "latdeg",
+            "londeg",
+            "altim",
+            "appSZA",
+            "azimuth",
+            "XH2O",
+            "XAIR",
+            "XCO2",
+            "XCH4",
+            "XCO",
+            "H2O",
+            "CO2",
+            "CH4",
+            "CO",
+        ]
+        df = df[cols]
         df = df.set_index("UTC")
+
         return df
 
     def get_prior(self, path):

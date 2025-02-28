@@ -62,62 +62,55 @@ spectrum:
 pres:
   standard_name: air_pressure
   units: Pa
-  coordinates: lat lon time height
+  coordinates: time
   _FillValue: -900000.0
 temp:
   standard_name: air_temperature
   units: K
-  coordinates: lat lon time height
+  coordinates: time
   _FillValue: -900000.0
 azimuth:
   standard_name: solar_azimuth_angle
   long_name: solar azimuth angle at observation
   units: degree
-  coordinates: time lon lat height
+  coordinates: time
   _FillValue: -900000.0
 sza:
   standard_name: solar_zenith_angle
   long_name: solar zenith angle at observation
   units: degree
-  coordinates: time lon lat height
+  coordinates: time
   _FillValue: -900000.0
 XCO2:
   standard_name: dry_atmosphere_mole_fraction_of_carbon_dioxide
   units: "1"
-  coordinates: lat lon time 
+  coordinates: time
   _FillValue: -900000.0
 XCO2_STR:
   standard_name: dry_atmosphere_mole_fraction_of_carbon_dioxide
   comment: XCO2 retrieved in a spectral window with strong absorption
   units: "1"
-  coordinates: lat lon time 
+  coordinates: time
   _FillValue: -900000.0
 XCH4:
   standard_name: dry_atmosphere_mole_fraction_of_methane
   units: "1"
-  coordinates: lat lon time 
-  _FillValue: -900000.0
-XCH4_S5P:
-  standard_name: dry_atmosphere_mole_fraction_of_methane
-  comment: XCH4 retrieved from S5P spectral window
-  units: "1"
-  coordinates: lat lon time
+  coordinates: time
   _FillValue: -900000.0
 XCO:
   long_name: dry_atmosphere_mole_fraction_of_carbon_monoxide
   units: "1"
-  coordinates: lat lon time
-
+  coordinates: time
   _FillValue: -900000.0
 XH2O:
   long_name: dry_atmosphere_mole_fraction_of_water_vapor
   units: "1"
-  coordinates: lat lon time
+  coordinates: time
   _FillValue: -900000.0
 XAIR:
   long_name: data quality parameter XAIR derived by PROFFAST
   units: "1"
-  coordinates: lat lon time
+  coordinates: time
   _FillValue: -900000.0
 
 # vertical columns
@@ -133,12 +126,6 @@ CH4:
   units: "mol m-2"
   coordinates: time_prior
   _FillValue: -900000.0
-CH4_S5P:
-  standard_name: atmosphere_mole_content_of_methane
-  long_name: from S5P spectral window retrieved vertical column of methane
-  units: "mol m-2"
-  coordinates: time_prior
-  _FillValue: -900000.0
 CO:
   standard_name: atmosphere_mole_content_of_carbon_monoxide
   long_name: retrieved vertical column of carbon monoxide
@@ -150,27 +137,6 @@ H2O:
     retrieved vertical column of water vapor
   units: "mol m-2"
   coordinates: time_prior
-  _FillValue: -900000.0
-HF:
-  long_name: retrieved vertical column of hydrogen fluoride
-  units: "mol m-2"
-  coordinates: time_prior
-  _FillValue: -900000.0
-O2:
-  long_name: retrieved vertical column of oxygen
-  units: "mol m-2"
-  coordinates: time_prior
-  _FillValue: -900000.0
-N2O:
-  standard_name: atmosphere_mole_content_of_nitrious_oxide
-  long_name: retrieved vertical column of nitrious oxide
-  units: "mol m-2"
-  coordinates: time_prior
-  _FillValue: -900000.0
-HDO_prior:
-  long_name: retrieved vertical column of hydrogen deuterium oxide in air
-  units: "mol m-2"
-  coordinates: time_prior height_prior
   _FillValue: -900000.0
 
 # averaging kernel variables
@@ -194,22 +160,6 @@ XH2O_avk:
   units: "1"
   coordinates: time_prior height_prior 
   _FillValue: -900000.0
-XO2_avk:
-  long_name: averaging kernel for oxygen
-  units: "1"
-  coordinates: time_prior height_prior 
-  _FillValue: -900000.0
-XN2O_avk:
-  long_name: averaging kernel for nitrious oxide
-  units: "1"
-  coordinates: time_prior height_prior 
-  _FillValue: -900000.0
-XHDO_avk:
-  long_name: averaging kernel for hydrogen deuterium oxide
-  units: "1"
-  coordinates: time_prior height_prior 
-  _FillValue: -900000.0
-
 
 # prior information
 CO2_prior:
@@ -233,27 +183,6 @@ CO_prior:
 H2O_prior:
   standard_name: mole_fraction_of_water_vapor_in_air
   long_name: prior information of water vapor mole fraction
-  units: "1"
-  coordinates: time_prior height_prior
-  _FillValue: -900000.0
-HF_prior:
-  long_name: prior information of mole_fraction_of_hydrogen_fluoride_in_air
-  units: "1"
-  coordinates: time_prior height_prior
-  _FillValue: -900000.0
-O2_prior:
-  long_name: prior information of mole_fraction_of_oxygen_in_air
-  units: "1"
-  coordinates: time_prior height_prior
-  _FillValue: -900000.0
-N2O_prior:
-  standard_name: mole_fraction_of_nitrous_oxide_in_air
-  long_name: prior information of mole fraction of nitrious oxide
-  units: "1"
-  coordinates: time_prior height_prior
-  _FillValue: -900000.0
-HDO_prior:
-  long_name: prior information of mole fraction of hydrogen deuterium oxide in air
   units: "1"
   coordinates: time_prior height_prior
   _FillValue: -900000.0

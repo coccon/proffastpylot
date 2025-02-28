@@ -404,30 +404,23 @@ class Pylot(FileMover):
         format_list = [
             "%s",  # UTC
             "%s",  # LocalTime
-            "%s",  # spectrum
             "%12.5f",  # JulianDate
+            "%6.0f",  # YYMMDD
             "%6.1f",  # UTtimeh
+            "%s",  # spectrum
+            "%5.2f",  # gndPmap
             "%5.2f",  # gndP
+            "%5.2f",  # gndTmap
             "%5.2f",  # gndT
             "%7.5f",  # latdeg
             "%7.5f",  # londeg
             "%7.3f",  # altim
             "%4.2f",  # appSZA
             "%5.2f",  # azimuth
-            "%.5e",  # XH20
-            "%.5e",  # XAIR
-            "%.5e",  # XCO2
-            "%.5e",  # XCH4
-            "%.5e",  # XCO2_STR
-            "%.5e",  # XCO
-            "%.5e",  # XCH4_S5P
-            "%.5e",  # H20
-            "%.5e",  # O2
-            "%.5e",  # CO2
-            "%.5e",  # CH4
-            "%.5e",  # CO
-            "%.5e"  # CH4_S5P
         ]
+
+        len_remaining = len(df.keys()) - len(format_list)
+        format_list.extend(["%.5e"]*len_remaining)
 
         header = ", ".join(df.columns)
         np.savetxt(
@@ -557,21 +550,11 @@ class Pylot(FileMover):
         }
         df = df.rename(columns=rename)
 
-        sel_cols = [
-            "UTC", "LocalTime", "spectrum",
-            "JulianDate", "UTtimeh",
-            "gndP", "gndT",
-            "latdeg", "londeg", "altim",
-            "appSZA", "azimuth",
-            "XH2O", "XAIR",
-            "XCO2", "XCH4",
-            "XCO2_STR",
-            "XCO", "XCH4_S5P",
-            "H2O", "O2",
-            "CO2", "CH4",
-            "CO", "CH4_S5P"
-        ]
-        df = df[[*sel_cols]]
+        # reorder colums
+        cols = df.columns.tolist()
+        cols = cols[-2:] + cols[:-2]
+        df = df[cols]
+
         return df
 
     def _get_executable(self, program):
