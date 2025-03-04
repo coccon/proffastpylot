@@ -769,7 +769,7 @@ class Preparation():
             # the first priority is always the ILS params given in the the
             # general config file:
             ME1, PE1, ME2, PE2 = self.ils_parameters
-            if self.instrument_parameters != "em27":
+            if self.instrument_parameters != "em27" or "em27s":
                 self.logger.warning(
                     "Individual ILS Parameters are used,"
                     " the parameters are not "
@@ -777,7 +777,7 @@ class Preparation():
                     f"Used ILS Parameters: {self.ils_parameters}.")
         else:
             # ILS parameters NOT given in general input file.
-            if self.instrument_parameters == "em27":
+            if self.instrument_parameters == "em27" or "em27s":
                 # for the EM27 try to take it from the ILS List:
                 self.logger.debug("Load ILS parameters from file.")
                 ME1, PE1, ME2, PE2 = self.get_ils_from_file(meas_date)
@@ -1331,18 +1331,20 @@ class Preparation():
         # find the correct map files: before and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = local_noon_utc.hour
+        noon_datehour = int(mapfiles[0][-11:-7]+'00') + noon_hour
         for i, file in enumerate(mapfiles):
-            hour_file = int(file[-7:-5])
-            if hour_file > noon_hour:
+            datehour_file = int(file[-11:-5])
+            if datehour_file > noon_datehour:
                 i_noon = i
                 break
         if i_noon in [None, 0]:
-            self.logger.critical(
+            errormessage = (
                 f"Could not calculate mapfile for {local_noon_utc} UTC "
                 "from the following files:\n"
                 f"{' '.join(mapfiles)}"
-                )
-            sys.exit()
+            )
+            self.logger.critical(errormessage)
+            raise RuntimeError(errormessage)
 
         file1 = pd.read_csv(
             mapfiles[i_noon-1],
