@@ -19,6 +19,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import pandas as pd
 import numpy as np
 from glob import glob
@@ -31,9 +32,6 @@ from prfpylot.prepare import TimeHandler
 import yaml
 import inspect
 
-# Todos:
-# - Write ILS list to file
-# - implement which version was used
 
 class NcWriter(object):
     """
@@ -108,7 +106,7 @@ class NcWriter(object):
 
         1. combine all data
         2. replace secondary time columns
-        3. apply filters
+        3. scale to SI units
         4. write all metadata and set fill_values
 
         Returns:
@@ -126,9 +124,8 @@ class NcWriter(object):
         ds = self.add_local_noon_column(ds)
         ds = ds.drop(["LocalTime"])
 
-        # apply filters
+        # scale to SI units
         ds = self.scale_columns(ds)
-        ds = self.apply_filters(ds)
 
         # rename columns and write all metadata
         ds = self.rename_variables(ds)
@@ -140,17 +137,16 @@ class NcWriter(object):
     def scale_columns(self, ds):
         """Apply scaling factors to match SI units."""
 
-        # scaling factors found by checking results ..
         scaling_factors = {
-            'XH2O': 1e-6,  # ppm --> 1
-            'XAIR': 1,  # parts --> 1
-            'XCO2': 1e-6,  # ppm --> 1
-            'XCH4': 1e-6,  # ppm --> 1
-            'XCO': 1e-6,  # ppm --> 1
-            'H2O_prior': 1e-6,  # ppm --> 1 ?
-            'CO2_prior': 1,  # ?
-            'CH4_prior': 1e3,  # ??
-            'CO_prior': 1e3,  # ??
+            'XH2O': 1e-6,
+            'XAIR': 1,
+            'XCO2': 1e-6,
+            'XCH4': 1e-6,
+            'XCO': 1e-6,
+            'H2O_prior': 1e-6,
+            'CO2_prior': 1e-6,
+            'CH4_prior': 1e-6,
+            'CO_prior': 1e-6,
         }
 
         # convert number content to mole content
@@ -211,11 +207,17 @@ class NcWriter(object):
         return ds
 
     def modify_spectrum(self, ds):
+        """Convert spectrum column to cf compatible string type."""
         ds["spectrum"] = xr.DataArray(
             ds["spectrum"].values.astype('|S20'), dims={"time": ds["time"]})
         return ds
 
     def add_local_noon_column(self, ds):
+        """Add column with local noot of given date.
+
+        This column links the values dependet on `time` to the values dependent
+        on `time_prior`.
+        """
         local_noon = []
         for lt in self.df_invparms["LocalTime"]:
             ln = self.time_handler.get_local_noon_utc(lt.date())
@@ -227,9 +229,6 @@ class NcWriter(object):
                 units=self.cftime_unit,
                 calendar=self.cftime_calendar),
             dims={"time": ds["time"]})
-        return ds
-
-    def apply_filters(self, ds):
         return ds
 
     def get_files_colsens(self):
@@ -319,17 +318,6 @@ class NcWriter(object):
             names=names,
             sep=' ',
             engine='python')
-
-        # convert to SI units
-        prior_scaling_values = {
-            "H2O": 1,  # parts
-            "CO2": 1e-6,  # ppm
-            "CH4": 1e-9,  # ppb
-            "CO": 1e-9,  # ppb
-            # todo extend!
-        }
-        for key, scaling in prior_scaling_values.items():
-            df[key] *= scaling
 
         return df
 
