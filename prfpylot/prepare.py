@@ -36,7 +36,6 @@ import pytz
 import fortranformat
 import inspect
 import codecs
-from random import randint
 
 
 class Preparation():
@@ -63,6 +62,8 @@ class Preparation():
     defaults = {
         "mapfile_wetair_vmr": None,  # this is determined automatically if
                                      # you use mapfiles from tccon
+        "custom_mapfile": None,  # use this to specify a custom map file naming
+        "use_measured_pressure_for_pcxs": False,
         "coords": {"lat": None, "lon": None, "alt": None},
         "coord_file": None,
         "utc_offset": 0.0,
@@ -94,9 +95,12 @@ class Preparation():
             self, input_file, logginglevel="info",
             external_logger=None, loggername=None):
         """Initialize the PROFFASTpylot backbone.
-        
+
         Params:
-            input_file (str): The path to a yaml input file.
+            input_file (str|dict):
+                Can be either the path to a yaml input file or an dictionary,
+                containing all needed parameters as keys and the settings as
+                values.
             logginglevel (str):
                 A string specifying the logging level (`debug`, `info`,
                 `warning`).
@@ -105,20 +109,32 @@ class Preparation():
                 instance of an logging.logger class. Note that to this logger,
                 the FileHandler and StreamHandler are added.
             loggername (None):
-                Optionally, the name of the logger can be specified. This can be
-                usefull to access the logger outside of the PROFFASTpylot.
-                If loggername is None the default loggername is 'PROFFASTpylot'.
+                Optionally, the name of the logger can be specified. This
+                can be usefull to access the logger outside of the
+                PROFFASTpylot. If loggername is None the default loggername
+                is 'PROFFASTpylot'.
         """
         self.logger = self.create_logger(
             logginglevel=logginglevel,
             external_logger=external_logger, loggername=loggername)
-        self.logger.info(
-            "++++ Welcome to PROFFASTpylot ++++")
+
+        welcome_text = "\n".join([
+            "++++ Welcome to PROFFASTpylot ++++",
+            "Cite this software as\n",
+            "Feld et al., (2024). PROFFASTpylot: Running PROFFAST with "
+            "Python. Journal of Open Source Software, 9(96), 6481, "
+            "https://doi.org/10.21105/joss.06481\n",
+            ])
+
+        self.logger.info(welcome_text)
         self.logger.debug("Start reading input file...")
 
-        # read input file
-        with open(input_file, "r") as f:
-            args = yaml.load(f, Loader=yaml.FullLoader)
+        # read input file or parse dict directly:
+        if isinstance(input_file, dict):
+            args = input_file
+        elif os.path.isfile(input_file):
+            with open(input_file, "r") as f:
+                args = yaml.load(f, Loader=yaml.FullLoader)
 
         for option, value in args.items():
             self.__dict__[option] = value
@@ -239,7 +255,7 @@ class Preparation():
             self.logger.warning(
                 "The parameter `mapfile_wetair_vmr` was given in the "
                 "input file. Don't use this option if you are using ggg2020 "
-                "or ggg2014 mapfiles from TCCON!")
+                "or ggg2014 mapfiles provided by Caltech!")
 
         dt_format = "%y%m%d"
         result_foldername = "{}_{}_{}-{}".format(
@@ -259,13 +275,15 @@ class Preparation():
         self.raw_output_prf_folder = os.path.join(
             self.result_folder, "raw_output_proffast")
 
-        # calculate the _localtime_offset
-        self._localtime_offset = self._get_localtime_offset()
-
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
             self.pressure_type_file, self.pressure_path,
             self.meas_dates, self.logger, self.utc_offset)
+
+        self.time_handler = TimeHandler(
+            coords=self.coords, utc_offset=self.utc_offset)
+        # calculate the _localtime_offset
+        self._localtime_offset = self.time_handler._get_localtime_offset()
 
         # collect all generated input files to move in FileMover
         self.global_inputfile_list = []
@@ -302,7 +320,6 @@ class Preparation():
         for handler in [FHandler, StreamHandler]:
             handler.setLevel(num_level[logginglevel])
 
-
         # The format of the logging
         self.format_styles = {
             "debug": logging.Formatter(
@@ -325,7 +342,7 @@ class Preparation():
             logger = external_logger
             logger.addHandler(FHandler)
             FHandler.setFormatter(self.format_styles[logginglevel])
-            FHandler.setLevel(num_level(logginglevel))
+            FHandler.setLevel(num_level[logginglevel])
             FHandler.addFilter(PylotOnly())
             logger.debug("Found external logger.")
         # set logging to debug to record everything in the first place
@@ -551,9 +568,9 @@ class Preparation():
                 - prf_input_files (list):
                     A list of paths to the input files.
                 - skipped_spectra (list):
-                    List containing all spectra skipped 
-                    at this day, due to missing pressure values. 
-                    This list is provided by `get_spectra_pT_input` called in 
+                    List containing all spectra skipped
+                    at this day, due to missing pressure values.
+                    This list is provided by `get_spectra_pT_input` called in
                     `get_inv_parameters`.
         """
         # the name of the input file to be generated
@@ -637,7 +654,7 @@ class Preparation():
 
         Returns:
             localdate_spectra (dict):
-                containing the a list of full pathes to the spectra for each 
+                containing the a list of full pathes to the spectra for each
                 local date in the format
                 `{local_date: ["path/YYMMDD_HHMMSSSN.BIN", ...]}`
         """
@@ -704,7 +721,7 @@ class Preparation():
         times = {
             "meas_time": meas_time,
             "local_time": local_time,
-            "utc_time": utc_time            
+            "utc_time": utc_time
         }
         return times
 
@@ -735,21 +752,26 @@ class Preparation():
         if template_type == "tccon":
             self.tccon_file = prf_input_file
 
-    def get_prep_parameters(self, meas_date):
-        """Return Parameters to be replaced in the preprocess template.
+    def get_ils(self, meas_date):
+        """Return ILS parameters from measurement date.
+
+        The ILS parameters are either taken from the input file, from the
+        ILS list. In case of processing a different instrument that the
+        EM27/SUN, unity ILS parameters of ME=0.983 and PE = 0.0 are assumed.
 
         Parameters:
             meas_date (dt.datetime): date in measurement time
 
         Returns:
-            parameters (dict):
-                dict with parameters to fill the preporcess template.
+            ME1, PE1, ME2, PE2 (tuple):
+                ILS parameters
         """
+
         if self.ils_parameters is not None:
             # the first priority is always the ILS params given in the the
             # general config file:
             ME1, PE1, ME2, PE2 = self.ils_parameters
-            if self.instrument_parameters != "em27":
+            if self.instrument_parameters != "em27" or "em27s":
                 self.logger.warning(
                     "Individual ILS Parameters are used,"
                     " the parameters are not "
@@ -757,7 +779,7 @@ class Preparation():
                     f"Used ILS Parameters: {self.ils_parameters}.")
         else:
             # ILS parameters NOT given in general input file.
-            if self.instrument_parameters == "em27":
+            if self.instrument_parameters == "em27" or "em27s":
                 # for the EM27 try to take it from the ILS List:
                 self.logger.debug("Load ILS parameters from file.")
                 ME1, PE1, ME2, PE2 = self.get_ils_from_file(meas_date)
@@ -772,6 +794,19 @@ class Preparation():
                     "Using unity ILS parameter for non-em27 instruments as "
                     "default. If you want to use different, specify it in the "
                     "general input file.")
+        return ME1, PE1, ME2, PE2
+
+    def get_prep_parameters(self, meas_date):
+        """Return Parameters to be replaced in the preprocess template.
+
+        Parameters:
+            meas_date (dt.datetime): date in measurement time
+
+        Returns:
+            parameters (dict):
+                dict with parameters to fill the preporcess template.
+        """
+        ME1, PE1, ME2, PE2 = self.get_ils(meas_date)
 
         lat = self.coords["lat"]
         lon = self.coords["lon"]
@@ -835,23 +870,49 @@ class Preparation():
         alt = self.coords["alt"]
         # prepare map file path
         if self.mapfile_format == "ggg2020":
-            local_noon_utc = self.get_local_noon_utc(local_date)
+            local_noon_utc = self.time_handler.get_local_noon_utc(local_date)
             map_file = os.path.join(
                 self.result_folder,
                 "interpolated_mapfiles",
                 f"{self.site_abbrev}{local_noon_utc.strftime('%Y%m%d%H')}"
                 "_Z.map"
                 )
-
         elif self.mapfile_format == "ggg2014":
             map_file = os.path.join(
                 self.map_path,
                 f"{self.site_abbrev}{local_date.strftime('%Y%m%d')}.map"
             )
+        elif self.mapfile_format == "fixed_mapfile":
+            map_file = self.custom_mapfile
+        elif self.mapfile_format == "custom":
+            srchstrg = local_date.strftime(self.custom_mapfile)
+            map_file = glob(os.path.join(self.map_path, srchstrg))[0]
+
+        if self.use_measured_pressure_for_pcxs:
+            # We want to use the local noon time for the calculation in
+            # pcxs --> calculate the UTC time corresponding to local noon
+            utc_noon = self.time_handler.get_local_noon_utc(local_date)
+            # p-record can also have a time offset which is considered now:
+            pressure_offset = timedelta(
+                hours=self.pressure_handler.utc_offset)
+            pressure_time = utc_noon + pressure_offset
+            # get pressure at local noon:
+            local_noon_pressure = \
+                self.pressure_handler.get_pressure_at(pressure_time)
+            if local_noon_pressure < 1e-6:
+                self.logger.warning(
+                    "The option `use_measured_pressure_for_pcxs` was set"
+                    "to True but an error occured when retrieving the "
+                    "pressure data. Set the value to the default-value.")
+                local_noon_pressure = "9999.99"
+        else:
+            local_noon_pressure = "9999.99"
+
         parameters = {
             "ALT": alt,
             "LAT": lat,
             "LON": lon,
+            "PRESSURE_LOCALNOON": local_noon_pressure,
             "DATAPATH": self.analysis_instrument_path,
             "DATE": local_date.strftime("%y%m%d"),
             "SITE": self.site_name,
@@ -885,10 +946,10 @@ class Preparation():
 
         Returns:
             parameters, skipped_spectra:
-                - parameters (list): Contains one or two dict objects, 
+                - parameters (list): Contains one or two dict objects,
                     depending if all spectra of the local date are stored in
                     the same YYMMDD folder.
-                - skipped_spectra (list): List containing all spectra skipped 
+                - skipped_spectra (list): List containing all spectra skipped
                     at this day, due to missing pressure values. This list is
                     provided by `get_sepctra_pT_input`.
         """
@@ -914,13 +975,13 @@ class Preparation():
         for sub_pT_input, spectrum, suffix \
                 in zip(spectra_pT_input, representative_spectra, charlist):
             times = self.get_times_of(spectrum)
+            spectra_path = self.get_spectra_path(spectrum)
             if len(sub_pT_input) == 0:
                 # occurs if no pressure was found for all spectra
                 temp_parameters = None
             else:
                 temp_parameters = {
-                    "DATAPATH": self.analysis_instrument_path,
-                    "MEASUREMENT_DATE": times["meas_time"].strftime("%y%m%d"),
+                    "SPECTRA_PATH": spectra_path,
                     "LOCAL_DATE": times["local_time"].strftime("%y%m%d"),
                     "SITE": self.site_name,
                     "SUFFIX": suffix,
@@ -928,6 +989,12 @@ class Preparation():
                 }
             parameters.append(temp_parameters)
         return parameters, skipped_spectra
+
+    def get_spectra_path(self, spectrum):
+        full_path = os.path.dirname(spectrum)
+        # remove "cal/BIN" part
+        spectra_path = os.path.dirname(full_path)
+        return spectra_path
 
     def get_spectra_pT_input(self, local_date):
         """Return invers formatted pT infos for given local date.
@@ -948,9 +1015,9 @@ class Preparation():
 
         Returns:
             spectra_pT_input (list), skipped_spectra (list):
-                - spectra_pT_input: List containing a list of strings with 
+                - spectra_pT_input: List containing a list of strings with
                     spectra and pT infos.
-                - skipped_spectra (list): List containing all spectra skipped 
+                - skipped_spectra (list): List containing all spectra skipped
                     at this day, due to missing pressure values.
         """
         # in case of two measurement days in a local date list, split them up:
@@ -973,10 +1040,10 @@ class Preparation():
             split_spectra_list = [spectra0]
         else:
             split_spectra_list = [spectra0, spectra1]
-        
+
         # create a list of all spectra skipped at this LOCAL day
         skipped_spectra = []
-        
+
         spectra_pT_input = []
         for sublist in split_spectra_list:
             temp_pT_input = []
@@ -1023,11 +1090,14 @@ class Preparation():
             ils_df = ils_df.loc[self.instrument_number]
         except KeyError:
             self.logger.critical(
-                f"{self.instrument_number} is not in ILS-file.\n"
-                "Please ensure you are using the newest version of "
-                "PROFFASTpylot.\n"
+                f"{self.instrument_number} is not in ILS-file. "
+                "Give the ILS-parameters in the proffastpylot input "
+                "file instead!"
                 )
-            sys.exit()
+            raise KeyError(
+                f"{self.instrument_number} is not in ILS-file. "
+                "Give the ILS-parameters in the proffastpylot input "
+                "file instead!")
         if isinstance(ils_df, pd.Series):
             # this is the case, if only one entry per instrument is available
             MEChan1 = ils_df['Channel1ME']
@@ -1127,6 +1197,34 @@ class Preparation():
                 True if map files were found and created
                 False if no files were found.
         """
+        if self.custom_mapfile is not None:
+            # custom map file can either be a path to a file
+            if os.path.isfile(self.custom_mapfile):
+                self.mapfile_format = "fixed_mapfile"
+                self.logger.warning(
+                    "A fixed map-file was given. This can give wrong results. "
+                    "Only use this option if you know what you are doing!")
+                return True
+            # or a format specifier:
+            else:
+                self.mapfile_format = "custom"
+                self.logger.warning(
+                    "A custom format for mapfiles was given. Using this "
+                    "setting will NOT produce validated COCCON results.")
+                srchstrg = local_date.strftime(self.custom_mapfile)
+                map_files = glob(os.path.join(self.map_path, srchstrg))
+                if len(map_files) > 1:
+                    self.logger.warning(
+                        "Too many map files were found. "
+                        f"Skip day {local_date}.")
+                    return False
+                elif len(map_files) < 1:
+                    self.logger.warning(
+                        f"No map file was found at {local_date}."
+                        " Skip this day!")
+                    return False
+                else:
+                    return True
         # search for GGG2020 map files:
         # This includes files produced by ginput as well as from a running
         # ggg2020 evaluation
@@ -1173,28 +1271,6 @@ class Preparation():
                 "The format of the mapfile was not determined."
                 )
 
-    def get_local_noon_utc(self, local_date):
-        """Return local noon in utc.
-
-        Local noon is referring to the 12:00 in the local time.
-        Daylight saving time is not considered for this transformation.
-
-        Parameters:
-            local_date (dt.datetime):
-                date in local time
-
-        Returns:
-            local_noon_utc: 12:00 in local time converted to UTC
-        """
-        local_noon = dt.datetime(
-            year=local_date.year,
-            month=local_date.month,
-            day=local_date.day, hour=12)
-        total_localtime_utc_offset = timedelta(
-            hours=(self.utc_offset + self._localtime_offset))
-        local_noon_utc = local_noon - total_localtime_utc_offset
-        return local_noon_utc
-
     def get_mapfiles(self, local_noon_utc):
         """Return mapfiles of date and following date of the local noon in UTC.
         """
@@ -1229,24 +1305,26 @@ class Preparation():
         Parameters:
             local_date (dt.datetime): datetime in local time
         """
-        local_noon_utc = self.get_local_noon_utc(local_date)
+        local_noon_utc = self.time_handler.get_local_noon_utc(local_date)
         mapfiles = self.get_mapfiles(local_noon_utc)
 
         # find the correct map files: before and after the hour of noon_utc
         i_noon = None  # local noon between i_noon and i_noon-1
         noon_hour = local_noon_utc.hour
+        noon_datehour = int(mapfiles[0][-11:-7]+'00') + noon_hour
         for i, file in enumerate(mapfiles):
-            hour_file = int(file[-7:-5])
-            if hour_file > noon_hour:
+            datehour_file = int(file[-11:-5])
+            if datehour_file > noon_datehour:
                 i_noon = i
                 break
         if i_noon in [None, 0]:
-            self.logger.critical(
+            errormessage = (
                 f"Could not calculate mapfile for {local_noon_utc} UTC "
                 "from the following files:\n"
                 f"{' '.join(mapfiles)}"
-                )
-            sys.exit()
+            )
+            self.logger.critical(errormessage)
+            raise RuntimeError(errormessage)
 
         file1 = pd.read_csv(
             mapfiles[i_noon-1],
@@ -1326,6 +1404,35 @@ class Preparation():
                 f"The Longitude of the map file ({lon_map}) "
                 f"Does not match the Latitude given to PROFFASTpylot ({lon})!")
 
+
+class TimeHandler():
+    def __init__(self, coords, utc_offset):
+        self.coords = coords
+        self.utc_offset = utc_offset
+        self._localtime_offset = self._get_localtime_offset()
+
+    def get_local_noon_utc(self, local_date):
+        """Return local noon in utc.
+
+        Local noon is referring to the 12:00 in the local time.
+        Daylight saving time is not considered for this transformation.
+
+        Parameters:
+            local_date (dt.datetime):
+                date in local time
+
+        Returns:
+            local_noon_utc: 12:00 in local time converted to UTC
+        """
+        local_noon = dt.datetime(
+            year=local_date.year,
+            month=local_date.month,
+            day=local_date.day, hour=12)
+        total_localtime_utc_offset = timedelta(
+            hours=(self.utc_offset + self._localtime_offset))
+        local_noon_utc = local_noon - total_localtime_utc_offset
+        return local_noon_utc
+
     def _get_localtime_offset(self):
         """Return offset between measurement time and local time.
 
@@ -1344,6 +1451,7 @@ class Preparation():
         localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
         localtime_offset = localtime_utc_offset - self.utc_offset
         return localtime_offset
+
 
 class PylotOnly(logging.Filter):
     """
