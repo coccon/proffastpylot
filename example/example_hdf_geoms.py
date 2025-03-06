@@ -1,6 +1,6 @@
-from prfpylot.geoms_gen.writer import GeomsGenWriter
+from prfpylot.output.hdf_geoms_writer import GeomsGenWriter
 
-geomsgen_inputfile = "input_sodankyla_geomsgen.yml"
+geomsgen_inputfile = "input_sodankyla_hdf_geoms.yml"
 print(geomsgen_inputfile)
 
 if __name__ == "__main__":

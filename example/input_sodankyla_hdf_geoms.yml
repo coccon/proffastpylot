@@ -1,7 +1,7 @@
 calibration_params_list: hdf_geoms_calibration_parameters.csv
 
 # output of the GEOMS-files:
-geoms_out_path: results_geoms
+geoms_out_path: output_hdf_geoms
 prf_res_path: results/Sodankyla_SN039_170608-170609
 
 

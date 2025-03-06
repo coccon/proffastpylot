@@ -275,13 +275,15 @@ class Preparation():
         self.raw_output_prf_folder = os.path.join(
             self.result_folder, "raw_output_proffast")
 
-        # calculate the _localtime_offset
-        self._localtime_offset = self._get_localtime_offset()
-
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
             self.pressure_type_file, self.pressure_path,
             self.meas_dates, self.logger, self.utc_offset)
+
+        self.time_handler = TimeHandler(
+            coords=self.coords, utc_offset=self.utc_offset)
+        # calculate the _localtime_offset
+        self._localtime_offset = self.time_handler._get_localtime_offset()
 
         # collect all generated input files to move in FileMover
         self.global_inputfile_list = []
@@ -868,7 +870,7 @@ class Preparation():
         alt = self.coords["alt"]
         # prepare map file path
         if self.mapfile_format == "ggg2020":
-            local_noon_utc = self.get_local_noon_utc(local_date)
+            local_noon_utc = self.time_handler.get_local_noon_utc(local_date)
             map_file = os.path.join(
                 self.result_folder,
                 "interpolated_mapfiles",
@@ -889,7 +891,7 @@ class Preparation():
         if self.use_measured_pressure_for_pcxs:
             # We want to use the local noon time for the calculation in
             # pcxs --> calculate the UTC time corresponding to local noon
-            utc_noon = self.get_local_noon_utc(local_date)
+            utc_noon = self.time_handler.get_local_noon_utc(local_date)
             # p-record can also have a time offset which is considered now:
             pressure_offset = timedelta(
                 hours=self.pressure_handler.utc_offset)
@@ -1269,28 +1271,6 @@ class Preparation():
                 "The format of the mapfile was not determined."
                 )
 
-    def get_local_noon_utc(self, local_date):
-        """Return local noon in utc.
-
-        Local noon is referring to the 12:00 in the local time.
-        Daylight saving time is not considered for this transformation.
-
-        Parameters:
-            local_date (dt.datetime):
-                date in local time
-
-        Returns:
-            local_noon_utc: 12:00 in local time converted to UTC
-        """
-        local_noon = dt.datetime(
-            year=local_date.year,
-            month=local_date.month,
-            day=local_date.day, hour=12)
-        total_localtime_utc_offset = timedelta(
-            hours=(self.utc_offset + self._localtime_offset))
-        local_noon_utc = local_noon - total_localtime_utc_offset
-        return local_noon_utc
-
     def get_mapfiles(self, local_noon_utc):
         """Return mapfiles of date and following date of the local noon in UTC.
         """
@@ -1325,7 +1305,7 @@ class Preparation():
         Parameters:
             local_date (dt.datetime): datetime in local time
         """
-        local_noon_utc = self.get_local_noon_utc(local_date)
+        local_noon_utc = self.time_handler.get_local_noon_utc(local_date)
         mapfiles = self.get_mapfiles(local_noon_utc)
 
         # find the correct map files: before and after the hour of noon_utc
@@ -1423,6 +1403,35 @@ class Preparation():
             self.logger.warning(
                 f"The Longitude of the map file ({lon_map}) "
                 f"Does not match the Latitude given to PROFFASTpylot ({lon})!")
+
+
+class TimeHandler():
+    def __init__(self, coords, utc_offset):
+        self.coords = coords
+        self.utc_offset = utc_offset
+        self._localtime_offset = self._get_localtime_offset()
+
+    def get_local_noon_utc(self, local_date):
+        """Return local noon in utc.
+
+        Local noon is referring to the 12:00 in the local time.
+        Daylight saving time is not considered for this transformation.
+
+        Parameters:
+            local_date (dt.datetime):
+                date in local time
+
+        Returns:
+            local_noon_utc: 12:00 in local time converted to UTC
+        """
+        local_noon = dt.datetime(
+            year=local_date.year,
+            month=local_date.month,
+            day=local_date.day, hour=12)
+        total_localtime_utc_offset = timedelta(
+            hours=(self.utc_offset + self._localtime_offset))
+        local_noon_utc = local_noon - total_localtime_utc_offset
+        return local_noon_utc
 
     def _get_localtime_offset(self):
         """Return offset between measurement time and local time.

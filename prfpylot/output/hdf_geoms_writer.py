@@ -1,4 +1,4 @@
-"""GeomsGenWriter is a module of PROFFASTpylot.
+"""hdf_geoms_writer is a module of PROFFASTpylot.
 
 Generate GEOMS HDF5 files.
 
@@ -30,7 +30,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 import glob
-from prfpylot.geoms_gen.helper import GeomsGenHelper
+from prfpylot.output.hdf_geoms_helper import GeomsGenHelper
 from prfpylot.prepare import Preparation
 
 
@@ -1589,8 +1589,13 @@ class GeomsGenWriter(GeomsGenHelper):
         return tuple(ils)
 
     def _get_ils_from_prf(self, local_date):
-        """Read ILS from the ILS list"""
+        """Read ILS from the ILS list. Return None if Ils file does not exist.
+        """
         ils_path = os.path.join(self.prf_res_path, "ils_list.csv")
+
+        if not os.path.exists(ils_path):
+            return None
+
         df_ils = pd.read_csv(ils_path).set_index("LocalDate")
 
         date_str = local_date.strftime("%Y-%m-%d")
@@ -1621,7 +1626,12 @@ class GeomsGenWriter(GeomsGenHelper):
             tuple (ME1, PE1, ME2, PE2)
         """
         ils_from_prf = self._get_ils_from_prf(local_date)
-        # TODO: implent function in run_invers to read ils from .bin files
+
+        if ils_from_prf is not None:  # preferred ils source (1.)
+            ils = ils_from_prf
+            return ils
+
+        # else, read ils from secondary sources and perform cross checks
         ils_from_prep = self._get_ils_form_preprocess_inp(local_date)
         if self.ils_file is not None:
             try:
@@ -1635,8 +1645,6 @@ class GeomsGenWriter(GeomsGenHelper):
         ils = None
         if ils_from_prep is not None:  # second best ils source (2.)
             ils = ils_from_prep
-        if ils_from_prf is not None:  # preferred ils source (1.)
-            ils = ils_from_prf
 
         # compare ils with ils from file
         if ils is not None and ils_from_file is not None:
