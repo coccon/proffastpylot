@@ -34,23 +34,100 @@ import copy
 class AuxiliaryHandler():
     """Parent class for reading, interpolating and averaging auxiliary data."""
 
+    mandatory_options = [
+        "dataframe_parameters",
+        "filename_parameters",
+        "data_parameters",
+    ]
+
+    default_options = {
+        "utc_offset": 0.0
+    }
+
+    parsed_dtcol = "parsed_datetime"
+
     def __init__(
             self,
             description_file,
             data_path,
             dates,
             logger):
-        pass
+
+        self.dates = self.get_date_list(dates)
+
+        self.logger = logger
+        self.data_path = data_path
+
+        with open(description_file, "r") as f:
+            args = yaml.load(f, Loader=yaml.FullLoader)
+        for option, value in args.items():
+            self.__dict__[option] = value
+
+        for option, default in self.default_options.items():
+            if self.__dict__.get(option) is None:
+                self.__dict__[option] = default
+                self.logger.debug(
+                    f"The parameter {option} was set to the default "
+                    f"value: {default}.")
+
+        for option in self.mandatory_options:
+            if self.__dict__.get(option) is None:
+                self.logger.critical(
+                    f"Mandatory parameter {option} not given in the "
+                    f"description file {description_file}!")
+                sys.exit()
+            else:
+                # fill defaults and check for missing values inside the dicts
+                self.__dict__[option] = self._set_defaults(option)
+        self._check_mandatory()
+
+        self.cols_to_use = []
+        for key in ["time_key", "date_key", "datetime_key"]:
+
+            val = self.dataframe_parameters[key]
+            if val != "":
+                self.cols_to_use.append(val)
+
+        # to ensure the date-columns are read in as string format
+        self.dataframe_parameters["csv_kwargs"] = \
+            self._append_dtype_to_csv_kwargs()
+
+    def get_date_list(self, dates):
+        """Return extended, sorted deepcopy of date_list."""
+
+        # make a deepcopy of the dates since we want to add one day at the end
+        # and the beginning of the list. And since lists are mutable in python
+        # therefore are kind of `called by reference`, it is necessary to
+        # explicitly deepcopy it here.
+        dates = copy.deepcopy(dates)
+        dates = self._extend_datelist(dates)
+        # delete the duplicate days:
+        dates = list(set(dates))
+        dates = sorted(dates)
+        return dates
 
     def create_df(self):
         """Read relevant files and return dataframe.
 
         This function was formerly called _read_subdaily_files()."""
 
-        df = pd.DataFrame()
-        file_list = self._get_file_list(self.dates)
+        # in case the date information is only given in the file name
+        datetime_key = self.dataframe_parameters["datetime_key"]
+        date_key = self.dataframe_parameters["date_key"]
+        if datetime_key == "" and date_key == "":
+            df = self.create_df_when_date_in_filename()
+            return df
 
-        # get all files of one day and concat them:
+        file_list = self._get_file_list(self.dates)
+        df = self.concat_files(file_list)
+        df = self._parse_datetime_col(df)
+        df = df.sort_values(self.parsed_dtcol).drop_duplicates()
+        df = df.reset_index(drop=True)
+        return df
+
+    def concat_files(self, file_list):
+        # read all files from list and concatenate them
+        df = pd.DataFrame()
         for file in file_list:
             self.logger.debug(f"Read in file {file}")
             temp = pd.read_csv(
@@ -58,15 +135,35 @@ class AuxiliaryHandler():
                 usecols=self.cols_to_use,  # todo
                 **(self.dataframe_parameters["csv_kwargs"]))
             df = pd.concat([df, temp])
+        return df
 
-        df = self._parse_datetime_col(df, day)
-        self.p_df = pd.concat([self.p_df, daily_df])
-        self.p_df.reset_index(drop=True, inplace=True)
+    def create_df_when_date_in_filename(self):
+        """Create dataframe in case the date information is only given in the file name."""
+        dataframes = []
+        for date in self.dates:
+            file_list = self._get_file_list([date])
+            if len(file_list) == 0:
+                self.logger.warning(
+                    "No pressure file could be found "
+                    f"at {date.strftime('%Y-%m-%d')}")
+            tmp = self.concat_files(file_list)
+            tmp = self._parse_datetime_col(tmp, date)
+            dataframes.append(tmp)
+        df = pd.concat(dataframes)
+        df = df.sort_values(self.parsed_dtcol).drop_duplicates()
+        df = df.reset_index(drop=True)
+        return df
 
     def _extend_datelist(self, dates):
         """Add additional day before and after time range.
         To prevent time zone issues."""
-        pass
+
+        previous_day = dates[0] - dt.timedelta(days=1)
+        dates.append(previous_day)
+        next_day = dates[-1] + dt.timedelta(days=1)
+        dates.append(next_day)
+
+        return dates
 
     def _get_file_list(self, dates):
         """Return merged filename of pressure_type."""
@@ -78,17 +175,19 @@ class AuxiliaryHandler():
                         date.strftime(params["time_format"]),
                         params["ending"]]
                 )
-            tmp_file_list = glob.glob(filename)
+            path = os.path.join(
+                self.data_path, filename)
+            tmp_file_list = glob.glob(path)
             file_list.extend(tmp_file_list)
 
         # remove duplicates
         file_list = list(set(file_list))
 
         # warning in case of empty file list
-        if len(file_list) == 0:
-            # no pressure file is available for this day!
+        if len(dates) > 1 and len(file_list) == 0:
+            # no pressure file is available
             self.logger.warning(
-                f"No pressure file could be found.")
+                "No pressure file could be found.")
         return file_list
 
     def _parse_datetime_col(self, df, date=None):
@@ -293,13 +392,6 @@ class CoordHandler(AuxiliaryHandler):
 class PressureHandler(AuxiliaryHandler):
     """Read, interpolate and return pressure data from various formats."""
 
-    mandatory_options = [
-        "dataframe_parameters",
-        "filename_parameters",
-        "data_parameters",
-        "frequency"
-    ]
-
     default_options = {
         "utc_offset": 0.0,
         "pressure_factor": 1.0,
@@ -324,77 +416,19 @@ class PressureHandler(AuxiliaryHandler):
                                                 as generated by the
                                                 PROFFASTpylot
         """
-        # make a deepcopy of the dates since we want to add one day at the end
-        # and the beginning of the list. And since lists are mutable in python
-        # therefore are kind of `called by reference`, it is necessary to
-        # explicitly deepcopy it here.
-        self.dates = copy.deepcopy(dates)
-        self.logger = logger
-        self.pressure_path = pressure_path
+        super().__init__(
+            description_file=pressure_type_file,
+            data_path=pressure_path,
+            dates=dates,
+            logger=logger,
+            )
 
         self.interpolation_failed_at = []
-
-        with open(pressure_type_file, "r") as f:
-            args = yaml.load(f, Loader=yaml.FullLoader)
-        for option, value in args.items():
-            self.__dict__[option] = value
-
-        for option, default in self.default_options.items():
-            if self.__dict__.get(option) is None:
-                self.__dict__[option] = default
-                self.logger.debug(
-                    f"The pressure parameter {option} was set to the default "
-                    f"value: {default}.")
-
-        for option in self.mandatory_options:
-            if self.__dict__.get(option) is None:
-                self.logger.critical(
-                    f"Mandatory pressure parameter {option} not given in the "
-                    f"pressure type file {pressure_type_file}!")
-                sys.exit()
-            else:
-                # fill defaults and check for missing values inside the dicts
-                self.__dict__[option] = self._set_defaults(option)
-        self._check_mandatory()
 
         # For a later read in of the pressure data frame it makes sense to only
         # read in the columns needed. In case of large meteo files, this can
         # save a lot of RAM and processing time.
-        self.cols_to_use = []
-        for key in ["pressure_key", "time_key", "date_key", "datetime_key"]:
-            val = self.dataframe_parameters[key]
-            if val != "":
-                self.cols_to_use.append(val)
-
-        # to ensure the date-columns are read in as string format
-        self.dataframe_parameters["csv_kwargs"] = \
-            self._append_dtype_to_csv_kwargs()
-
-        # When the pressure data is recorded using a different time zone, than
-        # the FTIR data, this can lead to gaps in the data. Hence convert the
-        # date list to a datelist which matches with the pressure data
-        # time zone.
-        if abs(measurement_time - self.utc_offset) > 4:
-            temp = self.dates.copy()
-            for date in temp:
-                # measurement_time = UTC + UTC_offset_measurement
-                # p_time = UTC + UTC_offset_p
-                # Hence, if measurement_time > UTC_offset_p then we also need
-                # to load the date BEFORE the current pressure date:
-                if measurement_time > self.utc_offset:
-                    previous_day = date - dt.timedelta(days=1)
-                    self.dates.append(previous_day)
-                # when the measurement_time < UTC_offset_p then we also need
-                # to load the date AFTER the current pressure date
-                else:
-                    next_day = date + dt.timedelta(days=1)
-                    self.dates.append(next_day)
-            # delete the duplicate days:
-            self.dates = list(set(self.dates))
-            self.dates.sort()
-        self.logger.debug(
-            "Dates to load pressure files for:"
-            "\n".join([x.strftime("%Y-%m-%d") for x in self.dates]))
+        self.cols_to_use.append(self.dataframe_parameters["pressure_key"])
 
         self.p_df = pd.DataFrame()
 
@@ -409,30 +443,10 @@ class PressureHandler(AuxiliaryHandler):
 
         """
         self.logger.debug("Execute prepare_pressure_df()...")
-        frequency = self.frequency
 
-        # Create the p_df for different file frequencies
-        if frequency in ["subdaily", "daily"]:
-            self._read_subdaily_files()
-        elif frequency == "yearly":
-            self._read_yearly_files()
-        elif frequency == "unregular":
-            self._read_unregular_files()
-        elif frequency in ["monthly", "weekly"]:
-            self.logger.warning(
-                "Please use 'unregular' frequency."
-                " weekly and monthly are not yet implemented seperately.")
-            self._read_unregular_files()
-        else:
-            raise ValueError(f"Unknown frequency {frequency}.")
-
+        self.p_df = self.create_df()
+        self._filter_pressure()
         self._apply_pressure_offset_and_factor()
-
-        # sort values (needed for correct interpolation)
-        self.p_df.sort_values(self.parsed_dtcol)
-
-        # Reset index to let in be unique
-        self.p_df.reset_index(drop=True, inplace=True)
 
         # print df.head for debug purposes
         df_args = self.dataframe_parameters
@@ -486,89 +500,7 @@ class PressureHandler(AuxiliaryHandler):
 
         return p
 
-    def _read_subdaily_files(self):
-        """Reads the subdaily AND daily files into the internal p_df
-        """
-        for day in self.dates:
-
-            daily_df = pd.DataFrame()
-            filename = self._get_filename(day)
-            file_list = glob.glob(
-                os.path.join(self.pressure_path, filename))
-            # print("Files to read in: ", dataloggerFileList)
-            if len(file_list) == 0:
-                # no pressure file is available for this day!
-                self.logger.warning(
-                    f"No pressure file could be found at day {day}.")
-            else:
-                # get all files of one day and concat them:
-                file_list.sort()
-                for file in file_list:
-                    self.logger.debug(f"Read in file {file}")
-                    temp = pd.read_csv(
-                        file,
-                        usecols=self.cols_to_use,
-                        **(self.dataframe_parameters["csv_kwargs"]))
-                    daily_df = pd.concat([daily_df, temp])
-
-            daily_df = self._parse_datetime_col(daily_df, day)
-            self.p_df = pd.concat([self.p_df, daily_df])
-        self.p_df.reset_index(drop=True, inplace=True)
-        self._parse_pressure()
-
-    def _read_yearly_files(self):
-        """read yearly files and return a dict containing the pressure
-        for each day in dates
-        """
-        first_year = self.dates[0].year
-        last_year = self.dates[-1].year
-        if first_year == last_year:
-            years = [first_year]
-        else:
-            years = np.arange(first_year, last_year + 1)
-        # read in all needed years:
-        df = pd.DataFrame()
-        for year in years:
-            filename = self._get_filename(
-                dt.datetime(year=year, month=1, day=1))
-            fileList = glob.glob(
-                os.path.join(self.pressure_path, filename))
-            if len(fileList) > 1:
-                raise RuntimeError("Found more than one yearly pressure file")
-            if len(fileList) == 0:
-                raise RuntimeError("Could not find a pressure file")
-            temp = pd.read_csv(
-                fileList[0],
-                usecols=self.cols_to_use,
-                **(self.dataframe_parameters["csv_kwargs"]))
-            df = pd.concat([df, temp])
-        df = self._parse_datetime_col(df)
-        self.p_df = df
-        self._parse_pressure()
-
-    def _read_unregular_files(self):
-        """read unregular files. Save the result in self.p_df DataFrame"""
-        params = self.filename_parameters
-        filename = "".join([params["basename"], "*", params["ending"]])
-        file_list = glob.glob(os.path.join(self.pressure_path, filename))
-
-        df = pd.DataFrame()
-        if len(file_list) == 0:
-            self.logger.critical(
-                f"No pressure data could be found in {self.presure_path}! "
-                "Terminating PROFFASTpylot.")
-            exit()
-        for file in file_list:
-            temp = pd.read_csv(
-                file,
-                usecols=self.cols_to_use,
-                **(self.dataframe_parameters["csv_kwargs"]))
-            df = pd.concat([df, temp])
-        df = self._parse_datetime_col(df)
-        self.p_df = df
-        self._parse_pressure()
-
-    def _parse_pressure(self, date=None):
+    def _filter_pressure(self, date=None):
         """
         Parse the internal raw p_df and eliminate bad values
         """
