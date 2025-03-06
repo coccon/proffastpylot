@@ -6,7 +6,7 @@ data formats.
 License information:
 PROFFASTpylot - Running PROFFAST with Python
 Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
-                        Karlsruhe Institut of Technology (KIT)
+                        Karlsruhe Institute of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 3 as published by
@@ -31,7 +31,116 @@ import yaml
 import copy
 
 
-class PressureHandler():
+class AuxiliaryHandler():
+    """Parent class for reading, interpolating and averaging auxiliary data."""
+
+    def __init__(
+            self,
+            description_file,
+            data_path,
+            logger):
+        pass
+
+    def create_df(self):
+        """Read relevant files and return dataframe."""
+        pass
+
+    def _parse_datetime_col(self, df, date=None):
+        """Parse the dataframe for a suitable datetime.
+
+        Add the column 'parsed_datecol' to the dataframe
+        Depending on the options given, the datetime column is constructed f
+        rom the combination of the separate time and date columns.
+
+        Parameters:
+            df (pandas.DataFrame): pressure dataframe containing time
+                information in arbitrary format.
+
+        Returns:
+            df (pandas.DataFrame): with an additional datetime column.
+
+        """
+        # give warning if an empty df is read in and this is not the first
+        # or the last day of the list
+        # (since these are only to catch dateline issues)
+        if len(df) == 0:
+            if not (date == self.dates[0] or date == self.dates[-1]):
+                self.logger.warning(
+                    f"For date {date} an empty dataset is read in!")
+                return df
+            else:
+                return df
+        df_args = self.dataframe_parameters
+        time_key = df_args["time_key"]
+        time_fmt = df_args["time_fmt"]
+        date_key = df_args["date_key"]
+        date_fmt = df_args["date_fmt"]
+        dt_key = df_args["datetime_key"]
+        dt_fmt = df_args["datetime_fmt"]
+
+        if dt_key == "":
+            # no datetime column available, check for date column:
+            if date_key == "":
+                # no date key avaliable as well. Do only take the time from
+                # file.
+                # day is taken from call day
+                try:
+                    df[self.parsed_dtcol] = pd.to_datetime(
+                        df[time_key], format=time_fmt)
+                except KeyError:
+                    self.logger.critical(
+                        f"Could not access key {time_key} in pressure data."
+                        "Exit Program.")
+                    exit()
+
+                df[self.parsed_dtcol] = df[self.parsed_dtcol].apply(
+                    lambda x: x.replace(
+                        day=date.day, month=date.month, year=date.year))
+            else:
+                # combine two columns to datetime
+                try:
+                    df[self.parsed_dtcol] = pd.to_datetime(
+                        df[date_key] + df[time_key],
+                        format=date_fmt+time_fmt)
+                except KeyError:
+                    self.logger.critical(
+                        f"Could not find key {date_key} or {time_key} in "
+                        f"pressure data for date {date}. Exit Program.")
+                    self.logger.debug(f"The dataframe is: {df}")
+                    exit()
+        else:
+            # seems that a datetime column is available:
+            try:
+                if dt_fmt == "POSIX-timestamp":
+                    df[self.parsed_dtcol] = df[dt_key].apply(
+                        lambda x: dt.datetime.utcfromtimestamp(np.float64(x)))
+                else:
+                    df[self.parsed_dtcol] = pd.to_datetime(
+                        df[dt_key], format=dt_fmt)
+            except KeyError:
+                self.logger.critical(
+                    f"Could not find key {dt_key} in pressure data."
+                    f"Pressure data are:\n{df}\n."
+                    f"Pressure folder is: {self.pressure_path}\n"
+                    "Exit Program.")
+                exit()
+
+        return df
+
+
+class CoordHandler(AuxiliaryHandler):
+    """Organize variable coordinates from a file for a moving observer"""
+    def __init__(
+            self):
+        super().__init__()
+        pass
+
+    def get_coords_at(self, utc_time):
+        """Return coordinates at given utc time."""
+        pass
+
+
+class PressureHandler(AuxiliaryHandler):
     """Read, interpolate and return pressure data from various formats."""
 
     mandatory_options = [
@@ -72,7 +181,7 @@ class PressureHandler():
         self.dates = copy.deepcopy(dates)
         self.logger = logger
         self.pressure_path = pressure_path
-        
+
         self.interpolation_failed_at = []
 
         with open(pressure_type_file, "r") as f:
@@ -335,88 +444,6 @@ class PressureHandler():
         pressure_key = self.dataframe_parameters["pressure_key"]
         self.p_df[pressure_key] *= self.pressure_factor
         self.p_df[pressure_key] += self.pressure_offset
-
-    def _parse_datetime_col(self, df, date=None):
-        """Parse the dataframe for a suitable datetime.
-
-        Add the column 'parsed_datecol' to the dataframe
-        Depending on the options given, the datetime column is constructed f
-        rom the combination of the separate time and date columns.
-
-        Parameters:
-            df (pandas.DataFrame): pressure dataframe containing time 
-                information in arbitrary format.
-
-        Returns:
-            df (pandas.DataFrame): with an additional datetime column.
-
-        """
-        # give warning if an empty df is read in and this is not the first
-        # or the last day of the list
-        # (since these are only to catch dateline issues)
-        if len(df) == 0:
-            if not (date == self.dates[0] or date == self.dates[-1]):
-                self.logger.warning(
-                    f"For date {date} an empty dataset is read in!")
-                return df
-            else:
-                return df
-        df_args = self.dataframe_parameters
-        time_key = df_args["time_key"]
-        time_fmt = df_args["time_fmt"]
-        date_key = df_args["date_key"]
-        date_fmt = df_args["date_fmt"]
-        dt_key = df_args["datetime_key"]
-        dt_fmt = df_args["datetime_fmt"]
-
-        if dt_key == "":
-            # no datetime column available, check for date column:
-            if date_key == "":
-                # no date key avaliable as well. Do only take the time from
-                # file.
-                # day is taken from call day
-                try:
-                    df[self.parsed_dtcol] = pd.to_datetime(
-                        df[time_key], format=time_fmt)
-                except KeyError:
-                    self.logger.critical(
-                        f"Could not access key {time_key} in pressure data."
-                        "Exit Program.")
-                    exit()
-
-                df[self.parsed_dtcol] = df[self.parsed_dtcol].apply(
-                    lambda x: x.replace(
-                        day=date.day, month=date.month, year=date.year))
-            else:
-                # combine two columns to datetime
-                try:
-                    df[self.parsed_dtcol] = pd.to_datetime(
-                        df[date_key] + df[time_key],
-                        format=date_fmt+time_fmt)
-                except KeyError:
-                    self.logger.critical(
-                        f"Could not find key {date_key} or {time_key} in "
-                        f"pressure data for date {date}. Exit Program.")
-                    self.logger.debug(f"The dataframe is: {df}")
-                    exit()
-        else:
-            # seems that a datetime column is available:
-            try:
-                if dt_fmt == "POSIX-timestamp":
-                    df[self.parsed_dtcol] = df[dt_key].apply(
-                        lambda x: dt.datetime.utcfromtimestamp(np.float64(x)))
-                else:
-                    df[self.parsed_dtcol] = pd.to_datetime(
-                        df[dt_key], format=dt_fmt)
-            except KeyError:
-                self.logger.critical(
-                    f"Could not find key {dt_key} in pressure data."
-                    f"Pressure data are:\n{df}\n."
-                    f"Pressure folder is: {self.pressure_path}\n"
-                    "Exit Program.")
-                exit()
-
-        return df
 
     def _get_filename(self, date):
         """Return merged filename of pressure_type."""
