@@ -38,12 +38,58 @@ class AuxiliaryHandler():
             self,
             description_file,
             data_path,
+            dates,
             logger):
         pass
 
     def create_df(self):
-        """Read relevant files and return dataframe."""
+        """Read relevant files and return dataframe.
+
+        This function was formerly called _read_subdaily_files()."""
+
+        df = pd.DataFrame()
+        file_list = self._get_file_list(self.dates)
+
+        # get all files of one day and concat them:
+        for file in file_list:
+            self.logger.debug(f"Read in file {file}")
+            temp = pd.read_csv(
+                file,
+                usecols=self.cols_to_use,  # todo
+                **(self.dataframe_parameters["csv_kwargs"]))
+            df = pd.concat([df, temp])
+
+        df = self._parse_datetime_col(df, day)
+        self.p_df = pd.concat([self.p_df, daily_df])
+        self.p_df.reset_index(drop=True, inplace=True)
+
+    def _extend_datelist(self, dates):
+        """Add additional day before and after time range.
+        To prevent time zone issues."""
         pass
+
+    def _get_file_list(self, dates):
+        """Return merged filename of pressure_type."""
+        params = self.filename_parameters
+        file_list = []
+        for date in dates:
+            filename = "".join(
+                    [params["basename"],
+                        date.strftime(params["time_format"]),
+                        params["ending"]]
+                )
+            tmp_file_list = glob.glob(filename)
+            file_list.extend(tmp_file_list)
+
+        # remove duplicates
+        file_list = list(set(file_list))
+
+        # warning in case of empty file list
+        if len(file_list) == 0:
+            # no pressure file is available for this day!
+            self.logger.warning(
+                f"No pressure file could be found.")
+        return file_list
 
     def _parse_datetime_col(self, df, date=None):
         """Parse the dataframe for a suitable datetime.
@@ -63,13 +109,13 @@ class AuxiliaryHandler():
         # give warning if an empty df is read in and this is not the first
         # or the last day of the list
         # (since these are only to catch dateline issues)
-        if len(df) == 0:
-            if not (date == self.dates[0] or date == self.dates[-1]):
-                self.logger.warning(
-                    f"For date {date} an empty dataset is read in!")
-                return df
-            else:
-                return df
+        # if len(df) == 0:
+        #     if not (date == self.dates[0] or date == self.dates[-1]):
+        #         self.logger.warning(
+        #             f"For date {date} an empty dataset is read in!")
+        #         return df
+        #     else:
+        #         return df
         df_args = self.dataframe_parameters
         time_key = df_args["time_key"]
         time_fmt = df_args["time_fmt"]
@@ -126,6 +172,110 @@ class AuxiliaryHandler():
                 exit()
 
         return df
+
+    def _set_defaults(self, option):
+        """Set defaults in dataframe, filename and data parameters dict.
+        Check for mandatory options.
+
+        Parameters:
+            option (str): "dataframe_parameters", "filename_parameters"
+                or "data_parameters"
+
+        Return:
+            modified dict
+        """
+        defaults = {}
+        defaults["data_parameters"] = {
+            "max_pressure": 1500,
+            "min_pressure": 500,
+            "default_value": "skip"
+        }
+        defaults["dataframe_parameters"] = {
+            "pressure_key": "",
+            "time_key": "",
+            "time_fmt": "",
+            "date_key": "",
+            "date_fmt": "",
+            "datetime_key": "",
+            "datetime_fmt": "",
+            "csv_kwargs": {},
+        }
+        defaults["filename_parameters"] = {
+            "basename": "",
+            "time_format": "",
+            "ending": ""
+        }
+
+        d = self.__dict__[option]
+        if option not in defaults.keys():
+            return d
+        for k, v in defaults[option].items():
+            if d.get(k) is None:
+                d[k] = v
+                self.logger.debug(
+                    f"The pressure parameter {option}:{k} was set to "
+                    f"default value: {v}.")
+        return d
+
+    def _check_mandatory(self):
+        """Check mandatory options for completeness.
+
+        The options must satisfy the following:
+        - A pressure key is given,
+        - the time key XOR datetime key is given and
+        - the filename is not empty.
+
+        Raises:
+            RuntimeError: in case of a missing option.
+
+        """
+        # pressure key are given
+        pressure_key = self.dataframe_parameters.get("pressure_key")
+        if pressure_key == "":
+            raise RuntimeError(
+                "The key of the pressure column in the pressure file must be "
+                "given as dataframe_parameters: pressure_key")
+
+        # time or datetime key
+        time_key = self.dataframe_parameters.get("time_key")
+        datetime_key = self.dataframe_parameters.get("datetime_key")
+        general_instruction = (
+            " Give either the time_key or the datetime_key in "
+            "dataframe_parameters!")
+        if (time_key == "") and (datetime_key == ""):
+            raise RuntimeError(
+                "None of time_key and datetime_key are given!"
+                + general_instruction)
+        elif (time_key != "") and (datetime_key != ""):
+            raise RuntimeError(
+                "time_key and datetime_key can not be given at the same time!"
+                + general_instruction)
+
+        # filename not empty
+        joined_filename = "".join([
+            self.filename_parameters["basename"],
+            self.filename_parameters["time_format"],
+            self.filename_parameters["ending"]
+        ])
+        if joined_filename == "":
+            raise RuntimeError(
+                "No filename is given! Give the start, time format (optional) "
+                "and ending of your filename as filename_parameters: "
+                "basename, time_format and ending.")
+
+    def _append_dtype_to_csv_kwargs(self):
+        """Return extended csv_kwargs to make sure the date and time column
+        are interpreted as string."""
+        csv_kwargs = self.dataframe_parameters["csv_kwargs"]
+        dtype = {
+            self.dataframe_parameters["date_key"]: str,
+            self.dataframe_parameters["time_key"]: str,
+            self.dataframe_parameters["datetime_key"]: str,
+        }
+        dtype.pop("", None)  # remove default empty string
+
+        csv_kwargs["dtype"] = dtype
+        return csv_kwargs
 
 
 class CoordHandler(AuxiliaryHandler):
@@ -444,117 +594,3 @@ class PressureHandler(AuxiliaryHandler):
         pressure_key = self.dataframe_parameters["pressure_key"]
         self.p_df[pressure_key] *= self.pressure_factor
         self.p_df[pressure_key] += self.pressure_offset
-
-    def _get_filename(self, date):
-        """Return merged filename of pressure_type."""
-        params = self.filename_parameters
-        filename = "".join(
-                [params["basename"],
-                    date.strftime(params["time_format"]),
-                    params["ending"]]
-            )
-        return filename
-
-    def _set_defaults(self, option):
-        """Set defaults in dataframe, filename and data parameters dict.
-        Check for mandatory options.
-
-        Parameters:
-            option (str): "dataframe_parameters", "filename_parameters"
-                or "data_parameters"
-
-        Return:
-            modified dict
-        """
-        defaults = {}
-        defaults["data_parameters"] = {
-            "max_pressure": 1500,
-            "min_pressure": 500,
-            "default_value": "skip"
-        }
-        defaults["dataframe_parameters"] = {
-            "pressure_key": "",
-            "time_key": "",
-            "time_fmt": "",
-            "date_key": "",
-            "date_fmt": "",
-            "datetime_key": "",
-            "datetime_fmt": "",
-            "csv_kwargs": {},
-        }
-        defaults["filename_parameters"] = {
-            "basename": "",
-            "time_format": "",
-            "ending": ""
-        }
-
-        d = self.__dict__[option]
-        if option not in defaults.keys():
-            return d
-        for k, v in defaults[option].items():
-            if d.get(k) is None:
-                d[k] = v
-                self.logger.debug(
-                    f"The pressure parameter {option}:{k} was set to "
-                    f"default value: {v}.")
-        return d
-
-    def _check_mandatory(self):
-        """Check mandatory options for completeness.
-
-        The options must satisfy the following:
-        - A pressure key is given,
-        - the time key XOR datetime key is given and
-        - the filename is not empty.
-
-        Raises:
-            RuntimeError: in case of a missing option.
-
-        """
-        # pressure key are given
-        pressure_key = self.dataframe_parameters.get("pressure_key")
-        if pressure_key == "":
-            raise RuntimeError(
-                "The key of the pressure column in the pressure file must be "
-                "given as dataframe_parameters: pressure_key")
-
-        # time or datetime key
-        time_key = self.dataframe_parameters.get("time_key")
-        datetime_key = self.dataframe_parameters.get("datetime_key")
-        general_instruction = (
-            " Give either the time_key or the datetime_key in "
-            "dataframe_parameters!")
-        if (time_key == "") and (datetime_key == ""):
-            raise RuntimeError(
-                "None of time_key and datetime_key are given!"
-                + general_instruction)
-        elif (time_key != "") and (datetime_key != ""):
-            raise RuntimeError(
-                "time_key and datetime_key can not be given at the same time!"
-                + general_instruction)
-
-        # filename not empty
-        joined_filename = "".join([
-            self.filename_parameters["basename"],
-            self.filename_parameters["time_format"],
-            self.filename_parameters["ending"]
-        ])
-        if joined_filename == "":
-            raise RuntimeError(
-                "No filename is given! Give the start, time format (optional) "
-                "and ending of your filename as filename_parameters: "
-                "basename, time_format and ending.")
-
-    def _append_dtype_to_csv_kwargs(self):
-        """Return extended csv_kwargs to make sure the date and time column
-        are interpreted as string."""
-        csv_kwargs = self.dataframe_parameters["csv_kwargs"]
-        dtype = {
-            self.dataframe_parameters["date_key"]: str,
-            self.dataframe_parameters["time_key"]: str,
-            self.dataframe_parameters["datetime_key"]: str,
-        }
-        dtype.pop("", None)  # remove default empty string
-
-        csv_kwargs["dtype"] = dtype
-        return csv_kwargs
