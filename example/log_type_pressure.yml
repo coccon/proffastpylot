@@ -52,15 +52,3 @@ pressure_factor: 1.0
 # The pressure offset is added to the read in pressure values.
 # This can be used to correct for a constant offset.
 pressure_offset: 0.0
-
-# Frequency of pressure files. Options are 
-# - subdaily: Several files per day
-# - daily: One single file per day
-# - weekly: One single file per Week
-# - monthly: One single file per month
-# - yearly: One single file per year
-# - unregular: Unregular spaced files.
-#              Please note: Algorithm is not very stable. It does not take into
-#                           account any datetime but only the basename and
-#                           ending.
-frequency: "subdaily"

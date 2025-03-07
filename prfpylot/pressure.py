@@ -138,7 +138,8 @@ class AuxiliaryHandler():
         return df
 
     def create_df_when_date_in_filename(self):
-        """Create dataframe in case the date information is only given in the file name."""
+        """Create dataframe if date information is only given in the file name.
+        """
         dataframes = []
         for date in self.dates:
             file_list = self._get_file_list([date])
@@ -153,6 +154,54 @@ class AuxiliaryHandler():
         df = df.sort_values(self.parsed_dtcol).drop_duplicates()
         df = df.reset_index(drop=True)
         return df
+
+    def get_frequency(self, df):
+        differences = df[self.parsed_dtcol].diff().dropna()
+        frequency = differences.median()
+        return frequency
+
+    def interpolate_data_at(self, df, utc_time, data_key):
+        """Return interpolated value for given date_key and time stamp.
+
+        If time difference greater than threshhold, return 0.
+        """
+        time_key = self.parsed_dtcol
+
+        if self._is_below_threshhold(df, utc_time) is False:
+            return 0
+
+        interpolated = np.interp(
+            np.datetime64(utc_time, "ns"),
+            df[time_key].astype("datetime64[ns]"),
+            df[data_key].values)
+
+        return interpolated
+
+    def _is_below_threshhold(self, df, utc_time):
+        """Reject if time difference to closed value is greater than threshhold.
+
+        Get the two closest entries by calculating differences to current value
+        Return False if distance greater, than threshhold, and else True.
+        """
+        time_key = self.parsed_dtcol
+
+        diff = \
+            (df[time_key] - utc_time).dt.total_seconds()
+        diff = abs(diff).sort_values()
+        i_nearest = diff.index[0]  # sort the two nearest to the top
+
+        t_nearest = df.loc[i_nearest][time_key]
+        threshold = self.max_interpolation_time * 3600
+
+        if abs((t_nearest - utc_time).total_seconds()) > threshold:
+            self.logger.debug(
+                f"Interpolation time for requested time {utc_time} "
+                "was larger than the threshold. Will skip the processing "
+                "of the spectra corresponding to this time. "
+                "(See next message!)")
+            return False
+        else:
+            return True
 
     def _extend_datelist(self, dates):
         """Add additional day before and after time range.
@@ -266,10 +315,14 @@ class AuxiliaryHandler():
                 self.logger.critical(
                     f"Could not find key {dt_key} in pressure data."
                     f"Pressure data are:\n{df}\n."
-                    f"Pressure folder is: {self.pressure_path}\n"
+                    f"Pressure folder is: {self.data_path}\n"
                     "Exit Program.")
                 exit()
 
+        # remove time zone information
+        df[self.parsed_dtcol] = df[self.parsed_dtcol].dt.tz_localize(None)
+
+        # TODO convert to UTC
         return df
 
     def _set_defaults(self, option):
@@ -320,7 +373,6 @@ class AuxiliaryHandler():
         """Check mandatory options for completeness.
 
         The options must satisfy the following:
-        - A pressure key is given,
         - the time key XOR datetime key is given and
         - the filename is not empty.
 
@@ -328,12 +380,6 @@ class AuxiliaryHandler():
             RuntimeError: in case of a missing option.
 
         """
-        # pressure key are given
-        pressure_key = self.dataframe_parameters.get("pressure_key")
-        if pressure_key == "":
-            raise RuntimeError(
-                "The key of the pressure column in the pressure file must be "
-                "given as dataframe_parameters: pressure_key")
 
         # time or datetime key
         time_key = self.dataframe_parameters.get("time_key")
@@ -379,14 +425,70 @@ class AuxiliaryHandler():
 
 class CoordHandler(AuxiliaryHandler):
     """Organize variable coordinates from a file for a moving observer"""
+
+    default_options = {
+        "utc_offset": 0.0,
+        "altitude_factor": 1.0,
+        "data_parameters": {},
+        "max_interpolation_time": 0.167,  # 10 min in hours
+    }
+
     def __init__(
-            self):
-        super().__init__()
-        pass
+            self, coord_type_file, coord_path, dates, logger):
+        super().__init__(
+            description_file=coord_type_file,
+            data_path=coord_path,
+            dates=dates,
+            logger=logger,
+            )
+        for key in ["latitude_key", "longitude_key", "altitude_key"]:
+            self.cols_to_use.append(
+                self.dataframe_parameters[key])
+
+    def prepare_coord_df(self):
+        df = self.create_df()
+        self.coord_df = df
 
     def get_coords_at(self, utc_time):
         """Return coordinates at given utc time."""
-        pass
+        coords = []
+        frequency = self.get_frequency(self.coord_df)
+        if frequency >= pd.Timedelta("30s"):
+            coords = self.interpolate_coords(utc_time)
+        else:
+            coords = self.average_coords(utc_time)
+
+        return coords
+
+    def interpolate_coords(self, utc_time):
+        coords = []
+        for coord_name in ["latitude", "longitude", "altitude"]:
+            data_key = self.dataframe_parameters[coord_name+"_key"]
+            coord_value = self.interpolate_data_at(
+                self.coord_df, utc_time, data_key)
+            coords.append(coord_value)
+        return coords
+
+    def average_coords(self, utc_time):
+        # TODO: what happens if slice is empty?
+        coords = []
+        df = self._get_timeslice(utc_time)
+        if len(df) == 0:
+            return None
+        for coord_name in ["latitude", "longitude", "altitude"]:
+            data_key = self.dataframe_parameters[coord_name+"_key"]
+            coord_value = df[data_key].mean()
+            coords.append(coord_value)
+        return coords
+
+    def _get_timeslice(self, utc_time):
+        # TODO: does the utc_time refer to the beginning?
+        time_slice = slice(
+            utc_time,
+            utc_time + pd.Timedelta("60s")
+            )
+        df = self.coord_df.set_index(self.parsed_dtcol)
+        return df[time_slice]
 
 
 class PressureHandler(AuxiliaryHandler):
@@ -425,6 +527,13 @@ class PressureHandler(AuxiliaryHandler):
 
         self.interpolation_failed_at = []
 
+        # check if pressure key is given
+        pressure_key = self.dataframe_parameters.get("pressure_key")
+        if pressure_key == "":
+            raise RuntimeError(
+                "The key of the pressure column in the pressure file must be "
+                "given as dataframe_parameters: pressure_key")
+
         # For a later read in of the pressure data frame it makes sense to only
         # read in the columns needed. In case of large meteo files, this can
         # save a lot of RAM and processing time.
@@ -447,6 +556,7 @@ class PressureHandler(AuxiliaryHandler):
         self.p_df = self.create_df()
         self._filter_pressure()
         self._apply_pressure_offset_and_factor()
+        self._check_frequency()
 
         # print df.head for debug purposes
         df_args = self.dataframe_parameters
@@ -458,7 +568,7 @@ class PressureHandler(AuxiliaryHandler):
             f"{df_print.head()}\n"
             )
 
-    def get_pressure_at(self, pressure_time):
+    def get_pressure_at(self, utc_time):
         """Return the interpolated pressure at a given time.
 
         If the value is rejected or an interpolation error occured p=0
@@ -472,33 +582,20 @@ class PressureHandler(AuxiliaryHandler):
             pressure_time (datetime:datetime):
                 time in timezone of the pressure file
         """
-        tkey = self.parsed_dtcol
-        pkey = self.dataframe_parameters["pressure_key"]
-
-        # reject if time difference to closed value is greater than threshhold
-        # get the two closest entry by calculating differences to current value
-        diff = \
-            (self.p_df[tkey] - pressure_time).dt.total_seconds()
-        diff = abs(diff).sort_values()
-        i_nearest = diff.index[0]  # sort the two nearest to the top
-
-        t_nearest = self.p_df.loc[i_nearest][tkey]
-        threshold = self.max_interpolation_time * 3600
-
-        if abs((t_nearest - pressure_time).total_seconds()) > threshold:
-            self.logger.debug(
-                f"Interpolation time for requested time {pressure_time} "
-                "was larger than the threshold. Will skip the processing "
-                "of the spectra corresponding to this time. "
-                "(See next message!)")
-            return 0
-
-        p = np.interp(
-            np.datetime64(pressure_time, "ns"),
-            self.p_df[tkey].astype("datetime64[ns]"),
-            self.p_df[pkey].values)
-
+        p_key = self.dataframe_parameters["pressure_key"]
+        p = self.interpolate_data_at(self.p_df, utc_time, p_key)
         return p
+
+    def _check_frequency(self):
+        frequency = self.get_frequency(self.p_df)
+        if frequency < pd.Timedelta("30s"):
+            self.logger.warning(
+                "The pressure is recorded with a frequency higher than 30s. "
+                "Please note that the pressure is interpolated by "
+                "PROFFASTpylot. Consider to average your pressure data over a "
+                "longer time period."
+
+                )
 
     def _filter_pressure(self, date=None):
         """
