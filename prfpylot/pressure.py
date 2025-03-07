@@ -322,7 +322,8 @@ class AuxiliaryHandler():
         # remove time zone information
         df[self.parsed_dtcol] = df[self.parsed_dtcol].dt.tz_localize(None)
 
-        # TODO convert to UTC
+        # convert to UTC
+        df[self.parsed_dtcol] = df[self.parsed_dtcol] - pd.Timedelta(hours=self.utc_offset)
         return df
 
     def _set_defaults(self, option):

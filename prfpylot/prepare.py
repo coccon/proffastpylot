@@ -892,13 +892,9 @@ class Preparation():
             # We want to use the local noon time for the calculation in
             # pcxs --> calculate the UTC time corresponding to local noon
             utc_noon = self.time_handler.get_local_noon_utc(local_date)
-            # p-record can also have a time offset which is considered now:
-            pressure_offset = timedelta(
-                hours=self.pressure_handler.utc_offset)
-            pressure_time = utc_noon + pressure_offset
             # get pressure at local noon:
             local_noon_pressure = \
-                self.pressure_handler.get_pressure_at(pressure_time)
+                self.pressure_handler.get_pressure_at(utc_noon)
             if local_noon_pressure < 1e-6:
                 self.logger.warning(
                     "The option `use_measured_pressure_for_pcxs` was set"
@@ -1051,12 +1047,8 @@ class Preparation():
                 # get utc time of spectrum
                 times = self.get_times_of(spec)
                 utc_time = times["utc_time"]
-                pressure_offset = timedelta(
-                    hours=self.pressure_handler.utc_offset)
-                pressure_time = utc_time + pressure_offset
-
                 # get pressure from pressure record
-                p = self.pressure_handler.get_pressure_at(pressure_time)
+                p = self.pressure_handler.get_pressure_at(utc_time)
                 if p == 0:
                     self.logger.debug(
                         f"For the spectrum {spec} no pressure record is "
