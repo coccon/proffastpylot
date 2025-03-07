@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import prfpylot
-from prfpylot.pressure import PressureHandler
+from prfpylot.pressure import PressureHandler, CoordHandler
 import os
 import sys
 import yaml
@@ -77,7 +77,7 @@ class Preparation():
         "backup_results": True,
         "igram_pattern": "*.*",
         "instrument_parameters": "em27",
-        "mobile_measurements": False,
+        "coord_type_file": None
     }
 
     instrument_templates = {
@@ -228,6 +228,8 @@ class Preparation():
             "map_path", "pressure_path", "pressure_type_file",
             "interferogram_path", "analysis_path", "result_path",
             "analysis_instrument_path"]
+        if self.coord_type_file is not None:
+            paths.append("coord_type_file")
         for path in paths:
             self.__dict__[path] = os.path.abspath(self.__dict__[path])
 
@@ -278,7 +280,18 @@ class Preparation():
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
             self.pressure_type_file, self.pressure_path,
-            self.meas_dates, self.logger, self.utc_offset)
+            self.meas_dates, self.logger)
+
+        # initialise CoordHandler
+        if self.coord_type_file is not None:
+            self.coord_handler = CoordHandler(
+                self.coord_type_file,
+                self.coord_path,
+                self.meas_dates,
+                self.logger,
+            )
+            if self.start_with_spectra is False:
+                self.coord_handler.prepare_coord_df()
 
         self.time_handler = TimeHandler(
             coords=self.coords, utc_offset=self.utc_offset)
@@ -396,8 +409,8 @@ class Preparation():
         print_date_str = ", ".join(print_date_list)
 
         # print run information
-        self.logger.debug(f"start_date is {self.start_date}")
-        self.logger.debug(f"end_date is {self.end_date}")
+        # self.logger.debug(f"start_date is {self.start_date}")
+        # self.logger.debug(f"end_date is {self.end_date}")
 
         self.logger.info(
             "Run information:\n"
@@ -626,6 +639,16 @@ class Preparation():
                               "found in get_igrams().")
         return igrams
 
+    def get_igram_coord_list(self, igrams):
+        igram_coord_list = []
+        for igram in igrams:
+            times = self.get_times_of(igram)  # todo implement
+            utc_time = times["utc_time"]
+            coords = self.coord_handler.get_coords_at(utc_time)
+            igram_coord_line = ", ".join([]) 
+            igram_coord_list.append(igram_coord_line)
+        return igram_coord_list
+
     def get_spectra(self, meas_date):
         """Return list of spectra for a given date (in measurement time).
 
@@ -829,6 +852,11 @@ class Preparation():
 
         logfile = f"Internal_preprocess_log_{datestring}.log"
 
+        if self.coord_type_file is None:
+            fixed_observer = "T",
+        else:
+            fixed_observer = "F"
+
         parameters = {
             'ILS_Channel1': f"{ME1} {PE1}",
             'ILS_Channel2': f"{ME2} {PE2}",
@@ -849,7 +877,8 @@ class Preparation():
             'use_analytical_phase':
                 self.instrument_args["use_analytical_phase"],
             'band_selection': self.instrument_args["band_selection"],
-                     }
+            "fixed_observer": fixed_observer,
+            }
         return parameters
 
     def get_pcxs_parameters(self, local_date):
@@ -1058,25 +1087,12 @@ class Preparation():
                         "processed.\n")
                     skipped_spectra.append(os.path.basename(spec))
                     continue
-                if self.mobile_measurements is True:
-                    coords = self.coord_handler.get_coords_at(utc_time)
-                    if coords is None:
-                        skipped_spectra.append(os.path.basename(spec))
-                        continue
-                    coords_str = ", ".join(coords)
-                    temp_pT_input.append(
-                        f"{os.path.basename(spec)}, {p}, 0.0, {coords_str}")
-                else:
-                    temp_pT_input.append(f"{os.path.basename(spec)}, {p}, 0.0")
+                temp_pT_input.append(f"{os.path.basename(spec)}, {p}, 0.0")
             spectra_pT_input.append(temp_pT_input)
 
         if self.mobile_measurements is True:
             spectra_pT_input = self._add_mobile_coords(spectra_pT_input)
         return spectra_pT_input, skipped_spectra
-
-    def _add_mobile_coords(self, spectra_pT_input):
-        return spectra_pT_input
-
 
     def get_ils_from_file(self, date):
         """Read the ILS parameters form the given file.

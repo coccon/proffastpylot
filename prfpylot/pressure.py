@@ -459,6 +459,8 @@ class CoordHandler(AuxiliaryHandler):
         else:
             coords = self.average_coords(utc_time)
 
+        if coords is not None:
+            coords = self._apply_altitude_factor(coords)
         return coords
 
     def interpolate_coords(self, utc_time):
@@ -467,7 +469,7 @@ class CoordHandler(AuxiliaryHandler):
             data_key = self.dataframe_parameters[coord_name+"_key"]
             coord_value = self.interpolate_data_at(
                 self.coord_df, utc_time, data_key)
-            if coord_value == 0:
+            if coord_value is None:
                 return None
             coords.append(coord_value)
         return coords
@@ -482,6 +484,9 @@ class CoordHandler(AuxiliaryHandler):
             coord_value = df[data_key].mean()
             coords.append(coord_value)
         return coords
+
+    def _apply_altitude_factor(self, coords):
+        return [coords[0], coords[1], coords[2]*self.altitude_factor]
 
     def _get_timeslice(self, utc_time):
         # TODO: does the utc_time refer to the beginning?
@@ -507,8 +512,7 @@ class PressureHandler(AuxiliaryHandler):
     parsed_dtcol = "parsed_datetime"
 
     def __init__(
-            self, pressure_type_file, pressure_path, dates, logger,
-            measurement_time=0):
+            self, pressure_type_file, pressure_path, dates, logger):
         """
         Initialize the Pressure Handler.
         Parameters:
