@@ -74,10 +74,10 @@ class Preparation():
         "delete_input_files": False,
         "delete_spc_files": True,
         "ils_parameters": None,
-        "ignore_interpolation_error": None,
         "backup_results": True,
         "igram_pattern": "*.*",
         "instrument_parameters": "em27",
+        "mobile_measurements": False,
     }
 
     instrument_templates = {
@@ -1049,7 +1049,7 @@ class Preparation():
                 utc_time = times["utc_time"]
                 # get pressure from pressure record
                 p = self.pressure_handler.get_pressure_at(utc_time)
-                if p == 0:
+                if p is None:
                     self.logger.debug(
                         f"For the spectrum {spec} no pressure record is "
                         "available. The reason can be found in the previous "
@@ -1058,10 +1058,25 @@ class Preparation():
                         "processed.\n")
                     skipped_spectra.append(os.path.basename(spec))
                     continue
-                temp_pT_input.append(f"{os.path.basename(spec)}, {p}, 0.0")
+                if self.mobile_measurements is True:
+                    coords = self.coord_handler.get_coords_at(utc_time)
+                    if coords is None:
+                        skipped_spectra.append(os.path.basename(spec))
+                        continue
+                    coords_str = ", ".join(coords)
+                    temp_pT_input.append(
+                        f"{os.path.basename(spec)}, {p}, 0.0, {coords_str}")
+                else:
+                    temp_pT_input.append(f"{os.path.basename(spec)}, {p}, 0.0")
             spectra_pT_input.append(temp_pT_input)
 
+        if self.mobile_measurements is True:
+            spectra_pT_input = self._add_mobile_coords(spectra_pT_input)
         return spectra_pT_input, skipped_spectra
+
+    def _add_mobile_coords(self, spectra_pT_input):
+        return spectra_pT_input
+
 
     def get_ils_from_file(self, date):
         """Read the ILS parameters form the given file.

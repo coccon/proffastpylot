@@ -163,12 +163,12 @@ class AuxiliaryHandler():
     def interpolate_data_at(self, df, utc_time, data_key):
         """Return interpolated value for given date_key and time stamp.
 
-        If time difference greater than threshhold, return 0.
+        If time difference greater than threshhold, return None.
         """
         time_key = self.parsed_dtcol
 
         if self._is_below_threshhold(df, utc_time) is False:
-            return 0
+            return None
 
         interpolated = np.interp(
             np.datetime64(utc_time, "ns"),
@@ -445,8 +445,6 @@ class CoordHandler(AuxiliaryHandler):
         for key in ["latitude_key", "longitude_key", "altitude_key"]:
             self.cols_to_use.append(
                 self.dataframe_parameters[key])
-        # implement list with timestamps without coords
-        # similar to interpolation_failed_at
 
     def prepare_coord_df(self):
         df = self.create_df()
@@ -470,7 +468,7 @@ class CoordHandler(AuxiliaryHandler):
             coord_value = self.interpolate_data_at(
                 self.coord_df, utc_time, data_key)
             if coord_value == 0:
-                return 0 # todo, coordinates can become 0! replace with None!
+                return None
             coords.append(coord_value)
         return coords
 
@@ -478,7 +476,7 @@ class CoordHandler(AuxiliaryHandler):
         coords = []
         df = self._get_timeslice(utc_time)
         if len(df) == 0:
-            return 0
+            return None
         for coord_name in ["latitude", "longitude", "altitude"]:
             data_key = self.dataframe_parameters[coord_name+"_key"]
             coord_value = df[data_key].mean()
@@ -528,8 +526,6 @@ class PressureHandler(AuxiliaryHandler):
             dates=dates,
             logger=logger,
             )
-
-        self.interpolation_failed_at = []
 
         # check if pressure key is given
         pressure_key = self.dataframe_parameters.get("pressure_key")

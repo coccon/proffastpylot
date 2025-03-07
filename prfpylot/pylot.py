@@ -240,7 +240,7 @@ class Pylot(FileMover):
             no_pData = all([infile is None for infile in input_files])
             if no_pData:
                 self.logger.debug(
-                    f"For date {local_date} no pressure data was available"
+                    f"For date {local_date} no auxiliary data was available"
                     ". Hence, this day is skipped."
                 )
                 p_data_warnings[local_date] = "All spectra of this local day!"
@@ -256,7 +256,7 @@ class Pylot(FileMover):
                     all_inputfiles.append(input_file)
         if len(p_data_warnings) != 0:
             warn_strg = (
-                "Due to missing pressure data the following spectra were "
+                "Due to missing auxiliary data the following spectra were "
                 "skipped:")
             for date, status in p_data_warnings.items():
                 datestr = date.strftime("%Y-%m-%d")
@@ -270,34 +270,6 @@ class Pylot(FileMover):
         inv_exe = self._get_executable("inv")
         # store the path to change the cwd for the popen commmand
         exec_path = os.path.dirname(inv_exe)
-
-        # check for failed interpolation of pressure
-        interpolation_failed_at = self.pressure_handler.interpolation_failed_at
-        n_failed_interpolation = len(interpolation_failed_at)
-        if n_failed_interpolation > 0:
-            failed_list_print = " ".join(
-                [
-                    d.strftime("%Y-%m-%d %H:%M:%S")
-                    for d in interpolation_failed_at
-                    ]
-                )
-            self.logger.error(
-                "The interpolated pressure was NaN!\n"
-                f"This occured {n_failed_interpolation} times. Check if the "
-                "time is parsed correctly and if there are duplicates in the "
-                "pressure data. The interpolation failed at the following "
-                "times:\n"
-                f"{failed_list_print}.\n"
-                "If this is due to unavoidable overlap from different "
-                "pressure files and only occured in limited time ranges, "
-                "there is an option to continue execution. Set\n"
-                "ignore_interpolation_error: True\n"
-                "in the PROFFASTpylot input file."
-                )
-            if self.ignore_interpolation_error is not True:
-                raise RuntimeError("The interpolated pressure was NaN!")
-            else:
-                self.logger.warning("The interpolation error was ignored!")
 
         if n_processes <= 1:
             for inputfile in all_inputfiles:
