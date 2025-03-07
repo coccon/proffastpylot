@@ -132,7 +132,7 @@ class AuxiliaryHandler():
             self.logger.debug(f"Read in file {file}")
             temp = pd.read_csv(
                 file,
-                usecols=self.cols_to_use,  # todo
+                usecols=self.cols_to_use,
                 **(self.dataframe_parameters["csv_kwargs"]))
             df = pd.concat([df, temp])
         return df
@@ -323,7 +323,7 @@ class AuxiliaryHandler():
         df[self.parsed_dtcol] = df[self.parsed_dtcol].dt.tz_localize(None)
 
         # convert to UTC
-        df[self.parsed_dtcol] = df[self.parsed_dtcol] - pd.Timedelta(hours=self.utc_offset)
+        df[self.parsed_dtcol] -= pd.Timedelta(hours=self.utc_offset)
         return df
 
     def _set_defaults(self, option):
@@ -445,6 +445,8 @@ class CoordHandler(AuxiliaryHandler):
         for key in ["latitude_key", "longitude_key", "altitude_key"]:
             self.cols_to_use.append(
                 self.dataframe_parameters[key])
+        # implement list with timestamps without coords
+        # similar to interpolation_failed_at
 
     def prepare_coord_df(self):
         df = self.create_df()
@@ -467,15 +469,16 @@ class CoordHandler(AuxiliaryHandler):
             data_key = self.dataframe_parameters[coord_name+"_key"]
             coord_value = self.interpolate_data_at(
                 self.coord_df, utc_time, data_key)
+            if coord_value == 0:
+                return 0 # todo, coordinates can become 0! replace with None!
             coords.append(coord_value)
         return coords
 
     def average_coords(self, utc_time):
-        # TODO: what happens if slice is empty?
         coords = []
         df = self._get_timeslice(utc_time)
         if len(df) == 0:
-            return None
+            return 0
         for coord_name in ["latitude", "longitude", "altitude"]:
             data_key = self.dataframe_parameters[coord_name+"_key"]
             coord_value = df[data_key].mean()
