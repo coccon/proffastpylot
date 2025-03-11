@@ -1,4 +1,5 @@
 from prfpylot.pressure import PressureHandler, CoordHandler
+from prfpylot.prepare import TimeHandler
 import pandas as pd
 import logging
 
@@ -26,4 +27,9 @@ logger = logging.getLogger()
 ch = CoordHandler(coord_type_file, coord_path, dates, logger)
 ch.prepare_coord_df()
 print(ch.get_frequency(ch.coord_df))
-print(ch.get_coords_at(pd.Timestamp("2024-08-23T15:26:00")))
+coords = ch.get_coords_at(pd.Timestamp("2024-08-23T15:26:00"))
+print(coords)
+th = TimeHandler({"lat": coords[0], "lon": coords[1]}, 0)
+igram = "input_data/interferograms/SN119/240823/240823SN.0160"
+date_from_igram = th.get_times_from_opus(igram)
+print(date_from_igram)

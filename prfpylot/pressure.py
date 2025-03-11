@@ -491,10 +491,11 @@ class CoordHandler(AuxiliaryHandler):
     def _get_timeslice(self, utc_time):
         # TODO: does the utc_time refer to the beginning?
         time_slice = slice(
-            utc_time,
-            utc_time + pd.Timedelta("60s")
+            pd.Timestamp(utc_time),
+            pd.Timestamp(utc_time) + pd.Timedelta("60s")  # measurement period
             )
-        df = self.coord_df.set_index(self.parsed_dtcol)
+        df = self.coord_df.set_index(self.parsed_dtcol).sort_index()
+
         return df[time_slice]
 
 
