@@ -696,7 +696,15 @@ class Preparation():
         all_spectra.sort()
         localdate_spectra = {}
         for spectrum in all_spectra:
-            times = self.time_handler.get_times_from_spectrum(spectrum=spectrum)
+            times = self.time_handler.get_times_from_spectrum(spectrum)
+            is_consistent = self.time_handler.check_times_from_spectrum(
+                times, spectrum)
+            if is_consistent is False:
+                error_message = (
+                    "The time parsed from the spectrum header is "
+                    "inconsistent!")
+                self.logger.critical(error_message)
+                raise RuntimeError(error_message)
             local_time = times["local_time"]
             local_date = local_time.date()
             if local_date in localdate_spectra.keys():
@@ -704,8 +712,6 @@ class Preparation():
             else:
                 localdate_spectra[local_date] = [spectrum]
         return localdate_spectra
-
-    
 
     def replace_params_in_template(
             self, parameters, template_type, prf_input_file):
@@ -812,7 +818,7 @@ class Preparation():
         logfile = f"Internal_preprocess_log_{datestring}.log"
 
         if self.coord_type_file is None:
-            fixed_observer = "T",
+            fixed_observer = "T"
         else:
             fixed_observer = "F"
             igrams = self.get_igram_coord_list(igrams)
@@ -836,8 +842,8 @@ class Preparation():
             'swap_channels': self.instrument_args["swap_channels"],
             'use_analytical_phase':
                 self.instrument_args["use_analytical_phase"],
-            'band_selection': self.instrument_args["band_selection"],
             "fixed_observer": fixed_observer,
+            'band_selection': self.instrument_args["band_selection"],
             }
         return parameters
 
@@ -1050,8 +1056,6 @@ class Preparation():
                 temp_pT_input.append(f"{os.path.basename(spec)}, {p}, 0.0")
             spectra_pT_input.append(temp_pT_input)
 
-        if self.mobile_measurements is True:
-            spectra_pT_input = self._add_mobile_coords(spectra_pT_input)
         return spectra_pT_input, skipped_spectra
 
     def get_ils_from_file(self, date):
@@ -1462,23 +1466,26 @@ class TimeHandler():
         utc_time = dt.datetime.strptime(UT_date, "%y%m%d") + timedelta(
             hours=UTh)
 
-        # check if times are consistent
-        is_inconsistent = False
+        times = {
+            "meas_time": meas_time,
+            "local_time": local_time,
+            "utc_time": utc_time,
+        }
+        return times
 
+    def check_times_from_spectrum(self, times, spectrum):
+        """Read the times from the spectrum header and compare to"""
+        is_consistent = True
+
+        local_time = times["local_time"]
+        utc_time = times["utc_time"]
         total_offset = self._localtime_offset + self.utc_offset
         pylot_utc_time = local_time - timedelta(hours=total_offset)
         # utc_time is shifted by half of the measurement time
         time_difference = (pylot_utc_time - utc_time).total_seconds()
         if abs(time_difference) > 300:  # not greater than 5 min
-            is_inconsistent = True
-
-        times = {
-            "meas_time": meas_time,
-            "local_time": local_time,
-            "utc_time": utc_time,
-            "is_inconsistent": is_inconsistent
-        }
-        return times
+            is_consistent = False
+        return is_consistent
 
     def get_times_from_opus(self, interferogram):
         """Return dict of times from OPUS interferogram."""
