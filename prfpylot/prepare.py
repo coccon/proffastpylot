@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import prfpylot
-from prfpylot.pressure import PressureHandler, CoordHandler
+from prfpylot.auxiliary import PressureHandler, CoordHandler
 import os
 import sys
 import yaml

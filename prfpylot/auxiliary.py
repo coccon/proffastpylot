@@ -1,7 +1,7 @@
-"""Pressure is a module of PROFFASTpylot.
+"""Auxiliary is a module of PROFFASTpylot.
 
-Hand the pressure to PROFFAST, add own functions to handle different
-data formats.
+Hand the pressure and coordinates to PROFFAST, add own functions to handle
+different data formats.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
