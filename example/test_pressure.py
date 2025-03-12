@@ -1,4 +1,4 @@
-from prfpylot.pressure import PressureHandler, CoordHandler
+from prfpylot.auxiliary import PressureHandler, CoordHandler
 from prfpylot.prepare import TimeHandler
 import pandas as pd
 import logging
@@ -14,7 +14,11 @@ ph = PressureHandler(pressure_type_file, pressure_path, dates, logger)
 ph.prepare_pressure_df()
 print(ph.p_df)
 # p = ph.get_pressure_at(pd.Timestamp("2017-06-09T20:26:00"))
-p = ph.get_pressure_at(pd.Timestamp("2024-08-23T15:26:00"))
+p = ph.get_pressure_at(pd.Timestamp("2024-08-23T15:26:00").to_pydatetime())
+print("pressure", p)
+
+# test out of bounds:
+p = ph.get_pressure_at(pd.Timestamp("2021-08-23T15:26:00").to_pydatetime())
 print("pressure", p)
 
 print(ph.get_frequency(ph.p_df))

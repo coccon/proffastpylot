@@ -167,7 +167,7 @@ class AuxiliaryHandler():
         """
         time_key = self.parsed_dtcol
 
-        if self._is_below_threshhold(df, utc_time) is False:
+        if self._is_below_threshold(df, utc_time) is False:
             return None
 
         interpolated = np.interp(
@@ -177,23 +177,36 @@ class AuxiliaryHandler():
 
         return interpolated
 
-    def _is_below_threshhold(self, df, utc_time):
-        """Reject if time difference to closed value is greater than threshhold.
+    def _is_below_threshold(self, df, utc_time):
+        """Reject if time difference to closed value is greater than threshold.
 
         Get the two closest entries by calculating differences to current value
-        Return False if distance greater, than threshhold, and else True.
+        Return False if distance greater, than threshold, and else True.
         """
-        time_key = self.parsed_dtcol
 
-        diff = \
-            (df[time_key] - utc_time).dt.total_seconds()
-        diff = abs(diff).sort_values()
-        i_nearest = diff.index[0]  # sort the two nearest to the top
+        x = df[self.parsed_dtcol].values.astype("datetime64[ns]")
+        x_i = np.datetime64(utc_time)
 
-        t_nearest = df.loc[i_nearest][time_key]
+        # Find the index where the value would be inserted to maintain order
+        idx = np.searchsorted(x, x_i)
+
+        # Calculate distances to the closest x values
+        if idx == 0:
+            closest_idx = 0
+        elif idx == len(x):
+            closest_idx = len(x) - 1
+        else:
+            closest_idx = idx if abs(x[idx] - x_i) < abs(x[idx - 1] - x_i) \
+                else idx - 1
+
+        distance = abs(x[closest_idx] - x_i)
+
+        # distance in seconds
+        distance = distance.astype('timedelta64[s]').astype(int)
+
+        # compare to threshold
         threshold = self.max_interpolation_time * 3600
-
-        if abs((t_nearest - utc_time).total_seconds()) > threshold:
+        if distance > threshold:
             self.logger.debug(
                 f"Interpolation time for requested time {utc_time} "
                 "was larger than the threshold. Will skip the processing "
