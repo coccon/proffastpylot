@@ -1,0 +1,43 @@
+# This is the example pressure file for the MIRA Datalogger file
+
+# the filename used to search for the pressure file looks like:
+# filename = basename + "%Y-%m-%d" + "*.dat"
+filename_parameters:
+  basename: ""
+  time_format: "%Y-%m-%d"
+  ending: "*.dat"
+
+# the pressure file itself has the structure:
+# """
+#   UTCdate_____  UTCtime___  BaroTHB40  VariousOtherColumns
+#   01.01.2020    HH:MM:SS    1004.23    VariousOtherData
+# """"
+dataframe_parameters:
+  longitude_key: "GPSLong"
+  latitude_key: "GPSLat"
+  altitude_key: "GPSAlt"
+  time_key: "UTCtime___"
+  time_fmt: "%H:%M:%S"
+  date_key: "UTCdate_____"
+  date_fmt: "%d.%m.%Y"
+  csv_kwargs:
+    sep: "\t"
+
+
+
+# If the pressure needs to be interpolated for a timestep larger than X hours,
+# the spectrum is skipped. Give value in decimal hours
+# (i.e. 30 min are equal to 0.5). The default value is 2 hours.
+max_interpolation_time:
+
+# UTC Offset of data:
+# Have to be given even if data is processed in localtime!
+utc_offset: 0.0
+
+# altitude factor:
+# The altitude column will be multiplied by this value.
+# The altitude is assumed to be given in km
+# give e.g. 0.001 if your altitude is given in m
+altitude_factor: 0.001
+
+
