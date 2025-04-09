@@ -289,6 +289,7 @@ class Preparation():
                 self.coord_path,
                 self.meas_dates,
                 self.logger,
+                static_coords=self.coords
             )
             if self.start_with_spectra is False:
                 self.coord_handler.prepare_coord_df()

@@ -448,20 +448,43 @@ class CoordHandler(AuxiliaryHandler):
     }
 
     def __init__(
-            self, coord_type_file, coord_path, dates, logger):
+            self, coord_type_file, coord_path, dates, logger,
+            static_coords=None):
         super().__init__(
             description_file=coord_type_file,
             data_path=coord_path,
             dates=dates,
             logger=logger,
             )
+        self.static_coords = static_coords
         for key in ["latitude_key", "longitude_key", "altitude_key"]:
-            self.cols_to_use.append(
-                self.dataframe_parameters[key])
+            dataframe_key = self.dataframe_parameters.get(key)
+            if dataframe_key is not None:
+                self.cols_to_use.append(dataframe_key)
 
     def prepare_coord_df(self):
         df = self.create_df()
+        if self.dataframe_parameters.get("altitude_key") is None:
+            df = self.add_static_altitude(df)
         self.coord_df = df
+
+    def add_static_altitude(self, df):
+        """Use static altitude if no altitiude is present in the dataset"""
+        if self.static_coords is None:
+            raise RuntimeError(
+                "Give static coords if no altitude key is present in "
+                "your coord data")
+        static_altitude = self.static_coords["alt"]
+        static_altitude_column = [static_altitude]*len(df)
+        df["static_altitude"] = static_altitude_column
+        self.dataframe_parameters["altitude_key"] = "static_altitude"
+
+        self.logger.warning(
+            "No altude is given for the mobile coordinates. "
+            f"The static altitude of {static_altitude} km is used for all "
+            "interferograms. Make sure that this altitude is representative "
+            "for all observations.")
+        return df
 
     def get_coords_at(self, utc_time):
         """Return coordinates at given utc time."""
