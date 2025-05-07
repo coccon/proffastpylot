@@ -464,26 +464,27 @@ class CoordHandler(AuxiliaryHandler):
 
     def prepare_coord_df(self):
         df = self.create_df()
-        if self.dataframe_parameters.get("altitude_key") is None:
-            df = self.add_static_altitude(df)
+        for coord_type in ["latitude", "longitude", "altitude"]:
+            if self.dataframe_parameters.get(coord_type+"_key") is None:
+                df = self.add_static_coord(df, coord_type)
         self.coord_df = df
 
-    def add_static_altitude(self, df):
-        """Use static altitude if no altitiude is present in the dataset"""
+    def add_static_coord(self, df, coord_type):
+        """Use static coordinates if one of the coordinates is not given."""
         if self.static_coords is None:
             raise RuntimeError(
-                "Give static coords if no altitude key is present in "
+                f"Give static coords if no {coord_type} key is present in "
                 "your coord data")
-        static_altitude = self.static_coords["alt"]
-        static_altitude_column = [static_altitude]*len(df)
-        df["static_altitude"] = static_altitude_column
-        self.dataframe_parameters["altitude_key"] = "static_altitude"
+        static_coord = self.static_coords[coord_type[0:3]]
+        static_coord_column = [static_coord]*len(df)
+        df[f"static_{coord_type}"] = static_coord_column
+        self.dataframe_parameters[coord_type+"_key"] = "static_" + coord_type
 
         self.logger.warning(
-            "No altude is given for the mobile coordinates. "
-            f"The static altitude of {static_altitude} km is used for all "
-            "interferograms. Make sure that this altitude is representative "
-            "for all observations.")
+            f"No {coord_type} is given for the mobile coordinates. "
+            f"The static {coord_type} of {static_coord} km is used"
+            " for all interferograms. Make sure that this altitude is "
+            "representative for all observations.")
         return df
 
     def get_coords_at(self, utc_time):

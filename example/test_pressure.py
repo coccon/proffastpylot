@@ -44,7 +44,9 @@ print("Japan coords")
 coord_type_file = "japan_coord_parameters.yml"
 coord_path = "input_data/"
 dates = [pd.Timestamp("2023-10-25")]
-ch = CoordHandler(coord_type_file, coord_path, dates, logger, static_coords={"alt":0.0})
+ch = CoordHandler(
+    coord_type_file, coord_path, dates, logger,
+    {"alt": 0.0, "lat": 10.0, "lon": 15.0})
 ch.prepare_coord_df()
 print(ch.get_frequency(ch.coord_df))
 coords = ch.get_coords_at(pd.Timestamp("2023-10-25T00:26:00"))
