@@ -35,7 +35,7 @@ from prfpylot.prepare import Preparation
 
 
 class GeomsGenWriter(GeomsGenHelper):
-    def __init__(self, geomsgen_inputfile):
+    def __init__(self, geomsgen_inputfile, geoms_out_path=None):
 
         """
         This init can probably be omitted completly once it gets a part
@@ -46,7 +46,7 @@ class GeomsGenWriter(GeomsGenHelper):
         # This provides some usefull data within this class.
 
         super(GeomsGenWriter, self).__init__(
-            geomsgen_inputfile)
+            geomsgen_inputfile, geoms_out_path)
 
         # List of all variables for the GEOMS compliant HDF5 files.
         # For further information, see document "geoms-1.0.pdf":

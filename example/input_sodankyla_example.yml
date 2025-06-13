@@ -141,3 +141,7 @@ analysis_path: analysis
 # the result path. Within it, PROFFASTpylot will create 
 # a folder named 'SiteName_InstrumentNumber_StartDate-EndDate'
 result_path: results
+
+# if a geomsgen input file generate hdf outputfiles that follow the GEOMS conventions
+# the file should contain the corresponding attributes
+geomsgen_inputfile: "input_sodankyla_hdf_geoms.yml"
