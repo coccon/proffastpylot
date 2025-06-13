@@ -81,7 +81,7 @@ class Pylot(FileMover):
 
         self.logger.info(
             "The results of PROFFAST were written "
-            f"to {self.result_folder}.")
+            f"to {self.result_folder}/ .")
 
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""

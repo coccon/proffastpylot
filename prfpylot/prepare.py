@@ -77,7 +77,8 @@ class Preparation():
         "backup_results": True,
         "igram_pattern": "*.*",
         "instrument_parameters": "em27",
-        "coord_type_file": None
+        "coord_type_file": None,
+        "geomsgen_inputfile": None,
     }
 
     instrument_templates = {
