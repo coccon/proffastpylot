@@ -79,6 +79,10 @@ class Pylot(FileMover):
                 self.geomsgen_inputfile, geoms_out_path=geoms_out_path)
             geoms_writer.generate_geoms_files()
 
+        self.logger.info(
+            "The results of PROFFAST were written "
+            f"to {self.result_folder}.")
+
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""
         if self.start_with_spectra is True:
@@ -410,10 +414,6 @@ class Pylot(FileMover):
             fmt=format_list,
             delimiter=', ',
             comments='')
-
-        self.logger.info(
-            "The combined results of PROFFAST were written "
-            f"to {combined_file}.")
 
     def clean_files(self):
         """After execution clean up the files not needed anymore"""

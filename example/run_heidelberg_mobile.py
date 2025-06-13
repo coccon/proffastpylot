@@ -16,4 +16,5 @@ proffastpylot_parameters = {
     "altitude_factor": 1e-3,  # conversion to km
 }
 
-Pylot(proffastpylot_parameters).run()
+if __name__ == "__main__":
+    Pylot(proffastpylot_parameters).run()
