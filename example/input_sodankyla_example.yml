@@ -115,7 +115,7 @@ proffast_path:
 # input data
 # -----------
 # a folder where the data are located like YYMMDD/YYMMDDSN.XXX
-interferogram_path: input_data/interferograms_sodankyla/SN039
+interferogram_path: input_data/interferograms/SN039
 map_path: input_data/map_sodankyla
 pressure_path: input_data/pressure_sodankyla
 

@@ -42,8 +42,8 @@ class Preparation():
     """Import input parameters, and create input files."""
 
     template_types = {
-        "prep": "preprocess61",
-        "inv": "invers25",
+        "prep": "preprocess62",
+        "inv": "invers26",
         "pcxs": "pcxs24"
     }
 
