@@ -115,7 +115,7 @@ proffast_path:
 # input data
 # -----------
 # a folder where the data are located like YYMMDD/YYMMDDSN.XXX
-interferogram_path: input_data/interferograms_sodankyla/SN039
+interferogram_path: input_data/interferograms/SN039
 map_path: input_data/map_sodankyla
 pressure_path: input_data/pressure_sodankyla
 
@@ -141,3 +141,7 @@ analysis_path: analysis
 # the result path. Within it, PROFFASTpylot will create 
 # a folder named 'SiteName_InstrumentNumber_StartDate-EndDate'
 result_path: results
+
+# if a geomsgen input file generate hdf outputfiles that follow the GEOMS conventions
+# the file should contain the corresponding attributes
+geomsgen_inputfile: "input_sodankyla_hdf_geoms.yml"

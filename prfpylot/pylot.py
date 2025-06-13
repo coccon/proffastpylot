@@ -36,6 +36,7 @@ from functools import partial
 from copy import deepcopy
 import codecs
 from prfpylot.output.nc_cf_writer import NcWriter
+from prfpylot.output.hdf_geoms_writer import GeomsGenWriter
 
 
 class Pylot(FileMover):
@@ -67,8 +68,20 @@ class Pylot(FileMover):
             self.clean_files()
 
         # additionally generate netcdf output
-        writer = NcWriter(self.result_folder)
-        writer.write_nc()
+        cf_writer = NcWriter(self.result_folder)
+        cf_writer.write_nc()
+
+        # additionally generate hdf output
+        if self.geomsgen_inputfile is not None:
+            geoms_out_path = os.path.join(
+                self.result_folder, "output_hdf_geoms")
+            geoms_writer = GeomsGenWriter(
+                self.geomsgen_inputfile, geoms_out_path=geoms_out_path)
+            geoms_writer.generate_geoms_files()
+
+        self.logger.info(
+            "The results of PROFFAST were written "
+            f"to {self.result_folder}/ .")
 
     def run_preprocess(self, n_processes=1):
         """Main method to run preprocess."""
@@ -240,7 +253,7 @@ class Pylot(FileMover):
             no_pData = all([infile is None for infile in input_files])
             if no_pData:
                 self.logger.debug(
-                    f"For date {local_date} no pressure data was available"
+                    f"For date {local_date} no auxiliary data was available"
                     ". Hence, this day is skipped."
                 )
                 p_data_warnings[local_date] = "All spectra of this local day!"
@@ -256,7 +269,7 @@ class Pylot(FileMover):
                     all_inputfiles.append(input_file)
         if len(p_data_warnings) != 0:
             warn_strg = (
-                "Due to missing pressure data the following spectra were "
+                "Due to missing auxiliary data the following spectra were "
                 "skipped:")
             for date, status in p_data_warnings.items():
                 datestr = date.strftime("%Y-%m-%d")
@@ -270,34 +283,6 @@ class Pylot(FileMover):
         inv_exe = self._get_executable("inv")
         # store the path to change the cwd for the popen commmand
         exec_path = os.path.dirname(inv_exe)
-
-        # check for failed interpolation of pressure
-        interpolation_failed_at = self.pressure_handler.interpolation_failed_at
-        n_failed_interpolation = len(interpolation_failed_at)
-        if n_failed_interpolation > 0:
-            failed_list_print = " ".join(
-                [
-                    d.strftime("%Y-%m-%d %H:%M:%S")
-                    for d in interpolation_failed_at
-                    ]
-                )
-            self.logger.error(
-                "The interpolated pressure was NaN!\n"
-                f"This occured {n_failed_interpolation} times. Check if the "
-                "time is parsed correctly and if there are duplicates in the "
-                "pressure data. The interpolation failed at the following "
-                "times:\n"
-                f"{failed_list_print}.\n"
-                "If this is due to unavoidable overlap from different "
-                "pressure files and only occured in limited time ranges, "
-                "there is an option to continue execution. Set\n"
-                "ignore_interpolation_error: True\n"
-                "in the PROFFASTpylot input file."
-                )
-            if self.ignore_interpolation_error is not True:
-                raise RuntimeError("The interpolated pressure was NaN!")
-            else:
-                self.logger.warning("The interpolation error was ignored!")
 
         if n_processes <= 1:
             for inputfile in all_inputfiles:
@@ -429,10 +414,6 @@ class Pylot(FileMover):
             fmt=format_list,
             delimiter=', ',
             comments='')
-
-        self.logger.info(
-            "The combined results of PROFFAST were written "
-            f"to {combined_file}.")
 
     def clean_files(self):
         """After execution clean up the files not needed anymore"""

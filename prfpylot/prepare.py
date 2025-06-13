@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import prfpylot
-from prfpylot.pressure import PressureHandler
+from prfpylot.auxiliary import PressureHandler, CoordHandler
 import os
 import sys
 import yaml
@@ -42,8 +42,8 @@ class Preparation():
     """Import input parameters, and create input files."""
 
     template_types = {
-        "prep": "preprocess6",
-        "inv": "invers24",
+        "prep": "preprocess62",
+        "inv": "invers26",
         "pcxs": "pcxs24"
     }
 
@@ -74,10 +74,11 @@ class Preparation():
         "delete_input_files": False,
         "delete_spc_files": True,
         "ils_parameters": None,
-        "ignore_interpolation_error": None,
         "backup_results": True,
         "igram_pattern": "*.*",
         "instrument_parameters": "em27",
+        "coord_type_file": None,
+        "geomsgen_inputfile": None,
     }
 
     instrument_templates = {
@@ -228,6 +229,8 @@ class Preparation():
             "map_path", "pressure_path", "pressure_type_file",
             "interferogram_path", "analysis_path", "result_path",
             "analysis_instrument_path"]
+        if self.coord_type_file is not None:
+            paths.append("coord_type_file")
         for path in paths:
             self.__dict__[path] = os.path.abspath(self.__dict__[path])
 
@@ -278,7 +281,19 @@ class Preparation():
         # initialise pressure handler
         self.pressure_handler = PressureHandler(
             self.pressure_type_file, self.pressure_path,
-            self.meas_dates, self.logger, self.utc_offset)
+            self.meas_dates, self.logger)
+
+        # initialise CoordHandler
+        if self.coord_type_file is not None:
+            self.coord_handler = CoordHandler(
+                self.coord_type_file,
+                self.coord_path,
+                self.meas_dates,
+                self.logger,
+                static_coords=self.coords
+            )
+            if self.start_with_spectra is False:
+                self.coord_handler.prepare_coord_df()
 
         self.time_handler = TimeHandler(
             coords=self.coords, utc_offset=self.utc_offset)
@@ -396,8 +411,8 @@ class Preparation():
         print_date_str = ", ".join(print_date_list)
 
         # print run information
-        self.logger.debug(f"start_date is {self.start_date}")
-        self.logger.debug(f"end_date is {self.end_date}")
+        # self.logger.debug(f"start_date is {self.start_date}")
+        # self.logger.debug(f"end_date is {self.end_date}")
 
         self.logger.info(
             "Run information:\n"
@@ -626,6 +641,24 @@ class Preparation():
                               "found in get_igrams().")
         return igrams
 
+    def get_igram_coord_list(self, igrams):
+        igram_coord_list = []
+        for igram in igrams:
+            times = self.time_handler.get_times_from_opus(igram)
+            utc_time = times["utc_time"]
+            coords = self.coord_handler.get_coords_at(utc_time)
+            if coords is None:
+                self.logger.warning(
+                    "No coordinates are available at "
+                    f"{utc_time.strftime('%Y-%m-%d %H-%M-%S')}. The "
+                    f"interferogram {igram} was skipped."
+                    )
+                continue
+            elements_line = [str(value) for value in [igram, *coords]]
+            igram_coord_line = ", ".join(elements_line)
+            igram_coord_list.append(igram_coord_line)
+        return igram_coord_list
+
     def get_spectra(self, meas_date):
         """Return list of spectra for a given date (in measurement time).
 
@@ -665,7 +698,15 @@ class Preparation():
         all_spectra.sort()
         localdate_spectra = {}
         for spectrum in all_spectra:
-            times = self.get_times_of(spectrum=spectrum)
+            times = self.time_handler.get_times_from_spectrum(spectrum)
+            is_consistent = self.time_handler.check_times_from_spectrum(
+                times, spectrum)
+            if is_consistent is False:
+                error_message = (
+                    "The time parsed from the spectrum header is "
+                    "inconsistent!")
+                self.logger.critical(error_message)
+                raise RuntimeError(error_message)
             local_time = times["local_time"]
             local_date = local_time.date()
             if local_date in localdate_spectra.keys():
@@ -673,57 +714,6 @@ class Preparation():
             else:
                 localdate_spectra[local_date] = [spectrum]
         return localdate_spectra
-
-    def get_times_of(self, spectrum):
-        """Read measurement time from filename, calculate local and utc time.
-        Check if UTC time is consistent in the spectra header.
-
-        Parameters:
-            spectrum (str): full path to a spectrum
-
-        Returns:
-            times(dict):
-                A dict with the following keys:
-                    - meas_time (dt.datetime): time parsed from the filename
-                    - local_time (dt.datetime): calculated local time
-                    - utc_time (dt.datetime): read from spectra header
-        """
-        spectrum_name = os.path.basename(spectrum)
-        meas_time = dt.datetime.strptime(spectrum_name, "%y%m%d_%H%M%SSN.BIN")
-        local_time = meas_time + timedelta(hours=self._localtime_offset)
-
-        # read UTC time from header
-        with codecs.open(
-                spectrum, "r", encoding="utf-8", errors="ignore") as f:
-            header = f.readlines(1)[:24]
-        UTh = float(header[13].strip())
-        UT_date = header[12].strip()
-        utc_time = dt.datetime.strptime(UT_date, "%y%m%d") + timedelta(
-            hours=UTh)
-
-        # check if times are consistent
-        total_offset = self._localtime_offset + self.utc_offset
-        pylot_utc_time = local_time - timedelta(hours=total_offset)
-
-        # utc_time is shifted by half of the measurement time
-        time_difference = (pylot_utc_time - utc_time).total_seconds()
-        if abs(time_difference) > 300:  # not greater than 5 min
-            self.logger.critical(
-                f"Inconsistent times in spectrum {spectrum}!\n"
-                f"UTC time of spectrum: {utc_time},\n"
-                f"measurement time of spectrum: {meas_time},\n"
-                f"local time of spectrum: {local_time}.\n"
-                "Check if you entered the correct utc_offset or if there are "
-                "files from another processing in the analysis folder!"
-                )
-            sys.exit()
-
-        times = {
-            "meas_time": meas_time,
-            "local_time": local_time,
-            "utc_time": utc_time
-        }
-        return times
 
     def replace_params_in_template(
             self, parameters, template_type, prf_input_file):
@@ -819,7 +809,7 @@ class Preparation():
 
         # get all good igrams
         igrams = self.get_igrams(meas_date)
-        igrams = "\n".join(igrams)
+
         # generate path to outputfolder for this date:
         datestring = meas_date.strftime("%y%m%d")
         # NOTE: the 'cal' is necessary since "invers" automatically adds
@@ -828,6 +818,12 @@ class Preparation():
             self.analysis_instrument_path, datestring, "cal")
 
         logfile = f"Internal_preprocess_log_{datestring}.log"
+
+        if self.coord_type_file is None:
+            fixed_observer = "T"
+        else:
+            fixed_observer = "F"
+            igrams = self.get_igram_coord_list(igrams)
 
         parameters = {
             'ILS_Channel1': f"{ME1} {PE1}",
@@ -838,7 +834,7 @@ class Preparation():
             'alt': alt,
             'utc_offset': str(self.utc_offset),
             'comment': comment,
-            'igrams': igrams,
+            'igrams': "\n".join(igrams),
             'path_preprocess_log': self.logfile_folder,
             'filename_logfile': logfile,
             'path_spectra': outfolder,
@@ -848,8 +844,9 @@ class Preparation():
             'swap_channels': self.instrument_args["swap_channels"],
             'use_analytical_phase':
                 self.instrument_args["use_analytical_phase"],
+            "fixed_observer": fixed_observer,
             'band_selection': self.instrument_args["band_selection"],
-                     }
+            }
         return parameters
 
     def get_pcxs_parameters(self, local_date):
@@ -892,13 +889,9 @@ class Preparation():
             # We want to use the local noon time for the calculation in
             # pcxs --> calculate the UTC time corresponding to local noon
             utc_noon = self.time_handler.get_local_noon_utc(local_date)
-            # p-record can also have a time offset which is considered now:
-            pressure_offset = timedelta(
-                hours=self.pressure_handler.utc_offset)
-            pressure_time = utc_noon + pressure_offset
             # get pressure at local noon:
             local_noon_pressure = \
-                self.pressure_handler.get_pressure_at(pressure_time)
+                self.pressure_handler.get_pressure_at(utc_noon)
             if local_noon_pressure < 1e-6:
                 self.logger.warning(
                     "The option `use_measured_pressure_for_pcxs` was set"
@@ -974,7 +967,7 @@ class Preparation():
         parameters = []
         for sub_pT_input, spectrum, suffix \
                 in zip(spectra_pT_input, representative_spectra, charlist):
-            times = self.get_times_of(spectrum)
+            times = self.time_handler.get_times_from_spectrum(spectrum)
             spectra_path = self.get_spectra_path(spectrum)
             if len(sub_pT_input) == 0:
                 # occurs if no pressure was found for all spectra
@@ -1049,15 +1042,11 @@ class Preparation():
             temp_pT_input = []
             for spec in sublist:
                 # get utc time of spectrum
-                times = self.get_times_of(spec)
+                times = self.time_handler.get_times_from_spectrum(spec)
                 utc_time = times["utc_time"]
-                pressure_offset = timedelta(
-                    hours=self.pressure_handler.utc_offset)
-                pressure_time = utc_time + pressure_offset
-
                 # get pressure from pressure record
-                p = self.pressure_handler.get_pressure_at(pressure_time)
-                if p == 0:
+                p = self.pressure_handler.get_pressure_at(utc_time)
+                if p is None:
                     self.logger.debug(
                         f"For the spectrum {spec} no pressure record is "
                         "available. The reason can be found in the previous "
@@ -1451,6 +1440,91 @@ class TimeHandler():
         localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
         localtime_offset = localtime_utc_offset - self.utc_offset
         return localtime_offset
+
+    def get_times_from_spectrum(self, spectrum):
+        """Read measurement time from filename, calculate local and utc time.
+        Check if UTC time is consistent in the spectra header.
+
+        Parameters:
+            spectrum (str): full path to a spectrum
+
+        Returns:
+            times(dict):
+                A dict with the following keys:
+                    - meas_time (dt.datetime): time parsed from the filename
+                    - local_time (dt.datetime): calculated local time
+                    - utc_time (dt.datetime): read from spectra header
+        """
+        spectrum_name = os.path.basename(spectrum)
+        meas_time = dt.datetime.strptime(spectrum_name, "%y%m%d_%H%M%SSN.BIN")
+        local_time = meas_time + timedelta(hours=self._localtime_offset)
+
+        # read UTC time from header
+        with codecs.open(
+                spectrum, "r", encoding="utf-8", errors="ignore") as f:
+            header = f.readlines(1)[:24]
+        UTh = float(header[13].strip())
+        UT_date = header[12].strip()
+        utc_time = dt.datetime.strptime(UT_date, "%y%m%d") + timedelta(
+            hours=UTh)
+
+        times = {
+            "meas_time": meas_time,
+            "local_time": local_time,
+            "utc_time": utc_time,
+        }
+        return times
+
+    def check_times_from_spectrum(self, times, spectrum):
+        """Read the times from the spectrum header and compare to"""
+        is_consistent = True
+
+        local_time = times["local_time"]
+        utc_time = times["utc_time"]
+        total_offset = self._localtime_offset + self.utc_offset
+        pylot_utc_time = local_time - timedelta(hours=total_offset)
+        # utc_time is shifted by half of the measurement time
+        time_difference = (pylot_utc_time - utc_time).total_seconds()
+        if abs(time_difference) > 300:  # not greater than 5 min
+            is_consistent = False
+        return is_consistent
+
+    def get_times_from_opus(self, interferogram):
+        """Return dict of times from OPUS interferogram."""
+        with open(interferogram, "rb") as f:
+            data = f.read()
+
+        utf_list = []
+        i_start = 1000
+        n_iterations = 400
+        for i in range(n_iterations):
+            part = data[-i_start+i:-i_start+i+1]
+            try:
+                utf_list.append(part.decode("utf-8"))
+            except UnicodeDecodeError:
+                continue
+        utf_str = "".join(utf_list)
+
+        date_str = ""
+        i = utf_str.find("DAT")
+        # date_str += utf_str[i+8:i+16]
+        date_str += utf_str[i+8:i+18]
+        date_str += "T"
+        j = utf_str.find("TIM")
+        date_str += utf_str[j+8:j+20]
+
+        meas_time = dt.datetime.strptime(date_str, "%d/%m/%YT%H:%M:%S.%f")
+        local_time = meas_time + timedelta(hours=self._localtime_offset)
+
+        total_offset = self._localtime_offset + self.utc_offset
+        utc_time = local_time - timedelta(hours=total_offset)
+
+        times = {
+            "meas_time": meas_time,
+            "local_time": local_time,
+            "utc_time": utc_time
+        }
+        return times
 
 
 class PylotOnly(logging.Filter):

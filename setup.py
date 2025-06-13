@@ -18,6 +18,9 @@ setup(
         "tqdm",
         "numpy",
         "h5py",
+        "netCDF4",
+        "xarray",
+        "cftime",
         ],
     license='GPLv3',
     )

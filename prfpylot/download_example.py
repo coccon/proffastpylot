@@ -42,7 +42,7 @@ class ExampleDownloadHandler:
         # https://www.simplifiedpython.net/python-download-file/
         url = (
             "https://www.imk-asf.kit.edu/downloads/"
-            "Coccon-SW/example_data_sodankyla.zip")
+            "Coccon-SW/example_data_proffastpylot.zip")
         req = requests.get(url, stream=True)
         total_size = int(req.headers['content-length'])
 

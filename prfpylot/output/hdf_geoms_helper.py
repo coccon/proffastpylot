@@ -44,16 +44,16 @@ class GeomsGenHelper():
         "ils_not_in_file_warning": False,  # do not give this in the input file
         "DATA_DESCRIPTION": None,
         "DATETIME_NOTES": "",
+        "geoms_out_path": None,
     }
 
     mandatory_options = [
         "prf_res_path",
-        "geoms_out_path",
         "geoms_start_date",
         "geoms_end_date",
     ]
 
-    def __init__(self, geomsgen_inputfile):
+    def __init__(self, geomsgen_inputfile, geoms_out_path=None):
 
         self.logger = Preparation.create_logger(self, logginglevel="info")
 
@@ -76,6 +76,16 @@ class GeomsGenHelper():
                     f"Mandatory option {option} not given in the input file"
                     f" file {geomsgen_inputfile}!"
                 )
+        if geoms_out_path is not None:
+            self.geoms_out_path = geoms_out_path
+        if self.geoms_out_path is None:
+            m = (
+                "Output path for hdf files not given! Give the path "
+                "either in the geoms input file or directly when "
+                "initilizing the class."
+            )
+            self.logger.critical(m)
+            raise RuntimeError(m)
 
         for option, value in self.defaults.items():
             if input_args.get(option) is None:

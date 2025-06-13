@@ -17,7 +17,7 @@ dataframe_parameters:
   time_key: "UTCtime___"
   time_fmt: "%H:%M:%S"
   date_key: "UTCdate_____"
-  date_fmt: "%d.%m.%Y"
+  date_fmt: "%Y-%m-%d"
   datetime_key: ""
   datetime_fmt: ""
   csv_kwargs:
