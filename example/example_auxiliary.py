@@ -15,10 +15,8 @@ pressure_type_file = "vaisala_pressure_parameters.yml"
 pressure_path = "input_data/pressure_coords_mobile/"
 dates = [pd.Timestamp("2024-08-23")]
 
-
 ph = PressureHandler(pressure_type_file, pressure_path, dates, logger)
 ph.prepare_pressure_df()
-
 t1 = pd.Timestamp("2024-08-23T15:26:00")
 p1 = ph.get_pressure_at(t1.to_pydatetime())
 print(f"pressure from {pressure_path} at {t1}: {p1}")
@@ -57,8 +55,9 @@ print(f"the date from {igram} is: {date_from_igram}")
 # different coordinate file type
 print(
     "\n"
-    "Japan coordinates"
+    "Japan coordinates and pressure"
 )
+
 coord_type_file = "japan_coord_parameters.yml"
 coord_path = "input_data/"
 dates = [pd.Timestamp("2023-10-25")]
@@ -69,3 +68,14 @@ ch.prepare_coord_df()
 t4 = pd.Timestamp("2023-10-25T00:26:00")
 c4 = ch.get_coords_at(t4)
 print(f"coordinates from {coord_path} at {t4}: {c4}")
+
+
+pressure_type_file = "pressure_type_tsukuba.yml"
+pressure_path = "input_data/pressure_tsukuba"
+dates = [pd.Timestamp("2024-07-22")]
+
+ph = PressureHandler(pressure_type_file, pressure_path, dates, logger)
+ph.prepare_pressure_df()
+t5 = pd.Timestamp("2024-07-22T12:00:00")
+p5 = ph.get_pressure_at(t5.to_pydatetime())
+print(f"pressure from {pressure_path} at {t5}: {p5}")
