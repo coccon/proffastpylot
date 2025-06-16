@@ -4,7 +4,7 @@ Download the Sodankyla example data from the KIT website.
 
 License information:
 PROFFASTpylot - Running PROFFAST with Python
-Copyright (C)   2022    Lena Feld, Benedikt Herkommer, 
+Copyright (C)   2022    Lena Feld, Benedikt Herkommer,
                         Karlsruhe Institut of Technology (KIT)
 
 This program is free software: you can redistribute it and/or modify
@@ -42,7 +42,7 @@ class ExampleDownloadHandler:
         # https://www.simplifiedpython.net/python-download-file/
         url = (
             "https://www.imk-asf.kit.edu/downloads/"
-            "Coccon-SW/example_data_sodankyla.zip")
+            "Coccon-SW/example_data_proffastpylot.zip")
         req = requests.get(url, stream=True)
         total_size = int(req.headers['content-length'])
 

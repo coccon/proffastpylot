@@ -13,25 +13,17 @@ filename_parameters:
 #   01.01.2020    HH:MM:SS    1004.23    VariousOtherData
 # """"
 dataframe_parameters:
-  pressure_key: "BaroTHB40"
+  longitude_key: "GPSLong"
+  latitude_key: "GPSLat"
+  altitude_key: "GPSAlt"
   time_key: "UTCtime___"
   time_fmt: "%H:%M:%S"
   date_key: "UTCdate_____"
   date_fmt: "%d.%m.%Y"
-  datetime_key: ""
-  datetime_fmt: ""
   csv_kwargs:
     sep: "\t"
 
-# Check the pressure data for the following parameters:
-#  - Check if pressure is between min_pressure and max_pressure.
-#    Else use default-value
-#  - default_value can be either "skip", to skip the line or a number to use
-#    instead
-data_parameters:
-  max_pressure: "1500"
-  min_pressure: "500"
-  default_value: "skip"
+
 
 # If the pressure needs to be interpolated for a timestep larger than X hours,
 # the spectrum is skipped. Give value in decimal hours
@@ -42,13 +34,10 @@ max_interpolation_time:
 # Have to be given even if data is processed in localtime!
 utc_offset: 0.0
 
-# pressure factor:
-# The pressure column will be multiplied by this factor.
-# Can be used e.g. for unit conversion or to correct for hight differences.
-# The pressure column is assumed to be in hPa.
-pressure_factor: 1.0
+# altitude factor:
+# The altitude column will be multiplied by this value.
+# The altitude is assumed to be given in km
+# give e.g. 0.001 if your altitude is given in m
+altitude_factor: 0.001
 
-# pressure offset:
-# The pressure offset is added to the read in pressure values.
-# This can be used to correct for a constant offset.
-pressure_offset: 0.0
+
