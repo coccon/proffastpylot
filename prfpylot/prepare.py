@@ -1425,7 +1425,7 @@ class TimeHandler():
     def _get_localtime_offset(self):
         """Return offset between measurement time and local time.
 
-        utc_offset + localtime_offset = total offset beteen Localtime and UTC.
+        utc_offset + localtime_offset = total offset between Localtime and UTC.
         and thus
         localtime_offset = total_localtime_utc_offset - utc_offset
         """
@@ -1434,8 +1434,11 @@ class TimeHandler():
             lat=self.coords["lat"],
             lng=self.coords["lon"])
         local_tz = pytz.timezone(local_tz_name)
-        # Allways use winter time
-        date_winter = dt.datetime.strptime("2000-01-01", "%Y-%m-%d")
+        # Always use winter time
+        if self.coords["lat"] > 0:  # northern hemisphere
+            date_winter = dt.datetime.strptime("2000-01-01", "%Y-%m-%d")
+        else:  # southern hemisphere
+            date_winter = dt.datetime.strptime("2000-06-01", "%Y-%m-%d")
         localtime_utc_timedelta = local_tz.utcoffset(date_winter)
         localtime_utc_offset = localtime_utc_timedelta.total_seconds() / 3600
         localtime_offset = localtime_utc_offset - self.utc_offset

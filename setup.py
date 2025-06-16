@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name="PROFFASTpylot",
     packages=["prfpylot"],
-    version="prf2.4.1-0",
+    version="2.4.1-0",
     author="Benedikt Herkommer, Lena Feld",
     author_email="lena.feld@kit.edu",
     description="Run PROFFAST with Python",
