@@ -133,7 +133,7 @@ class Preparation():
         # read input file or parse dict directly:
         if isinstance(input_file, dict):
             args = input_file
-        elif os.path.isfile(input_file):
+        else:
             with open(input_file, "r") as f:
                 args = yaml.load(f, Loader=yaml.FullLoader)
 
