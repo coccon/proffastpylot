@@ -32,16 +32,16 @@ Getting Started
 
 .. toctree::
    1-1_installation.md
-   :maxdepth: 1
+   :maxdepth: 2
 .. toctree::
    1-2_usage.md
-   :maxdepth: 1
+   :maxdepth: 2
 .. toctree::
    1-3_pressure_input.md
-   :maxdepth: 1
+   :maxdepth: 2
 .. toctree::
    1-4_folder_structure.md
-   :maxdepth: 1
+   :maxdepth: 2
 
 
 User Information
@@ -49,27 +49,27 @@ User Information
 
 .. toctree::
    2-1_all_input_parameters.md
-   :maxdepth: 1
+   :maxdepth: 2
 
 .. toctree::
    2-2_time_offsets.md
-   :maxdepth: 1
+   :maxdepth: 2
 
 .. toctree::
    2-3_ils_parameters.md
-   :maxdepth: 1
+   :maxdepth: 2
 
 .. toctree::
    2-4_instrument_parameters.md
-   :maxdepth: 1
+   :maxdepth: 2
 
 .. toctree::
    2-5_logging.md
-   :maxdepth: 1
+   :maxdepth: 2
 
 .. toctree::
    2-6_troubleshooting.md
-   :maxdepth: 1
+   :maxdepth: 2
 
 
 
@@ -79,6 +79,11 @@ Developer Information
 
 .. toctree::
    3-1_contribution_notes.md
+   :maxdepth: 2
+
+.. toctree::
+   3-2_developer_guide.md
+   :maxdepth: 2
 
 .. toctree::
    modules

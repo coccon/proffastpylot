@@ -136,7 +136,8 @@ class GeomsGenHelper():
     def _write_dataset(self, data, dataset_name, attributes):
         """
         Helper method to write a dataset to the file.
-        Params:
+
+        Parameters:
             data (np.array): The data to be stored
             dataset_name (string): The name of the dataset
             attributes (dict): The attributes to be stored
@@ -158,7 +159,8 @@ class GeomsGenHelper():
     def _write_dataset_src(self, data, dataset_name, attributes):
         """
         Helper method to write a dataset to the file.
-        Params:
+
+        Parameters:
             data (np.array): The data to be stored
             dataset_name (string): The name of the dataset
             attributes (dict): The attributes to be stored
@@ -171,7 +173,8 @@ class GeomsGenHelper():
     def _write_dataset_dt(self, data, dataset_name, attributes):
         """
         Helper method to write a dataset to the file.
-        Params:
+
+        Parameters:
             data (np.array): The data to be stored
             dataset_name (string): The name of the dataset
             attributes (dict): The attributes to be stored

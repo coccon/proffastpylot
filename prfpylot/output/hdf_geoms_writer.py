@@ -1610,16 +1610,16 @@ class GeomsGenWriter(GeomsGenHelper):
 
         ILS parameters are obtained in the following way:
         1. if present the values are taken from the generated prf output
-            (since v1.4)
+        (since v1.4)
         2. else, the values are taken from the preprocess input file
         3. else, the values can be taken from a given ils-list
-            (e.g. from the default list shiped with proffastpylot) if the list
-            is given in the geoms input file.
+        (e.g. from the default list shiped with proffastpylot) if the list
+        is given in the geoms input file.
 
         If the values can be obtained from 1. or 2. and additionally from 3.
         a cross-check is preformed.
 
-        Params:
+        Parameters:
             day: day to be processed
 
         Returns:
