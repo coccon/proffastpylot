@@ -466,34 +466,40 @@ class GeomsGenWriter(GeomsGenHelper):
 
         with open(path, 'r') as file:
 
-            for i in range(8):  # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
-                sza.append([])
-                alt.append([])
-                pre.append([])
-                sen.append([])
+            # order of the species in the colsens file
+            # 0: H2O, 1: HDO, 2: CO2, 3: CO2_STR, 4: CH4
+            # 5: CH4_S5P, 6: N2O, 7: CO, 8: O2, 9: HF
+            for i in range(10):
+                if i not in [3, 5]:  # skip CO2_STR and CH4_S5P
+                    sza.append([])
+                    alt.append([])
+                    pre.append([])
+                    sen.append([])
 
                 for j in range(6):  # 6 header lines for each species
                     header = file.readline()  # skip header line
-                    if j == 3:  # read SZA [rad] values in the third line
-                        header = re.sub(' +', '\t', header)
-                        header = header.split('\t')  # tab separator
-                        sza[i] = np.array(header[3:])  # SZA header/columns
-                        sza[i] = sza[i].astype(float)  # string to float
+                    if i not in [3, 5]:
+                        if j == 3:  # read SZA [rad] values in the third line
+                            header = re.sub(' +', '\t', header)
+                            header = header.split('\t')  # tab separator
+                            sza[i] = np.array(header[3:])  # SZA header/columns
+                            sza[i] = sza[i].astype(float)  # string to float
 
                 for j in range(49):  # number of altitude levels
                     line = file.readline()[1:-1]   # skip first empty
-                    # space and carriage return character at the end
-                    line = re.sub(' +', ',', line)  # replace empty spaces
-                    # by a comma
-                    line = line.split(',')         # split line into columns
+                    if i not in [3, 5]:
+                        # space and carriage return character at the end
+                        line = re.sub(' +', ',', line)  # replace empty spaces
+                        # by a comma
+                        line = line.split(',')  # split line into columns
 
-                    alt[i].append(line[0])         # altitude (first column)
-                    pre[i].append(line[1])         # pressure (second column)
+                        alt[i].append(line[0])  # altitude (first column)
+                        pre[i].append(line[1])  # pressure (second column)
 
-                    sen[i].append([])
-                    for k in range(2, len(line)):   # SZA (third column
-                        # upwards, total 15 columns)
-                        sen[i][j].append(float(line[k]))
+                        sen[i].append([])
+                        for k in range(2, len(line)):   # SZA (third column
+                            # upwards, total 15 columns)
+                            sen[i][j].append(float(line[k]))
 
         file.close()
 
