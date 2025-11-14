@@ -466,7 +466,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         with open(path, 'r') as file:
 
-            for i in range(8):  # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
+            for i in range(10): # H2O, HDO, CO2, CO2_STR, CH4, CH4_S5P, N2O, CO, O2, HF
                 sza.append([])
                 alt.append([])
                 pre.append([])
@@ -520,7 +520,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         gas_sens = []
 
-        for k in range(8):  # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
+        for k in range(10): # H2O, HDO, CO2, CO2_STR, CH4, CH4_S5P, N2O, CO, O2, HF
 
             gas_sens.append([])
 
@@ -1353,26 +1353,27 @@ class GeomsGenWriter(GeomsGenHelper):
 
         data = np.zeros(df['JulianDate'].shape+ptf['Altitude'].shape)
 
+        # 0: H2O, 1: HDO, 2: CO2, 3: CO2_STR, 4: CH4, 5: CH4_S5P, 6: N2O, 7: CO, 8: O2, 9: HF
         if cont == "H2O_AVK":
             # "H2O_APR": "H2O.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[0][i][j]  # 0: "CO2_int"
+                    data[i][j] = sen[0][i][j] # "H2O_colsens_int"
         elif cont == "CO2_AVK":
             # "CO2_APR": "CO2.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[2][i][j]  # 1: "CH4_int"
+                    data[i][j] = sen[2][i][j] # "CO2_colsens_int"
         elif cont == "CH4_AVK":
             # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIOR"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[3][i][j]  # 2: "CO_int"
+                    data[i][j] = sen[4][i][j] # "CH4_colsens_int"
         elif cont == "CO_AVK":
             # "CO_APR": "CO.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[5][i][j]  # 3: "H2O_int"
+                    data[i][j] = sen[7][i][j] # "CO_colsens_int"
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME;ALTITUDE"
