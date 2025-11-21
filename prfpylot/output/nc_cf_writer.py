@@ -334,10 +334,10 @@ class NcWriter(object):
             "H2O": 3,
             "HDO": 56,
             "CO2": 109,
-            "CH4": 162,
-            "N2O": 215,
-            "CO": 268,
-            "O2": 321,
+            "CH4": 215,
+            "N2O": 321,
+            "CO": 374,
+            "O2": 427,
         }
 
         df = pd.read_csv(
