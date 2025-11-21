@@ -4,7 +4,7 @@ This document gives an overview about the structure of the PROFFASTpylot code. I
 
 The general structure of the code is depicted schematically in the following image.
 
-![developer_guider.png](developer_guide_overview.png)
+![developer_guide_overview.png](developer_guide_overview.png)
 
 
 
