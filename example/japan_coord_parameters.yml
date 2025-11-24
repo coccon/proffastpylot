@@ -1,0 +1,19 @@
+# This is the example coordinate file from Japan
+
+filename_parameters:
+  basename: "CS"
+  time_format: "%y%m%d"
+  ending: ".csv"
+
+dataframe_parameters:
+  longitude_key: "風向最小値(deg)"
+  # latitude_key: "風向最大値(deg)"
+  time_key: "hhmmss"
+  time_fmt: "%H%M%S"
+  date_key: "yyyymmdd"
+  date_fmt: "%Y%m%d"
+  csv_kwargs:
+    skipinitialspace: True
+    encoding: "cp932"
+
+utc_offset: 0.0
