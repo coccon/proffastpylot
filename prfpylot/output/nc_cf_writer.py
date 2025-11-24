@@ -99,7 +99,7 @@ class NcWriter(object):
             path = os.path.join(
                 self.path_results,
                 filename)
-        ds.to_netcdf(path)
+        ds.to_netcdf(path, engine="scipy")
 
     def create_dataset(self):
         """Combine all proffast output in one ds.

@@ -761,7 +761,7 @@ class Preparation():
             # the first priority is always the ILS params given in the the
             # general config file:
             ME1, PE1, ME2, PE2 = self.ils_parameters
-            if self.instrument_parameters != "em27" or "em27s":
+            if self.instrument_parameters not in ["em27", "em27s"]:
                 self.logger.warning(
                     "Individual ILS Parameters are used,"
                     " the parameters are not "
@@ -769,7 +769,7 @@ class Preparation():
                     f"Used ILS Parameters: {self.ils_parameters}.")
         else:
             # ILS parameters NOT given in general input file.
-            if self.instrument_parameters == "em27" or "em27s":
+            if self.instrument_parameters in ["em27", "em27s"]:
                 # for the EM27 try to take it from the ILS List:
                 self.logger.debug("Load ILS parameters from file.")
                 ME1, PE1, ME2, PE2 = self.get_ils_from_file(meas_date)

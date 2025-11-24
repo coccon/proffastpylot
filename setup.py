@@ -21,6 +21,7 @@ setup(
         "netCDF4",
         "xarray",
         "cftime",
+        "scipy"
         ],
     license='GPLv3',
     )
