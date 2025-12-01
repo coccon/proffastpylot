@@ -147,6 +147,7 @@ class NcWriter(object):
             'CO2_prior': 1e-6,
             'CH4_prior': 1e-6,
             'CO_prior': 1e-6,
+            'gndP': 100,
         }
 
         # convert number content to mole content
