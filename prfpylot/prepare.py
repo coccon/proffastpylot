@@ -83,6 +83,7 @@ class Preparation():
 
     instrument_templates = {
         "em27": "em27.yml",
+        "em27s": "em27s.yml",
         "tccon_ka_hr": "tccon_ka_hr.yml",
         "tccon_ka_lr": "tccon_ka_lr.yml",
         "tccon_default_hr": "tccon_default_hr.yml",
