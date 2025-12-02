@@ -79,7 +79,6 @@ For more information you can look at the [pandas documentation](https://pandas.p
 
 - A UTC offset of the pressure file can be given as `utc_offset`.
 - In `data_parameters` you can define minimum and maximum pressure values.
-- The `frequency` of your files can be defined. Currently the frequencies `"daily"`, `"subdaily"` and `"yearly"` are available.
 - The `pressure_factor` is multiplied to the pressure values. It can be used to correct for a height offset or a different unit. The pressure is expected to be given in hPa.
 - The `pressure_offset` is added to the pressure values. The pressure value is expected to be given in hPa.
 - The `max_interpolation_time` is the maximal timely distance between two pressure data points.

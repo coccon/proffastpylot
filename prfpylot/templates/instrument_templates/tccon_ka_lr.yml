@@ -26,7 +26,7 @@ dual_ifg_recording: True
 # The second channel must cover wavenumbers from ~5500 to 4000 cm^-1
 # If this is vice versa, set swap_channels: True
 # In short: 1st channel SN, second channel SM - otherwise choose swap_channels: True
-swap_channels: False
+swap_channels: True
 
 # true/false
 use_analytical_phase: False

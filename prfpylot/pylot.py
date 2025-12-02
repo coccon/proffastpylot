@@ -265,8 +265,8 @@ class Pylot(FileMover):
                     if input_file is None:
                         # only a subset of the input file is none.
                         continue
-                else:
-                    all_inputfiles.append(input_file)
+                    else:
+                        all_inputfiles.append(input_file)
         if len(p_data_warnings) != 0:
             warn_strg = (
                 "Due to missing auxiliary data the following spectra were "

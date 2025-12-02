@@ -173,6 +173,7 @@ class GeomsGenWriter(GeomsGenHelper):
         # PROFFAST output (df pandas data frame)
         self.create_invparms_content(day)  # invparms file
         df = self.df
+        df = df.sort_values("UTC")
 
         # After applying the quality filter for SZA and XAIR
         # (see get_invparms_content),
@@ -466,7 +467,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         with open(path, 'r') as file:
 
-            for i in range(8):  # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
+            for i in range(10): # H2O, HDO, CO2, CO2_STR, CH4, CH4_S5P, N2O, CO, O2, HF
                 sza.append([])
                 alt.append([])
                 pre.append([])
@@ -520,7 +521,7 @@ class GeomsGenWriter(GeomsGenHelper):
 
         gas_sens = []
 
-        for k in range(8):  # H2O, HDO, CO2, CH4, N2O, CO, O2, HF
+        for k in range(10): # H2O, HDO, CO2, CO2_STR, CH4, CH4_S5P, N2O, CO, O2, HF
 
             gas_sens.append([])
 
@@ -1353,26 +1354,27 @@ class GeomsGenWriter(GeomsGenHelper):
 
         data = np.zeros(df['JulianDate'].shape+ptf['Altitude'].shape)
 
+        # 0: H2O, 1: HDO, 2: CO2, 3: CO2_STR, 4: CH4, 5: CH4_S5P, 6: N2O, 7: CO, 8: O2, 9: HF
         if cont == "H2O_AVK":
             # "H2O_APR": "H2O.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[0][i][j]  # 0: "CO2_int"
+                    data[i][j] = sen[0][i][j] # "H2O_colsens_int"
         elif cont == "CO2_AVK":
             # "CO2_APR": "CO2.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[2][i][j]  # 1: "CH4_int"
+                    data[i][j] = sen[2][i][j] # "CO2_colsens_int"
         elif cont == "CH4_AVK":
             # "CH4_APR": "CH4.MIXING.RATIO.VOLUME.DRY_APRIOR"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[3][i][j]  # 2: "CO_int"
+                    data[i][j] = sen[4][i][j] # "CH4_colsens_int"
         elif cont == "CO_AVK":
             # "CO_APR": "CO.MIXING.RATIO.VOLUME.DRY_APRIORI"
             for i in range(df['JulianDate'].shape[0]):
                 for j in range(ptf['Altitude'].shape[0]):
-                    data[i][j] = sen[5][i][j]  # 3: "H2O_int"
+                    data[i][j] = sen[7][i][j] # "CO_colsens_int"
 
         self.hdf5_atts["VAR_DATA_TYPE"] = "REAL"
         self.hdf5_atts["VAR_DEPEND"] = "DATETIME;ALTITUDE"
@@ -1610,16 +1612,16 @@ class GeomsGenWriter(GeomsGenHelper):
 
         ILS parameters are obtained in the following way:
         1. if present the values are taken from the generated prf output
-            (since v1.4)
+        (since v1.4)
         2. else, the values are taken from the preprocess input file
         3. else, the values can be taken from a given ils-list
-            (e.g. from the default list shiped with proffastpylot) if the list
-            is given in the geoms input file.
+        (e.g. from the default list shiped with proffastpylot) if the list
+        is given in the geoms input file.
 
         If the values can be obtained from 1. or 2. and additionally from 3.
         a cross-check is preformed.
 
-        Params:
+        Parameters:
             day: day to be processed
 
         Returns:
@@ -1706,7 +1708,8 @@ class GeomsGenWriter(GeomsGenHelper):
         self.MyHDF5.attrs['DATA_MODIFICATIONS'] = \
             np.bytes_(
                 "ILS parms applied: "
-                f"{str(ils)} (ME1, PE1, ME2, PE2). "
+                f"{str(ils[0])}, {str(ils[1])}, {str(ils[2])}, {str(ils[3])} "
+                "(ME1, PE1, ME2, PE2). "
                 "Calibration factors applied: "
                 f"{corr_fac['XCO2_cal']} for XCO2, "
                 f"{corr_fac['XCH4_cal']} for XCH4, "

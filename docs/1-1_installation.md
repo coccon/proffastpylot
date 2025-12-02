@@ -48,7 +48,7 @@ Extracting it will create the folder `proffastpylot`.
 
 ### Download PROFFAST
 Download PROFFAST Version 2.4 from the KIT website:  
-https://www.imk-asf.kit.edu/english/3225.php
+https://www.imkasf.kit.edu/english/3225.php
 
 ### Compile PROFFAST (only Linux)
 

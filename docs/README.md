@@ -1,6 +1,6 @@
 ## Build the documentation
 
-A webversion of the documentation is available [here](https://www.imk-asf.kit.edu/english/4261.php).
+A webversion of the documentation is available [here](https://www.imkasf.kit.edu/english/4261.php).
 
 To create the html version of the documentation, install sphinx with
  ```

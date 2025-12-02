@@ -13,9 +13,8 @@ The Collaborative Carbon Column Observing Network (COCCON) was established in 20
 To ensure common quality standards across the COCCON, raw EM27/SUN measurements are processed with the PROFFAST Fortran routines.
 The Python interface PROFFASTpylot significantly reduces the workload during the processing of large sets of observational data and supports a network-wide consistent data processing.
 
-
-For more information about PROFFAST, see https://www.imk-asf.kit.edu/english/3225.php.
-The PROFFASTpylot source code is available at https://gitlab.eudat.eu/coccon-kit/proffastpylot. If you have any comments or questions, contact us at benedikt.herkommer@kit.edu and lena.feld@kit.edu. You are welcome to contribute.
+For more information about PROFFAST, see https://coccon.kit.edu.
+The PROFFASTpylot source code is available at https://gitlab.eudat.eu/coccon-kit/proffastpylot. If you have any comments or questions, contact us at coccon@imkasf.kit.edu. You are welcome to contribute.
 
 This documentation and the PROFFASTpylot source code is licensed under GPL-3.0.
 
@@ -24,7 +23,7 @@ This documentation and the PROFFASTpylot source code is licensed under GPL-3.0.
 User Guide
 ===========
 
-In the following, you can find all instructions on PROFFASTpylot.
+In the following, you can find instructions on PROFFASTpylot.
 
 
 Getting Started
@@ -79,10 +78,15 @@ Developer Information
 
 .. toctree::
    3-1_contribution_notes.md
+   :maxdepth: 1
+
+.. toctree::
+   3-2_developer_guide.md
+   :maxdepth: 1
 
 .. toctree::
    modules
-   :maxdepth: 2
+   :maxdepth: 1
     
 
 

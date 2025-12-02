@@ -16,7 +16,7 @@ project = 'PROFFASTpylot'
 copyright = (
     '2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology')
 author = 'Lena Feld, Benedikt Herkommer'
-release = 'v1.3'
+release = '2.4.1-1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,8 +41,9 @@ extensions = [
 napoleon_use_rtype = False
 autodoc_default_options = {
     "members": True,
-    "undoc-members": True,
-    "private-members": True
+    # "undoc-members": True,
+    "private-members": False,
+    "show-inheritance": True
 }
 
 templates_path = ['_templates']

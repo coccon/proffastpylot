@@ -9,10 +9,10 @@ If you use PROFFASTpylot, cite our publication as
 
 PROFFASTpylot is an interface for PROFFAST.
 For more information about PROFFAST, see
-https://www.imk-asf.kit.edu/english/3225.php.
+https://www.imkasf.kit.edu/english/3225.php.
 
-Information about the usage and installation of this package can be found in our [Documentation](https://www.imk-asf.kit.edu/english/4261.php).  
+Information about the usage and installation of this package can be found in our [Documentation](https://www.imkasf.kit.edu/english/4261.php).  
 Please follow the installation instructions, first.
 
-If you have any comments or questions, contact lena.feld@kit.edu.
+If you have any comments or questions, contact moritz.makowski@tum.de and darko.dubravica@kit.edu.
 You are welcome to contribute.

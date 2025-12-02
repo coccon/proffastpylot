@@ -3,9 +3,9 @@ from setuptools import setup
 setup(
     name="PROFFASTpylot",
     packages=["prfpylot"],
-    version="2.4.1-0",
-    author="Benedikt Herkommer, Lena Feld",
-    author_email="lena.feld@kit.edu",
+    version="2.4.1-1",
+    author="Benedikt Herkommer, Lena Feld, Darko Dubravica, Moritz Makowski",
+    author_email="darko.dubravica@kit.edu, moritz.makowski@tum.de",
     description="Run PROFFAST with Python",
     install_requires=[
         "wheel",
@@ -21,6 +21,7 @@ setup(
         "netCDF4",
         "xarray",
         "cftime",
+        "scipy"
         ],
     license='GPLv3',
     )
