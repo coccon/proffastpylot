@@ -14,5 +14,5 @@ https://www.imkasf.kit.edu/english/3225.php.
 Information about the usage and installation of this package can be found in our [Documentation](https://www.imkasf.kit.edu/english/4261.php).  
 Please follow the installation instructions, first.
 
-If you have any comments or questions, contact moritz.makowski@tum.de and darko.dubravica@kit.edu.
+If you have any comments or questions, contact darko.dubravica@kit.edu and  moritz.makowski@tum.de.
 You are welcome to contribute.
