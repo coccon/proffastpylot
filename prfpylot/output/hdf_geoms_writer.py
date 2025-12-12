@@ -173,7 +173,6 @@ class GeomsGenWriter(GeomsGenHelper):
         # PROFFAST output (df pandas data frame)
         self.create_invparms_content(day)  # invparms file
         df = self.df
-        df = df.sort_values("UTC")
 
         # After applying the quality filter for SZA and XAIR
         # (see get_invparms_content),
@@ -187,6 +186,8 @@ class GeomsGenWriter(GeomsGenHelper):
                 "points.")
             self.MyHDF5.close()
             return
+
+        df = df.sort_values("UTC")
 
         # Get additional information from the colsens, pT_fast_out, and
         # VMR_fast_out PROFFAST output files.
