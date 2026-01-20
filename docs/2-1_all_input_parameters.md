@@ -1,11 +1,9 @@
 # List of all Input Parameters
 
-The example input file [input_sodankyla_example.yml](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/input_sodankyla_example.yml)
-contains the most relevant input parameters to run the PROFFASTpylot.
-However, there are several more parameters which can be used optionally.
-In this file all parameters are given and explained.
+The example input file [input_sodankyla_example.yml](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/input_sodankyla_example.yml) contains the most relevant input parameters to run the PROFFASTpylot. However, there are several more parameters which can be used optionally. In this file all parameters are given and explained.
 
 ## Site information
+
 - **instrument_number**  
   The serial number of your EM27/SUN.
 - **site_name**  
