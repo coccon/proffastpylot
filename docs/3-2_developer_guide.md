@@ -11,6 +11,26 @@ This document gives an overview of the structure of the PROFFASTpylot code. It s
 
 These are the most important functions for steering PROFFAST. The most important functions and interactions are described in the following. Additional code for different output formats is located in `/output`.
 
+## Repository
+
+### Dependency Management
+
+We use [PDM](https://pdm-project.org/) as a dependency management tool. We try to keep all project settings in the `pyproject.toml` file. To install the identical environment everywhere, use:
+
+```bash
+pdm sync
+```
+
+Install the dev dependencies (to format, test or build the docs) with:
+
+```bash
+pdm install -with=dev
+```
+
+### Code Formatting
+
+We use Ruff to automatically format our Python code. Consistent formatting improves readability and makes code-diffs more compact - i.e, the difference between releases will only show the semantic changes, not any whitespace changes, etc.. There is a CI workflow that checks whether the code has been formatted correctly. The formatting rules are defined in the `pyproject.toml` file.
+
 ## prepare.py
 
 Generally, the user provides an input file or dictionary with the corresponding parameters for the processing. From this, many additional options are derived. This happens in the `Preparation` class. The following functionality is handled by the `Preparation` class.
