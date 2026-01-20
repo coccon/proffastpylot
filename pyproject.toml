@@ -27,5 +27,7 @@ requires-python = ">=3.11,<3.15"
 readme = "README.md"
 license = { text = "GPLv3" }
 
+[project.optional-dependencies]
+dev = ["sphinx>=9.0.4", "sphinx-mdinclude>=0.6.2"]
 [tool.pdm]
 distribution = false
