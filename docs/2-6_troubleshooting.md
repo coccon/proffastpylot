@@ -10,7 +10,7 @@ If you encounter any problems, please do not hesitate to contact us via email or
 
 If you have several Python installations, and some are not included in your `PATH` variable, it might happen that the creation of a virtual environment results in `Error: [WinError 2] The system cannot find the file specified`.      
 
-In this case, the solution can be to give the full path to your Python executable whilst creating the virtual environment: `C:\path\to\your\python\python.exe -m venv prf_venv`
+In this case, the solution can be to give the full path to your Python executable whilst creating the virtual environment: `C:\path\to\your\python\python.exe -m venv .venv`
 
 ## Execution
 

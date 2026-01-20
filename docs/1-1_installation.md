@@ -60,14 +60,14 @@ Copy the `prf` folder that was extracted from the zip file into `proffastpylot`.
 We recommend using a virtual environment (venv) to avoid conflicts between any other packages or Python modules.
 
 1. (Only first time) Navigate to the `proffastpylot` folder using a terminal.
-2. (Only first time) Enter `python -m venv prf_venv`. This command will create a folder named `prf_venv`, which contains the virtual environment
+2. (Only first time) Enter `python -m venv .venv`. This command will create a folder named `.venv`, which contains the virtual environment
 3. **Activate the virtual environment** every time you run PROFFASTpylot with
-   - *Windows PowerShell:* `.\prf_venv\Scripts\Activate.ps1`
-   - *Windows Commandline:* `.\prf_venv\Scripts\activate`
-   - *Linux:* `source prf_venv/bin/activate`
+   - *Windows PowerShell:* `.\.venv\Scripts\Activate.ps1`
+   - *Windows Commandline:* `.\.venv\Scripts\activate`
+   - *Linux:* `source .venv/bin/activate`
 4. To deactivate the virtual environment, you can run `deactivate`
 
-Note that all packages installed with `pip install` will only affect the virtual environment, not the system-wide  Python installation. In case of a problem, take a look at the **Troubleshooting** article of this documentation.
+Note that all packages installed with `pip install .` will only affect the virtual environment, not the system-wide  Python installation. In case of a problem, take a look at the **Troubleshooting** article of this documentation.
 
 You need to activate the virtual environment before each run of PROFFASTpylot by executing the command in step 3; the other steps need to be executed only once in the initial installation.
 
@@ -85,7 +85,7 @@ If you follow exactly the installation guide, your folder structure should look 
 
 ```
 proffastpylot
-├── prf_venv
+├── .venv
 │   ├── ...
 ├── docs
 │   ├── ...
@@ -103,7 +103,7 @@ proffastpylot
 │   └── wrk_fast
 ├── prfpylot
 │   ├── ...
-└── setup.py
+└── pyproject.toml
 ```
 
 ## 7. Test the installation by running an example dataset
