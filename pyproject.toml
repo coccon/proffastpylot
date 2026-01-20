@@ -41,6 +41,10 @@ repository = "https://github.com/coccon/proffastpylot"
 documentation = "https://www.coccon.kit.edu/70.php"
 
 [project.optional-dependencies]
-dev = ["sphinx>=9.0.4", "sphinx-mdinclude>=0.6.2", "tomli>=2.4.0"]
+dev = ["sphinx>=9.0.4", "sphinx-mdinclude>=0.6.2", "tomli>=2.4.0", "ruff>=0.14.13"]
+
 [tool.pdm]
 distribution = false
+
+[tool.ruff]
+line-length = 100
