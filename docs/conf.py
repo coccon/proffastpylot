@@ -9,14 +9,17 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../prfpylot'))
 
+# Add project root to sys.path so autodoc can import prfpylot and submodules
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../prfpylot"))
+)
 
-project = 'PROFFASTpylot'
-copyright = (
-    '2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology')
-author = 'Lena Feld, Benedikt Herkommer'
-release = '2.4.1-1'
+project = "PROFFASTpylot"
+copyright = "2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology"
+author = "Lena Feld, Benedikt Herkommer"
+release = "2.4.1-2"
 
 
 # -- General configuration ---------------------------------------------------

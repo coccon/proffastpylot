@@ -348,7 +348,7 @@ class NcWriter(object):
         }
 
         df = pd.read_csv(
-            path, sep="\s+",
+            path, sep="\\s+",
             skip_blank_lines=True,
             header=header_values_for_dfs[species],
             names=header,
