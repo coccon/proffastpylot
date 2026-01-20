@@ -11,3 +11,11 @@ Information about the usage and installation of this package can be found in our
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.06481/status.svg)](https://doi.org/10.21105/joss.06481) 
 
 If you use PROFFASTpylot, cite our publication as: **Feld et al., (2024). PROFFASTpylot: Running PROFFAST with Python. Journal of Open Source Software, 9(96), 6481, https://doi.org/10.21105/joss.06481**
+
+## Code Repository
+
+Until version 2.4.1-2, new releases of the PROFFASTpylot were published on GitLab at https://gitlab.eudat.eu/coccon-kit/proffastpylot.
+
+Starting with version 2.4.1-3, new releases of PROFFASTpylot are published on GitHub at https://github.com/coccon/proffastpylot.
+
+We transferred all active issues to this new repository. The GitLab repository will remain online, but will not be updated.
