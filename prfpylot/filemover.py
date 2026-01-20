@@ -32,12 +32,13 @@ import yaml
 class FileMover(Preparation):
     """Copy, Move and remove temporary proffast Files."""
 
-    def __init__(
-            self, input_file,
-            logginglevel="info", external_logger=None, loggername=None):
+    def __init__(self, input_file, logginglevel="info", external_logger=None, loggername=None):
         super(FileMover, self).__init__(
-            input_file, logginglevel=logginglevel,
-            external_logger=external_logger, loggername=loggername)
+            input_file,
+            logginglevel=logginglevel,
+            external_logger=external_logger,
+            loggername=loggername,
+        )
         # create all folders
         self.init_folders()
         # move the log file to the log-dir
@@ -67,13 +68,13 @@ class FileMover(Preparation):
             self.logger.warning(
                 f"The analysis folder {self.analysis_instrument_path} "
                 "exists already! "
-                "The content may be overwritten.")
+                "The content may be overwritten."
+            )
 
         for date in self.meas_dates:
             datestring = date.strftime("%y%m%d")
             # create cal-folder
-            calfolder = os.path.join(
-                self.analysis_instrument_path, datestring, "cal")
+            calfolder = os.path.join(self.analysis_instrument_path, datestring, "cal")
             if not os.path.exists(calfolder):
                 os.makedirs(calfolder)
 
@@ -99,13 +100,13 @@ class FileMover(Preparation):
                 backuped_results = glob(self.result_folder + "_backup*")
                 # rename existing folder by adding _backupN where N is the N-th
                 # backup
-                result_folder_backup = self.result_folder\
-                    + f"_backup{len(backuped_results)}"
+                result_folder_backup = self.result_folder + f"_backup{len(backuped_results)}"
                 self.logger.warning(
                     f"The result directory {self.result_folder} exists "
                     "already! "
                     "Renamed existing one to "
-                    f"{result_folder_backup} and created a new one.")
+                    f"{result_folder_backup} and created a new one."
+                )
                 os.rename(self.result_folder, result_folder_backup)
 
             else:  # backup_results is False
@@ -113,7 +114,7 @@ class FileMover(Preparation):
                 self.logger.warning(
                     f"The result directory {self.result_folder} exists "
                     "already! The content may be overwritten. "
-                    )
+                )
                 return
 
         os.makedirs(self.result_folder)
@@ -148,11 +149,7 @@ class FileMover(Preparation):
         independent if pcxs was executed or skipped in this run.
         """
 
-        suffix_list = [
-            "invparms_?.dat",
-            "job0?_?.spc",
-            "version_?.dat"
-        ]
+        suffix_list = ["invparms_?.dat", "job0?_?.spc", "version_?.dat"]
         source_folder = os.path.join(self.proffast_path, "out_fast")
 
         # move/copy colsens files
@@ -179,13 +176,12 @@ class FileMover(Preparation):
                     f"and could not be {action} to "
                     "the result folder.\n"
                     "To solve this warning, try to delete "
-                    "all *.abscos.bin files and rerun pcxs.")
+                    "all *.abscos.bin files and rerun pcxs."
+                )
             except PermissionError:
-                self.logger.error(f"Could not write {target} due to "
-                                  "permission issues.")
+                self.logger.error(f"Could not write {target} due to permission issues.")
             except OSError as e:
-                self.logger.error("OSError while moving file "
-                                  f"{sfile}. Errormessage: {e}")
+                self.logger.error(f"OSError while moving file {sfile}. Errormessage: {e}")
 
         # move invparms.dat .spc and version.dat
         for date in self.local_dates:
@@ -196,21 +192,16 @@ class FileMover(Preparation):
                 source = os.path.join(source_folder, file)
                 sourcefiles = glob(source)
                 if len(sourcefiles) == 0:
-                    self.logger.warning(
-                        f"No file matchin the pattern {file} was not found!")
+                    self.logger.warning(f"No file matchin the pattern {file} was not found!")
 
                 for sfile in sourcefiles:
-                    target = os.path.join(
-                        self.raw_output_prf_folder,
-                        os.path.basename(sfile))
+                    target = os.path.join(self.raw_output_prf_folder, os.path.basename(sfile))
                     try:
                         shutil.move(sfile, target)
                     except PermissionError:
-                        self.logger.error(f"Could not write {target} due to "
-                                          "permission issues.")
+                        self.logger.error(f"Could not write {target} due to permission issues.")
                     except OSError as e:
-                        self.logger.error("OSError while movig file "
-                                          f"{sfile}. Errormessage: {e}")
+                        self.logger.error(f"OSError while movig file {sfile}. Errormessage: {e}")
 
     def handle_pT_VMR_files(self):
         """Copy or move the pT and VMR files created by pcxs.
@@ -229,32 +220,25 @@ class FileMover(Preparation):
 
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         for date in self.local_dates:
-            pTFile =\
-                f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
-            VMRFile =\
-                f"{self.site_name}{date.strftime('%y%m%d')}-VMR_fast_out.dat"
+            pTFile = f"{self.site_name}{date.strftime('%y%m%d')}-pT_fast_out.dat"
+            VMRFile = f"{self.site_name}{date.strftime('%y%m%d')}-VMR_fast_out.dat"
             try:
                 for file in [pTFile, VMRFile]:
                     filepath = os.path.join(wrk_fast_folder, file)
                     if self.delete_abscosbin_files:
                         action = "moved"
-                        shutil.move(
-                            filepath,
-                            os.path.join(self.raw_output_prf_folder, file)
-                            )
+                        shutil.move(filepath, os.path.join(self.raw_output_prf_folder, file))
                     else:
                         action = "copied"
-                        shutil.copy(
-                            filepath,
-                            os.path.join(self.raw_output_prf_folder, file)
-                            )
+                        shutil.copy(filepath, os.path.join(self.raw_output_prf_folder, file))
             except FileNotFoundError:
                 self.logger.warning(
                     f"File {file} was not found in `prf/wrk_fast` "
                     f"and could not be {action} to "
                     "the result folder.\n"
                     "To solve this warning, try to delete "
-                    "all *.abscos.bin files and rerun pcxs.")
+                    "all *.abscos.bin files and rerun pcxs."
+                )
 
     def delete_abscos_files(self):
         """Delete the abscos.bin files created by pcxs."""
@@ -264,25 +248,24 @@ class FileMover(Preparation):
             try:
                 os.remove(os.path.join(wrk_fast_folder, filename))
             except FileNotFoundError:
-                self.logger.error(
-                    "File not Found: "
-                    f"Could not delete {filename}")
+                self.logger.error(f"File not Found: Could not delete {filename}")
 
     def check_abscosbin_summed_size(self):
         """Get size of all abscos.bin files. Give warning if too large."""
         wrk_fast_folder = os.path.join(self.proffast_path, "wrk_fast")
         # the target folder doesnot exists, since this is an optional method
-        abscosbinfiles = glob(
-            os.path.join(wrk_fast_folder, "*-abscos.bin"))
+        abscosbinfiles = glob(os.path.join(wrk_fast_folder, "*-abscos.bin"))
         size = 0
         for file in abscosbinfiles:
             size += os.path.getsize(file)
         size = size / (1024 * 1024 * 1024)  # get size in GB, was in bytes
         self.logger.debug(f"Size of all abscosbin files: {size} GB.")
-        if size > 100.:
-            self.logger.warning("The size of all abscos bin files is "
-                                + "{:6.2f} GB. ".format(size)
-                                + "Please delete some to reduce disk usage!")
+        if size > 100.0:
+            self.logger.warning(
+                "The size of all abscos bin files is "
+                + "{:6.2f} GB. ".format(size)
+                + "Please delete some to reduce disk usage!"
+            )
 
     def delete_input_files(self):
         """Delete the input files for preprocess, pcxs and inv"""
@@ -290,10 +273,7 @@ class FileMover(Preparation):
             try:
                 os.remove(inp_file)
             except FileNotFoundError:
-                self.logger.error(
-                    "File not Found: "
-                    f"Could not remove {type} input file"
-                    f" {inp_file}")
+                self.logger.error(f"File not Found: Could not remove {type} input file {inp_file}")
 
     def move_input_files(self):
         """Move the input files for prep., pcxs and inv to result folder"""
@@ -301,15 +281,10 @@ class FileMover(Preparation):
         for inp_file in self.global_inputfile_list:
             try:
                 shutil.move(
-                    inp_file,
-                    os.path.join(
-                        self.input_files_folder, os.path.basename(inp_file))
-                    )
+                    inp_file, os.path.join(self.input_files_folder, os.path.basename(inp_file))
+                )
             except FileNotFoundError:
-                self.logger.error(
-                    "File not found: "
-                    f"Could not move {type} input file"
-                    f" {inp_file}.")
+                self.logger.error(f"File not found: Could not move {type} input file {inp_file}.")
 
     def _move_logfile(self):
         """Move the logfile to the log-folder.
@@ -322,9 +297,7 @@ class FileMover(Preparation):
             if handler.get_name() == "PRFpylotFileHandler":
                 FHandler = handler
 
-        new_logfile = os.path.join(
-            self.logfile_folder, os.path.basename(self.global_log)
-        )
+        new_logfile = os.path.join(self.logfile_folder, os.path.basename(self.global_log))
         logging_level = FHandler.level
         PylotOnly = FHandler.filter
         FHandler.close()
@@ -341,20 +314,18 @@ class FileMover(Preparation):
     def _move_prf_config_file(self):
         """Copy the PROFFASTpylot input file to the result folder."""
         self.logger.debug(
-            "Copying the PROFFASTpylot input_file "
-            f"{self.input_file} to {self.result_folder}")
+            f"Copying the PROFFASTpylot input_file {self.input_file} to {self.result_folder}"
+        )
 
         if isinstance(self.input_file, dict):
-            output_file = os.path.join(
-                self.result_folder, "proffastpylot_parameters.yml")
+            output_file = os.path.join(self.result_folder, "proffastpylot_parameters.yml")
             with open(output_file, "w") as file:
                 file.write(
                     "# This proffastpylot_parameters.yml file was created "
-                    "automatically from the given dict.")
+                    "automatically from the given dict."
+                )
                 yaml.dump(self.input_file, file)
         else:
             shutil.copy(
-                        self.input_file,
-                        os.path.join(
-                            self.result_folder, "proffastpylot_parameters.yml")
-                    )
+                self.input_file, os.path.join(self.result_folder, "proffastpylot_parameters.yml")
+            )

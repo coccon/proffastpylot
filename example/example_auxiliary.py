@@ -31,10 +31,7 @@ f = ph.get_frequency(ph.p_df)
 print(f"data frequency from {pressure_path} is {f}")
 
 
-print(
-    "\n"
-    "Mira coord file"
-)
+print("\nMira coord file")
 coord_type_file = "mira_coord_parameters.yml"
 coord_path = "input_data/pressure_coords_mobile/"
 dates = [pd.Timestamp("2024-08-23")]
@@ -53,17 +50,18 @@ date_from_igram = th.get_times_from_opus(igram)
 print(f"the date from {igram} is: {date_from_igram}")
 
 # different coordinate file type
-print(
-    "\n"
-    "Japan coordinates and pressure"
-)
+print("\nJapan coordinates and pressure")
 
 coord_type_file = "japan_coord_parameters.yml"
 coord_path = "input_data/"
 dates = [pd.Timestamp("2023-10-25")]
 ch = CoordHandler(
-    coord_type_file, coord_path, dates, logger,
-    {"alt": 0.0, "lat": 10.0, "lon": 15.0})  # test giving static coordinates
+    coord_type_file,
+    coord_path,
+    dates,
+    logger,
+    {"alt": 0.0, "lat": 10.0, "lon": 15.0},
+)  # test giving static coordinates
 ch.prepare_coord_df()
 t4 = pd.Timestamp("2023-10-25T00:26:00")
 c4 = ch.get_coords_at(t4)

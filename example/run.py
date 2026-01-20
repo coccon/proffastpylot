@@ -14,7 +14,6 @@ from prfpylot.pylot import Pylot
 # This statement needs to be executed in all run scripts to prevent problems
 # with the multiprocessing on windows
 if __name__ == "__main__":
-
     # Check if example input data is already available on disk,
     # if not download it.
     # This is not needed for your personal PROFASTpylot run-file

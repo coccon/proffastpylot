@@ -12,9 +12,7 @@ import sys
 
 # Add project root to sys.path so autodoc can import prfpylot and submodules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../prfpylot"))
-)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../prfpylot")))
 
 project = "PROFFASTpylot"
 copyright = "2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology"
@@ -38,29 +36,29 @@ def setup(app):
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    'sphinx_mdinclude',
-    ]
+    "sphinx_mdinclude",
+]
 
 napoleon_use_rtype = False
 autodoc_default_options = {
     "members": True,
     # "undoc-members": True,
     "private-members": False,
-    "show-inheritance": True
+    "show-inheritance": True,
 }
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+html_theme = "alabaster"
 html_theme_options = {
     "caption_font_family": "Roboto",
     "head_font_family": "Roboto",
 }
 
-html_static_path = ['_static']
-html_css_files = ['css/custom.css']
+html_static_path = ["_static"]
+html_css_files = ["css/custom.css"]
