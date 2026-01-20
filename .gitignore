@@ -15,6 +15,7 @@ hdf_test
 KA_LongTerm/
 pressure_config_files/
 config_run_files/
+.pdm-python
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,linux,macos,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,linux,macos,python
