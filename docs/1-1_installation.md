@@ -25,14 +25,14 @@ To use PROFFASTpylot, you need Python 3.7 or newer. The PROFFAST and PROFFASTpyl
 It will make future updates easier.
 
 ```bash
-git clone https://gitlab.eudat.eu/coccon-kit/proffastpylot.git
+git clone https://github.com/coccon/proffastpylot.git
 ```
 
 A folder `proffastpylot` containing all program files will be created.
 
 ### Alternatively: Download the PROFFASTpylot repository as a zip file
 
-If you do not want to use git, you can instead download and unpack the zip file https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/archive/master/proffastpylot-master.zip
+If you do not want to use git, you can instead download and unpack the zip file https://github.com/coccon/proffastpylot/archive/refs/heads/main.zip
 
 Extracting it will create the folder `proffastpylot`.
 

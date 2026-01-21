@@ -9,7 +9,7 @@ With PROFFASTpylot, most of the folder structure can be chosen freely. This arti
 
 All paths can be chosen freely (e.g., input data can be located on an external hard disk). **We recommend disentangling input data, output data, and the program execution files from each other.**
 
-_Note_: To run the example files using [run.py](https://gitlab.eudat.eu/coccon-kit/proffastpylot/-/blob/master/example/run.py) PROFFAST must be located inside the `proffastpylot` directory as described in the **Installation** article.
+_Note_: To run the example files using [run.py](https://github.com/coccon/proffastpylot/blob/main/example/run.py) PROFFAST must be located inside the `proffastpylot` directory as described in the **Installation** article.
 
 ## 1. Input data
 

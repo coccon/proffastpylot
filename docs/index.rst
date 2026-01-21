@@ -14,7 +14,7 @@ To ensure common quality standards across the COCCON, raw EM27/SUN measurements 
 The Python interface PROFFASTpylot significantly reduces the workload during the processing of large sets of observational data and supports a network-wide consistent data processing.
 
 For more information about PROFFAST, see https://coccon.kit.edu.
-The PROFFASTpylot source code is available at https://gitlab.eudat.eu/coccon-kit/proffastpylot. If you have any comments or questions, contact us at coccon@imkasf.kit.edu. You are welcome to contribute.
+The PROFFASTpylot source code is available at https://github.com/coccon/proffastpylot. If you have any comments or questions, contact us at coccon@imkasf.kit.edu. You are welcome to contribute.
 
 This documentation and the PROFFASTpylot source code is licensed under GPL-3.0.
 
