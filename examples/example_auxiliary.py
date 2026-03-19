@@ -3,7 +3,6 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from example.run_heidelberg_mobile import INPUT_DATA_DIR
 from prfpylot.auxiliary import PressureHandler, CoordHandler
 from prfpylot.prepare import TimeHandler
 from prfpylot.constants import EXAMPLE_DIR
