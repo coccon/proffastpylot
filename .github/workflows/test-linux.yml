@@ -3,10 +3,10 @@ name: "test-linux"
 on:
   push:
     branches:
-      - main
+      - paused
   pull_request:
     branches:
-      - main
+      - paused
 
 jobs:
   test-linux:
