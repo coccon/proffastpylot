@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.pylot import Pylot
 from prfpylot.constants import EXAMPLE_DIR
 
@@ -12,6 +13,14 @@ INPUT_DATA_DIR = os.path.join(EXAMPLE_DIR, "data", "input_data")
 
 
 if __name__ == "__main__":
+    # download example data if not already present
+    ExampleDownloadHandler.check_and_download_example_data(
+        skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
+    )
+    ExampleDownloadHandler.download_proffast()
+
+    # run the example
+    os.chdir(EXAMPLE_DIR)
     proffastpylot_parameters = {
         "instrument_number": "SN119",
         "site_name": "Heidelberg",
@@ -27,5 +36,4 @@ if __name__ == "__main__":
         "coord_path": os.path.join(INPUT_DATA_DIR, "pressure_coords_mobile"),
         "altitude_factor": 1e-3,  # conversion to km
     }
-
     Pylot(proffastpylot_parameters).run()

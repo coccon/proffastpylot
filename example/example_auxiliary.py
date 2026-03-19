@@ -17,6 +17,7 @@ INPUT_DATA_DIR = os.path.join(EXAMPLE_DIR, "data", "input_data")
 # CoordHandler are working, different file types are illustrated
 
 if __name__ == "__main__":
+    os.chdir(EXAMPLE_DIR)
     logger = logging.getLogger()
 
     print("Vaisala pressure")
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     print(f"coordinates from {coord_path} at {t3}: {c3}")
 
     # test the Time Handler (get local_time, utc_time and measurement_time)
-    th = TimeHandler({"lat": c3[0], "lon": c3[1]}, 0)
+    th = TimeHandler({"lat": c3[0], "lon": c3[1]}, 0)  # type:ignore
     igram = os.path.join(INPUT_DATA_DIR, "interferograms", "SN119", "240823", "240823SN.0160")
     date_from_igram = th.get_times_from_opus(igram)
     print(f"the date from {igram} is: {date_from_igram}")
