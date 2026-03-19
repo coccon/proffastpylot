@@ -1,4 +1,4 @@
-name: build-docs
+name: build-and-deploy-docs
 
 on:
   push:
@@ -9,7 +9,9 @@ on:
       - main
 
 jobs:
-  build-docs:
+
+  # Build documentation and upload as artifact
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,3 +40,21 @@ jobs:
         with:
           name: proffastpylot-docs-html-${{ steps.get_version.outputs.version }}
           path: docs/_build/html
+  
+  # Deploy to GitHub Pages
+  deploy:
+    needs: build
+    permissions:
+      pages: write      
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: proffastpylot-docs-html-${{ needs.build.outputs.version }}
+
