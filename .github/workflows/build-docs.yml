@@ -30,7 +30,7 @@ jobs:
       - name: Get version from pyproject.toml
         id: get_version
         run: |
-          VERSION=$(python -c "import tomli, pathlib; p = pathlib.Path('../pyproject.toml'); print(tomli.loads(p.read_text())['project']['version'])")
+          VERSION=$(python -c "import tomllib, pathlib; p = pathlib.Path('../pyproject.toml'); print(tomllib.loads(p.read_text())['project']['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Build HTML documentation
         run: |
@@ -52,9 +52,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Get version from pyproject.toml
+        id: get_version
+        run: |
+          VERSION=$(python -c "import tomli, pathlib; p = pathlib.Path('../pyproject.toml'); print(tomli.loads(p.read_text())['project']['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: proffastpylot-docs-html-${{ needs.build.outputs.version }}
+          artifact_name: proffastpylot-docs-html-${{ steps.get_version.outputs.version }}
 
