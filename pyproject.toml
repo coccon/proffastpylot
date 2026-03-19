@@ -26,9 +26,8 @@ dependencies = [
 ]
 requires-python = ">=3.11,<3.15"
 readme = "README.md"
-license = { text = "GPL-3.0-or-later" }
+license = "GPL-3.0-or-later"
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License (GPL)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -52,6 +51,9 @@ dev = [
 
 [tool.pdm]
 distribution = false
+
+[tool.setuptools.packages.find]
+exclude = ["prfpylot*"]
 
 [tool.ruff]
 line-length = 100
