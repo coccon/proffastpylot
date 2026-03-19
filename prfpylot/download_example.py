@@ -88,3 +88,14 @@ class ExampleDownloadHandler:
                         )
             ExampleDownloadHandler.download_example_data()
 
+    @staticmethod
+    def download_proffast() -> None:
+        if os.path.exists(os.path.join(PROJECT_DIR, "prf")):
+            print("PROFFAST is already available on disk")
+            return
+
+        url = "https://www.coccon.kit.edu/downloads/Instrument/PROFFASTv2.4.1.zip"
+        os.system(f"curl -L {url} -o {os.path.join(PROJECT_DIR, 'PROFFASTv2.4.1.zip')}")
+        with ZipFile(os.path.join(PROJECT_DIR, "PROFFASTv2.4.1.zip"), "r") as file:
+            file.extractall(os.path.join(PROJECT_DIR, "prf"))
+        os.remove(os.path.join(PROJECT_DIR, "PROFFASTv2.4.1.zip"))
