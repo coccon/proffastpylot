@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-docs:
+  test-windows:
     runs-on: windows-2022
     strategy:
       matrix:
