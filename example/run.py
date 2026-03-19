@@ -8,14 +8,13 @@ by Pylot.run() automatically.
 """
 
 import os
-import shutil
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.pylot import Pylot
 from prfpylot.constants import EXAMPLE_DIR
+from utils import prepare_pylot_test_environment
 
 
 # The `if __name__ == "__main__"`s tatement needs to be included in all run
@@ -23,24 +22,8 @@ from prfpylot.constants import EXAMPLE_DIR
 
 if __name__ == "__main__":
     # download example data if not already present
-    ExampleDownloadHandler.check_and_download_example_data(
-        skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
-    )
-    ExampleDownloadHandler.download_and_install_proffast()
-
-    results_dirpath = os.path.join(
-        EXAMPLE_DIR,
-        "data",
-        "results",
-        "Sodankyla_SN039_170608-170609",
-    )
-    results_filepath = os.path.join(
-        results_dirpath,
-        "comb_invparms_Sodankyla_SN039_170608-170609.csv",
-    )
-    if os.path.exists(results_filepath):
-        print(f"Example data already exists. Removing it to ensure a clean run.")
-        shutil.rmtree(results_dirpath)
+    # possibly remove existing results to ensure a clean run
+    results_filepath = prepare_pylot_test_environment("Sodankyla_SN039_170608-170609")
 
     # run the example (change for your own setup)
     os.chdir(EXAMPLE_DIR)
@@ -48,6 +31,7 @@ if __name__ == "__main__":
     MyPylot = Pylot(input_filepath, logginglevel="info")
     MyPylot.run(n_processes=2)
 
+    # check if the expected results file was created
     if not os.path.exists(results_filepath):
         raise FileNotFoundError(
             f"Expected results file not found at {results_filepath}. Please check the logs for any errors during the run."
