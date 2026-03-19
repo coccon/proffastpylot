@@ -102,5 +102,14 @@ class ExampleDownloadHandler:
         assert os.path.exists(os.path.join(PROJECT_DIR, "prf")), (
             "PROFFAST folder not found after extraction."
         )
+
+        # only allow the automatic compilation on linux
+        if not sys.platform.startswith("linux"):
+            print(
+                "Automatic compilation of PROFFAST is only supported on Linux. Please compile "
+                + f"PROFFAST manually by running the install_proffast_linux.sh script in the prf folder."
+            )
+            exit(0)
+
         os.chdir(os.path.join(PROJECT_DIR, "prf"))
         os.system("bash install_proffast_linux.sh")
