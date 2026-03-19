@@ -3,18 +3,25 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.output.hdf_geoms_writer import GeomsGenWriter
 from prfpylot.constants import EXAMPLE_DIR
 
-if __name__ == "__main__":
-    # download example data if not already present
-    ExampleDownloadHandler.check_and_download_example_data(
-        skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
-    )
+HDF_GEOMS_DIR = os.path.join(EXAMPLE_DIR, "data", "output_hdf_geoms")
 
-    # run the example
+if __name__ == "__main__":
     os.chdir(EXAMPLE_DIR)
+
+    print("Cleaning up existing HDF Geoms files... ")
+    for f in os.listdir(HDF_GEOMS_DIR):
+        if f.endswith(".h5"):
+            os.remove(os.path.join(HDF_GEOMS_DIR, f))
+
     geomsgen_inputfile = os.path.join(EXAMPLE_DIR, "config", "input_sodankyla_hdf_geoms.yml")
     MyCreator = GeomsGenWriter(geomsgen_inputfile)
     MyCreator.generate_geoms_files()
+
+    h5filecount: int = len([f for f in os.listdir(HDF_GEOMS_DIR) if f.endswith(".h5")])
+    if h5filecount > 0:
+        print(f"Successfully created {h5filecount} HDF Geoms files in {HDF_GEOMS_DIR}")
+    else:
+        raise FileNotFoundError(f"No HDF Geoms files were created in {HDF_GEOMS_DIR}.")
