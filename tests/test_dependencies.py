@@ -1,6 +1,8 @@
 import os
+import pytest
 
 
+@pytest.mark.order(0)
 def test_dependencies() -> None:
     from prfpylot import pylot, prepare, download_example, auxiliary, filemover
 
