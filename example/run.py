@@ -7,19 +7,26 @@ All steps of the retrieval with PROFFAST will be executed
 by Pylot.run() automatically.
 """
 
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.pylot import Pylot
+from prfpylot.constants import EXAMPLE_DIR
 
 
 # This statement needs to be executed in all run scripts to prevent problems
 # with the multiprocessing on windows
 if __name__ == "__main__":
-    # Check if example input data is already available on disk,
-    # if not download it.
+    # Check if example input data is already available on disk or download it.
     # This is not needed for your personal PROFASTpylot run-file
-    ExampleDownloadHandler().check_and_download_example_data()
+
+    ExampleDownloadHandler.check_and_download_example_data(
+        skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
+    )
 
     # The following part can be adapted to your own retrieval
-    input_file = "input_sodankyla_example.yml"
-    MyPylot = Pylot(input_file, logginglevel="info")
+    MyPylot = Pylot("input_sodankyla_example.yml", logginglevel="info")
     MyPylot.run(n_processes=2)
