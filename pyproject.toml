@@ -57,4 +57,7 @@ distribution = false
 line-length = 100
 
 [tool.pytest.ini_options]
+markers = [
+    "quick: quick tests that should run in a few seconds",
+]
 addopts = "--exitfirst --verbose --durations=0 --no-header"
