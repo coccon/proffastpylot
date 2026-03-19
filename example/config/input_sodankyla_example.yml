@@ -124,12 +124,12 @@ pressure_type_file: config/log_type_pressure.yml
 # If you process already available spectra (*.bin files),
 # you need to provide a folder structure as described above
 # and set start_with_spectra to True.
-analysis_path: analysis
+analysis_path: data/analysis
 
 # The merged results, the logfiles and optionally the inputfiles are written to
 # the result path. Within it, PROFFASTpylot will create
 # a folder named 'SiteName_InstrumentNumber_StartDate-EndDate'
-result_path: results
+result_path: data/results
 
 # if a geomsgen input file generate hdf outputfiles that follow the GEOMS conventions
 # the file should contain the corresponding attributes

@@ -12,7 +12,6 @@ if __name__ == "__main__":
     ExampleDownloadHandler.check_and_download_example_data(
         skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
     )
-    ExampleDownloadHandler.download_proffast()
 
     # run the example
     os.chdir(EXAMPLE_DIR)
