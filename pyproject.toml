@@ -55,3 +55,6 @@ distribution = false
 
 [tool.ruff]
 line-length = 100
+
+[tool.pytest.ini_options]
+addopts = "--exitfirst --verbose --durations=0 --no-header"
