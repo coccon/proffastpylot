@@ -40,6 +40,11 @@ jobs:
         with:
           name: proffastpylot-docs-html-${{ steps.get_version.outputs.version }}
           path: docs/_build/html
+      - name: Upload documentation gh pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: proffastpylot-docs-gh-pages-output
+          path: docs/_build/html
   
   # Deploy to GitHub Pages
   deploy:
@@ -52,20 +57,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Get version from pyproject.toml
-        id: get_version
-        run: |
-          VERSION=$(python -c "import tomllib, pathlib; p = pathlib.Path('./pyproject.toml'); print(tomllib.loads(p.read_text())['project']['version'])")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: proffastpylot-docs-html-${{ steps.get_version.outputs.version }}
+          artifact_name: proffastpylot-docs-gh-pages-output
 
