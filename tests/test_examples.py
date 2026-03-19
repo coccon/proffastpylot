@@ -52,6 +52,7 @@ def test_hdf_geoms_generation() -> None:
 
 
 @pytest.mark.order(6)
+@pytest.mark.quick
 def test_auxiliary_examples() -> None:
     assert (
         os.system(f"{sys.executable} {os.path.join(EXAMPLES_DIR, 'example_auxiliary_usage.py')}")

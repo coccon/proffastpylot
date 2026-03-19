@@ -7,6 +7,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 @pytest.mark.order(0)
+@pytest.mark.quick
 def test_project_version_equality() -> None:
     with open(os.path.join(ROOT_DIR, "pyproject.toml"), "rb") as f:
         pyproject_version = tomllib.load(f)["project"]["version"]
