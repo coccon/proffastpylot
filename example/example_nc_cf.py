@@ -6,10 +6,9 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from prfpylot.constants import EXAMPLE_DIR
 from prfpylot.output.nc_cf_writer import NcWriter
 
-NETCDF_DIR = os.path.join(EXAMPLE_DIR, "data", "netcdf")
+NETCDF_DIR = os.path.join(EXAMPLE_DIR, "data", "output_netcdf")
 
 if __name__ == "__main__":
-    os.makedirs(NETCDF_DIR, exist_ok=True)
     os.chdir(EXAMPLE_DIR)
 
     print("Cleaning up existing NetCDF files... ")
