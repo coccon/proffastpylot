@@ -17,18 +17,18 @@ from prfpylot.pylot import Pylot
 from prfpylot.constants import EXAMPLE_DIR
 
 
-# This statement needs to be executed in all run scripts to prevent problems
-# with the multiprocessing on windows
-if __name__ == "__main__":
-    # Check if example input data is already available on disk or download it.
-    # This is not needed for your personal PROFASTpylot run-file
+# The `if __name__ == "__main__"`s tatement needs to be included in all run
+# scripts to prevent problems with the multiprocessing on windows
 
+if __name__ == "__main__":
+    # download example data if not already present
     ExampleDownloadHandler.check_and_download_example_data(
         skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
     )
-    os.chdir(EXAMPLE_DIR)
+    ExampleDownloadHandler.download_proffast()
 
-    # The following part can be adapted to your own retrieval
+    # run the example (change for your own setup)
+    os.chdir(EXAMPLE_DIR)
     input_filepath = os.path.join(EXAMPLE_DIR, "config", "input_sodankyla_example.yml")
     MyPylot = Pylot(input_filepath, logginglevel="info")
     MyPylot.run(n_processes=2)
