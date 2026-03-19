@@ -54,7 +54,7 @@ class ExampleDownloadHandler:
 
         # Extract it
         with ZipFile(target_file, "r") as file:
-            file.extractall(os.path.join(EXAMPLE_DIR, "input_data"))
+            file.extractall(os.path.join(EXAMPLE_DIR, "data", "input_data"))
         # delete the downloaded zip file:
         os.remove(target_file)
         print("Download Completed")
@@ -63,7 +63,7 @@ class ExampleDownloadHandler:
     def check_and_download_example_data(skip_confirmation: bool = False) -> None:
         """Check if example data is available and download it."""
 
-        input_data_path = os.path.join(EXAMPLE_DIR, "input_data")
+        input_data_path = os.path.join(EXAMPLE_DIR, "data", "input_data")
         if os.path.exists(input_data_path):
             print("Example data are already available on disk")
             return
@@ -89,7 +89,7 @@ class ExampleDownloadHandler:
             ExampleDownloadHandler.download_example_data()
 
     @staticmethod
-    def download_proffast() -> None:
+    def download_and_install_proffast() -> None:
         if os.path.exists(os.path.join(PROJECT_DIR, "prf")):
             print("PROFFAST is already available on disk")
             return
@@ -97,5 +97,10 @@ class ExampleDownloadHandler:
         url = "https://www.coccon.kit.edu/downloads/Instrument/PROFFASTv2.4.1.zip"
         os.system(f"curl -L {url} -o {os.path.join(PROJECT_DIR, 'PROFFASTv2.4.1.zip')}")
         with ZipFile(os.path.join(PROJECT_DIR, "PROFFASTv2.4.1.zip"), "r") as file:
-            file.extractall(os.path.join(PROJECT_DIR, "prf"))
+            file.extractall(PROJECT_DIR)
         os.remove(os.path.join(PROJECT_DIR, "PROFFASTv2.4.1.zip"))
+        assert os.path.exists(os.path.join(PROJECT_DIR, "prf")), (
+            "PROFFAST folder not found after extraction."
+        )
+        os.chdir(os.path.join(PROJECT_DIR, "prf"))
+        os.system("bash install_proffast_linux.sh")
