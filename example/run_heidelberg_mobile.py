@@ -3,9 +3,9 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.pylot import Pylot
 from prfpylot.constants import EXAMPLE_DIR
+from utils import prepare_pylot_test_environment
 
 CONFIG_DIR = os.path.join(EXAMPLE_DIR, "config")
 DATA_DIR = os.path.join(EXAMPLE_DIR, "data")
@@ -14,10 +14,8 @@ INPUT_DATA_DIR = os.path.join(EXAMPLE_DIR, "data", "input_data")
 
 if __name__ == "__main__":
     # download example data if not already present
-    ExampleDownloadHandler.check_and_download_example_data(
-        skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
-    )
-    ExampleDownloadHandler.download_and_install_proffast()
+    # possibly remove existing results to ensure a clean run
+    results_filepath = prepare_pylot_test_environment("Heidelberg_SN119_240823-240823")
 
     # run the example
     os.chdir(EXAMPLE_DIR)
@@ -37,3 +35,9 @@ if __name__ == "__main__":
         "altitude_factor": 1e-3,  # conversion to km
     }
     Pylot(proffastpylot_parameters).run()
+
+    # check if the expected results file was created
+    if not os.path.exists(results_filepath):
+        raise FileNotFoundError(
+            f"Expected results file not found at {results_filepath}. Please check the logs for any errors during the run."
+        )
