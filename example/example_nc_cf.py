@@ -3,19 +3,35 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from prfpylot.download_example import ExampleDownloadHandler
 from prfpylot.constants import EXAMPLE_DIR
 from prfpylot.output.nc_cf_writer import NcWriter
 
-if __name__ == "__main__":
-    # download example data if not already present
-    ExampleDownloadHandler.check_and_download_example_data(
-        skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
-    )
+NETCDF_DIR = os.path.join(EXAMPLE_DIR, "data", "netcdf")
 
-    # run the example
+if __name__ == "__main__":
+    os.makedirs(NETCDF_DIR, exist_ok=True)
     os.chdir(EXAMPLE_DIR)
-    result_path = os.path.join(EXAMPLE_DIR, "results", "Sodankyla_SN039_170608-170609")
-    writer = NcWriter(result_path)
-    filename = writer.get_output_filename()
-    writer.write_nc(filename)
+
+    print("Cleaning up existing NetCDF files... ")
+    for f in os.listdir(NETCDF_DIR):
+        if f.endswith(".nc"):
+            os.remove(os.path.join(NETCDF_DIR, f))
+
+    for run_label in [
+        "Sodankyla_SN039_170608-170609",
+        "Tsukuba_SN063_240619-240722",
+        "Heidelberg_SN119_240823-240823",
+    ]:
+        print(f"Processing run {run_label}...")
+        result_path = os.path.join(EXAMPLE_DIR, "data", "results", run_label)
+        if not os.path.exists(result_path):
+            print(f"Results for run {run_label} not found at {result_path}. Skipping.")
+            continue
+        writer = NcWriter(result_path)
+        filepath = os.path.join(NETCDF_DIR, writer.get_output_filename())
+        writer.write_nc(filepath)
+
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Expected NetCDF file not found at {filepath} after writing.")
+        else:
+            print(f"Successfully created NetCDF file at {filepath}.")
