@@ -5,8 +5,9 @@ prf/*
 *subl*
 ./Logfile.txt
 *pT*
-data/
-example/*
+data/*
+!data/.gitkeep
+!example/config/*.yml
 desktop.ini
 GeneralLogfile.log
 .vscode
