@@ -26,7 +26,9 @@ if __name__ == "__main__":
     ExampleDownloadHandler.check_and_download_example_data(
         skip_confirmation=os.environ.get("NONINTERACTIVE", "0") == "1"
     )
+    os.chdir(EXAMPLE_DIR)
 
     # The following part can be adapted to your own retrieval
-    MyPylot = Pylot("input_sodankyla_example.yml", logginglevel="info")
+    input_filepath = os.path.join(EXAMPLE_DIR, "config", "input_sodankyla_example.yml")
+    MyPylot = Pylot(input_filepath, logginglevel="info")
     MyPylot.run(n_processes=2)
