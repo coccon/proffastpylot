@@ -12,7 +12,7 @@
 
 **Ready-to-use Example**
 
-You can follow the usage of PROFFASTpylot using an example from Sodankylä, provided in `example/run.py`. The example input data (i.e., the example interferogram, map, and pressure files) are downloaded automatically when running `run.py` for the first time. The runscript needs to be executed inside the `example` folder.
+You can follow the usage of PROFFASTpylot using an example from Sodankylä, provided in `examples/run_sodankyla_retrieval.py`. The example input data (i.e., the example interferogram, map, and pressure files) as well as proffast will be downloaded automatically when running any of the example scripts for the first time. On Linux, Proffast will be compiled automatically; on other operating systems, you will have to follow the proffast installation instructions.
 
 ### Executing PROFFAST with the PROFFASTpylot takes two steps
 
@@ -33,7 +33,7 @@ To start the processing, you need to create an instance of the Pylot class with 
 from prfpylot.pylot import Pylot
 
 if __name__ == "__main__":
-    input_file = "input_sodankyla_example.yml"
+    input_file = "config/input_sodankyla_example.yml"
     MyPylot = Pylot(input_file=input_file)
 ```
 
