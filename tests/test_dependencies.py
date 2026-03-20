@@ -7,6 +7,6 @@ import pytest
 def test_dependencies() -> None:
     from prfpylot import pylot, prepare, download_example, auxiliary, filemover
 
-    os.system("curl --version")
-    os.system("gfortran --version")
-    os.system("bash --version")
+    assert os.system("curl --version") == 0
+    assert os.system("gfortran --version") == 0
+    assert os.system("bash --version") == 0
