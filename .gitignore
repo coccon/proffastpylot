@@ -5,8 +5,10 @@ prf/*
 *subl*
 ./Logfile.txt
 *pT*
-data/
-example/*
+data/*
+examples/data/*/*
+!examples/data/.gitkeep
+!examples/data/*/.gitkeep
 desktop.ini
 GeneralLogfile.log
 .vscode

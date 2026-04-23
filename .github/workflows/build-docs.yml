@@ -1,24 +1,23 @@
-name: Build Documentation
+name: build-and-deploy-docs
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  build-docs:
+
+  # Build documentation and upload as artifact
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: docs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install dependencies
@@ -28,13 +27,36 @@ jobs:
       - name: Get version from pyproject.toml
         id: get_version
         run: |
-          VERSION=$(python -c "import tomli, pathlib; p = pathlib.Path('../pyproject.toml'); print(tomli.loads(p.read_text())['project']['version'])")
+          VERSION=$(python -c "import tomllib, pathlib; p = pathlib.Path('../pyproject.toml'); print(tomllib.loads(p.read_text())['project']['version'])")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Build HTML documentation
         run: |
           make html
       - name: Upload documentation artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: proffastpylot-docs-html-${{ steps.get_version.outputs.version }}
           path: docs/_build/html
+      - name: Upload documentation gh pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: proffastpylot-docs-gh-pages-output
+          path: docs/_build/html
+  
+  # Deploy to GitHub Pages
+  deploy:
+    needs: build
+    permissions:
+      pages: write      
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: proffastpylot-docs-gh-pages-output
+

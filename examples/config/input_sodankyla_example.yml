@@ -4,8 +4,6 @@
 # An example of a file structure and derived paths can be found in
 # 'docs/folder_strucutre.md'
 
-
-
 #######################
 # SITE AND INSTRUMENT #
 #######################
@@ -22,23 +20,23 @@ site_abbrev: so
 # leave empty if coordinates should be taken from file. An example file can
 # be found in examples/input_data/coords.csv
 coords:
-  lat: 
-  lon: 
-  alt:   # km over sea level
+  lat:
+  lon:
+  alt: # km over sea level
 
 # full path to the coord file.
 # This file contains the coordinates of the sites.
 #
-# Warning: 
+# Warning:
 #       If the coordinates of the spectrometer changed
 #       during the chosen time period, it can happen that the local time zone
 #       in the ouputfile is not correct anymore, since it is determined using
 #       the coordinates of the first day in the run.
-coord_file: input_data/coords.csv
+coord_file: data/input_data/coords.csv
 
 # if times of the recorded data is not stored in UTC, insert the offset here
 # default: 0.0
-utc_offset: 
+utc_offset:
 
 # ILS parameters
 # WARNING: we recommend using the official ILS parameters distributed with
@@ -51,7 +49,6 @@ utc_offset:
 #   - 0.9816  # Modulation Efficiency Channel 2
 #   - -0.00244  # Phase Error Channel 2
 
-
 #############
 # BEHAVIOUR #
 #############
@@ -61,33 +58,29 @@ utc_offset:
 # Default is 3.7
 min_interferogram_size:
 
-
 # Start the processing chain with already available spectra.
 # The directory to the spectra is given as the 'analysis_path'.
-# NOTE: 
+# NOTE:
 #     In this case the folder this path points to must have a
 #     substructure like analysis/SiteName_InstrumentNumber/YYMMDD/cal.
 # Set to True/False.
 # Default is False
 start_with_spectra:
 
-
 # Process only dates in a specific time range
 # date format: YYYY-MM-DD.
 # Leave empty to process all dates in the data folder
-start_date: 
-end_date: 
+start_date:
+end_date:
 
 # Optional comment included in bin-files by PREPROCESS
 # Leave empty for adding no comment
-note: 
-
-
+note:
 
 # Delete the abscos.bin files? (True/False)    Default: False
 # The abscos.bin file contains the simulation of the atmosphere which is
 # the result of the 'pcxs' program part of PROFFAST.
-delete_abscosbin_files: True
+delete_abscosbin_files: False
 
 # Delete the pT and VMR files (True/False) Default: False
 # The pT_fast_out.dat file contains the daily a priori height profile of
@@ -96,8 +89,6 @@ delete_abscosbin_files: True
 # gases.
 # When not removed they are copied/moved to results/raw_output_proffast
 delete_pT_VMR_files: False
-
-
 
 # Delete PROFFAST input files? (True/False)   Default: False
 # If False: Files will be moved to results folder
@@ -115,15 +106,13 @@ proffast_path:
 # input data
 # -----------
 # a folder where the data are located like YYMMDD/YYMMDDSN.XXX
-interferogram_path: input_data/interferograms/SN039
-map_path: input_data/map_sodankyla
-pressure_path: input_data/pressure_sodankyla
-
+interferogram_path: data/input_data/interferograms/SN039
+map_path: data/input_data/map_sodankyla
+pressure_path: data/input_data/pressure_sodankyla
 
 # Filename, or path to the pressure type file
 # With help of the pressure file, differen pressure formats can be used
-pressure_type_file: log_type_pressure.yml
-
+pressure_type_file: config/log_type_pressure.yml
 
 # output data
 # -----------
@@ -131,17 +120,17 @@ pressure_type_file: log_type_pressure.yml
 # We recommend to call it analysis.
 # Within this folder the PROFFASTpylot will create a folder structure like
 # analysis/SiteName_InstrumentNumber/YYMMDD.
-# 
+#
 # If you process already available spectra (*.bin files),
 # you need to provide a folder structure as described above
 # and set start_with_spectra to True.
-analysis_path: analysis
+analysis_path: data/analysis
 
 # The merged results, the logfiles and optionally the inputfiles are written to
-# the result path. Within it, PROFFASTpylot will create 
+# the result path. Within it, PROFFASTpylot will create
 # a folder named 'SiteName_InstrumentNumber_StartDate-EndDate'
-result_path: results
+result_path: data/results
 
 # if a geomsgen input file generate hdf outputfiles that follow the GEOMS conventions
 # the file should contain the corresponding attributes
-geomsgen_inputfile: "input_sodankyla_hdf_geoms.yml"
+geomsgen_inputfile: config/input_sodankyla_hdf_geoms.yml
