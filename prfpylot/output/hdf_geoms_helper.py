@@ -248,16 +248,16 @@ class GeomsGenHelper:
                 quality_check_passed = False
 
             for col in ["XH2O", "XCO2", "XCH4", "XCO"]:
-                if row[col] in [np.nan, 0.]:
+                if row[col] in [np.nan, 0.0]:
                     quality_check_passed = False
-                    print ('line', index, 'removed:', col, '=', row[col])
+                    print("line", index, "removed:", col, "=", row[col])
 
-          # if row[["XCO2", "XCH4", "XCO"]].isin([np.nan, 0.0]).all():
-          #     quality_check_passed = False
-          #     self.logger.debug(
-          #         f"line {index} removed: ['XCO2', 'XCH4', 'XCO'] = "
-          #         f"{row[['XCO2', 'XCH4', 'XCO']].values}"
-          #     )
+            # if row[["XCO2", "XCH4", "XCO"]].isin([np.nan, 0.0]).all():
+            #     quality_check_passed = False
+            #     self.logger.debug(
+            #         f"line {index} removed: ['XCO2', 'XCH4', 'XCO'] = "
+            #         f"{row[['XCO2', 'XCH4', 'XCO']].values}"
+            #     )
 
             # remove row from df
             if quality_check_passed is False:
