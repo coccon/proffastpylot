@@ -64,4 +64,4 @@ DATA_DESCRIPTION: "PROFFASTpylot example dataset."
 
 # OPTIONAL
 # DateTime VAR_NOTES
-# DATETIME_NOTES: ''
+# DATETIME_NOTES: "..."
