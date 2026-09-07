@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../p
 
 project = "PROFFASTpylot"
 copyright = "2023, Lena Feld, Benedikt Herkommer Karlsruhe Institut of Technology"
-author = "Lena Feld, Benedikt Herkommer"
-release = "2.4.1-4"
+author = "Lena Feld, Benedikt Herkommer, Darko Dubravica, Moritz Oliveira Makowski"
+release = "2.4.1-5"
 
 
 # -- General configuration ---------------------------------------------------

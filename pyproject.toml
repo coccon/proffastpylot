@@ -1,6 +1,6 @@
 [project]
 name = "PROFFASTpylot"
-version = "2.4.1-4"
+version = "2.4.1-5"
 description = "Run PROFFAST with Python"
 authors = [
     { name = "Benedikt Herkommer" },
@@ -41,13 +41,7 @@ repository = "https://github.com/coccon/proffastpylot"
 documentation = "https://www.coccon.kit.edu/70.php"
 
 [project.optional-dependencies]
-dev = [
-    "sphinx>=9.0.4",
-    "sphinx-mdinclude>=0.6.2",
-    "tomli>=2.4.0",
-    "ruff>=0.14.13",
-    "pytest>=9.0.2",
-]
+dev = ["sphinx>=9.0.4", "sphinx-mdinclude>=0.6.2", "tomli>=2.4.0", "ruff>=0.14.13", "pytest>=9.0.2"]
 
 [tool.pdm]
 distribution = false
@@ -57,9 +51,8 @@ exclude = ["prfpylot*"]
 
 [tool.ruff]
 line-length = 100
+exclude = ["docs/*"]
 
 [tool.pytest.ini_options]
-markers = [
-    "quick: quick tests that should run in a few seconds",
-]
+markers = ["quick: quick tests that should run in a few seconds"]
 addopts = "--exitfirst --verbose --durations=0 --no-header"
