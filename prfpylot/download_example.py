@@ -37,7 +37,7 @@ class ExampleDownloadHandler:
         """Download and extract the example data."""
         # Code for download copied from here:
         # https://www.simplifiedpython.net/python-download-file/
-        url = "https://www.imkasf.kit.edu/downloads/Coccon-SW/example_data_proffastpylot.zip"
+        url = "https://www.coccon.kit.edu/downloads/Instrument/example_data_proffastpylot.zip"
         req = requests.get(url, stream=True)
         total_size = int(req.headers["content-length"])
 
