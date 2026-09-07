@@ -108,7 +108,7 @@ proffastpylot
 
 ## 7. Test the installation by running an example dataset
 
-To test the installation, we provide example raw data and a reference result file for comparison. The example can be executed by navigating to the example folder and executing `python run.py` (please ensure that your virtual environment is activated). When first running the program, it will ask you to download the example file data to your local computer.
+To test the installation, we provide example raw data and a reference result file for comparison. The example can be executed by navigating to the example folder and executing the `run_*.py` scripts (please ensure that your virtual environment is activated). When first running the program, it will ask you to download the example file data to your local computer.
 
 After the run is complete, please compare your results to the data given in `example\Reference_Output_Example_Sodankyla.csv`. The deviations should be less than 0.1 ppm for XCO2, 0.1 ppb for XCH4, and 0.1 ppb for XCO.
 
