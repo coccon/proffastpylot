@@ -120,7 +120,7 @@ class NcWriter(object):
 
         # replace secondary time columns
         ds = self.add_local_noon_column(ds)
-        ds = ds.drop(["LocalTime"])
+        ds = ds.drop_vars(["LocalTime"])
 
         # scale to SI units
         ds = self.scale_columns(ds)
@@ -153,7 +153,7 @@ class NcWriter(object):
         for col in ["H2O", "CO2", "CH4", "CO"]:
             scaling_factors[col] = 1 / c.N_a
         for key, scaling_factor in scaling_factors.items():
-            ds[key] *= scaling_factor
+            ds[key] = ds[key] * scaling_factor
 
         return ds
 
