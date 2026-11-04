@@ -72,7 +72,9 @@ class ExampleDownloadHandler:
                 for filename in filenames
             )
             if input_data_size < 1_000_000:
-                print("Example input data are smaller than 1 MB. Removing them for a fresh download.")
+                print(
+                    "Example input data are smaller than 1 MB. Removing them for a fresh download."
+                )
                 shutil.rmtree(input_data_path)
 
         if os.path.exists(input_data_path):
