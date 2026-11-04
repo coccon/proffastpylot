@@ -24,6 +24,7 @@ import requests
 from tqdm import tqdm
 from zipfile import ZipFile
 import os
+import shutil
 import sys
 from .constants import PROJECT_DIR, EXAMPLE_DIR
 
@@ -64,6 +65,16 @@ class ExampleDownloadHandler:
         """Check if example data is available and download it."""
 
         input_data_path = os.path.join(EXAMPLE_DIR, "data", "input_data")
+        if os.path.isdir(input_data_path):
+            input_data_size = sum(
+                os.path.getsize(os.path.join(root, filename))
+                for root, _, filenames in os.walk(input_data_path)
+                for filename in filenames
+            )
+            if input_data_size < 1_000_000:
+                print("Example input data are smaller than 1 MB. Removing them for a fresh download.")
+                shutil.rmtree(input_data_path)
+
         if os.path.exists(input_data_path):
             print("Example data are already available on disk")
             return
