@@ -101,6 +101,26 @@ def _run_pool_map(subs_method, items, n_processes):
         output = pool.map(subs_method, items)
     except BaseException:
         for p in pool._pool:
+            # Both forms, not just one (2026-11-13) - os.killpg(p.pid, ...) only finds
+            # anything if this worker's own os.setpgrp() (_pool_worker_init(), above) has
+            # already run by the time we get here. Pool()'s constructor only guarantees the
+            # fork happened, not that the child has finished executing its initializer - a
+            # worker interrupted in that window is still a member of the *original* shared
+            # process group, so killpg(p.pid, ...) (pgid == p.pid only after setpgrp()
+            # succeeded) finds no matching group, raises ProcessLookupError, and silently
+            # no-ops - leaving that one worker alive and orphaned. Confirmed for real: a live
+            # Ctrl+C test left exactly this behind - the main process returned to the shell
+            # correctly (so this bug was invisible from there), but 10 worker processes sat
+            # orphaned, re-parented and unreaped, for hours afterward. os.kill(p.pid, ...)
+            # unconditionally kills the worker PID itself regardless of which group it's
+            # still in, closing that race; os.killpg(...) is kept alongside it for the normal
+            # case (setpgrp() already ran) since it additionally takes out whatever Fortran
+            # subprocess that worker is still running, which a plain os.kill() of the worker
+            # alone would leave orphaned on its own.
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
             try:
                 os.killpg(p.pid, signal.SIGKILL)
             except ProcessLookupError:
