@@ -27,6 +27,7 @@ import pandas as pd
 from subprocess import Popen, PIPE
 import os
 import sys
+import signal
 from glob import glob
 import multiprocessing
 from timezonefinder import TimezoneFinder
@@ -37,6 +38,78 @@ from copy import deepcopy
 import codecs
 from prfpylot.output.nc_cf_writer import NcWriter
 from prfpylot.output.hdf_geoms_writer import GeomsGenWriter
+
+
+def _pool_worker_init():
+    """multiprocessing.Pool initializer (2026-11-13): isolate each worker from the terminal's
+    own Ctrl+C, instead of trying to handle an interrupt gracefully once it has already landed
+    inside the worker.
+
+    os.setpgrp() moves this worker - and, transitively, whatever external Fortran binary it
+    later launches via Popen() in _call_external_program() (Popen does not setsid by default,
+    so that child inherits this same new group) - into its own, brand new process group,
+    separate from the main gbp_main.py process. A terminal's Ctrl+C delivers SIGINT only to
+    the terminal's own foreground process group, so once a worker has called this, that SIGINT
+    never reaches it or its subprocess at all - only the main process ever sees it, cleanly, in
+    the main thread's own blocking pool.map()/.get() wait (which is reliably interruptible
+    regardless of what workers are doing). signal.SIG_IGN is kept too, defensively, for the
+    rare case something sends SIGINT directly by PID rather than via the terminal's group
+    delivery.
+
+    This closes the underlying CPython hang (see _run_pool_map()'s docstring) at the source,
+    instead of patching individual interrupt-landing-points inside worker() one at a time -
+    confirmed necessary 2026-11-13 after a point fix inside _call_external_program() alone
+    turned out to cover only one of several places a worker can be interrupted (idling in
+    pool.py's own `task = get()`, entirely inside CPython stdlib and unreachable from here, was
+    a second, different hang with the exact same root cause).
+    """
+    os.setpgrp()
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
+def _run_pool_map(subs_method, items, n_processes):
+    """Run subs_method over items via a worker Pool, without the classic CPython hang on
+    Ctrl+C (`with multiprocessing.Pool(...) as pool: pool.map(...)`, used here until
+    2026-11-13).
+
+    multiprocessing.Pool + KeyboardInterrupt is a long-standing, never fully fixed CPython
+    fragility (bpo-8296, closed 2010 as a duplicate of bpo-9205 - the eventual fix landed for
+    concurrent.futures, explicitly NOT for multiprocessing.Pool): pool.py's own worker()
+    function wraps each task in `except Exception as e:`, not `except BaseException` - so a
+    raw KeyboardInterrupt reaching a worker (whether mid-task or just idling, waiting for its
+    next one) propagates straight out of worker() without ever reporting a result back
+    through the queue. Pool.terminate() - invoked either by a `with` block's __exit__, or just
+    as surely by the atexit Finalize every Pool registers at construction (exitpriority=15) -
+    then tries to .join() its own internal bookkeeping threads (worker_handler/task_handler/
+    result_handler) with no timeout, and hangs forever waiting for that missing result.
+    Confirmed live, 2026-11-13: two different real jobs got stuck this way, one interrupted
+    mid-task (inside _call_external_program()'s own communicate()) and one idling in pool.py's
+    task=get() before ever reaching our code - different interrupt-landing-points, same hang.
+
+    Fixed structurally rather than patched per-landing-point: _pool_worker_init() (above)
+    means a worker never sees the interrupt directly in the first place, so there is nothing
+    for it to mishandle. On the main-process side, if pool.map() itself raises for any reason
+    (a real KeyboardInterrupt/SystemExit from the main thread's own, reliably-interruptible
+    wait, or an ordinary task failure), this hard-kills every worker's entire process group
+    (which - since _pool_worker_init() gave each worker its own group - also takes out
+    whatever Fortran binary that worker is still running, in the same signal, no cooperation
+    needed from the worker's own Python code) and cancels the Pool's own Finalize so nothing
+    - neither a `with` block's __exit__ nor the atexit hook - ever attempts the hanging join.
+    """
+    pool = multiprocessing.Pool(processes=n_processes, initializer=_pool_worker_init)
+    try:
+        output = pool.map(subs_method, items)
+    except BaseException:
+        for p in pool._pool:
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        pool._terminate.cancel()
+        raise
+    pool.close()
+    pool.join()
+    return output
 
 
 class Pylot(FileMover):
@@ -121,8 +194,7 @@ class Pylot(FileMover):
             subs_method = partial(
                 self.run_prf_with_inputfile, executable=prep_exe, popen_kwargs={"cwd": exec_path}
             )
-            pool = multiprocessing.Pool(processes=n_processes)
-            output = pool.map(subs_method, all_inputfiles)
+            output = _run_pool_map(subs_method, all_inputfiles, n_processes)
         self._write_logfile("preprocess", output)
 
         self.executed_preprocess = True
@@ -195,8 +267,7 @@ class Pylot(FileMover):
             subs_method = partial(
                 self.run_prf_with_inputfile, executable=pcxs_exe, popen_kwargs={"cwd": exec_path}
             )
-            pool = multiprocessing.Pool(processes=n_processes)
-            temp = pool.map(subs_method, inputfile_list)
+            temp = _run_pool_map(subs_method, inputfile_list, n_processes)
             output.extend(temp)
         self._write_logfile("pcxs", output)
         self.logger.info("Finished pcxs.\n")
@@ -282,8 +353,7 @@ class Pylot(FileMover):
             subs_method = partial(
                 self.run_prf_with_inputfile, executable=inv_exe, popen_kwargs={"cwd": exec_path}
             )
-            pool = multiprocessing.Pool(processes=n_processes)
-            output = pool.map(subs_method, all_inputfiles)
+            output = _run_pool_map(subs_method, all_inputfiles, n_processes)
 
         self._write_logfile("inv", output)
 
@@ -425,8 +495,35 @@ class Pylot(FileMover):
     def _call_external_program(self, command_list, **kwargs):
         """Call a external program. Return output and error."""
         p = Popen(command_list, stdout=PIPE, stderr=PIPE, **kwargs)
-        out, err = p.communicate()
-        return_value = p.wait()
+        try:
+            out, err = p.communicate()
+            return_value = p.wait()
+        except BaseException as exc:
+            # p.communicate() does not kill the child process on KeyboardInterrupt (or
+            # any other exception) - without this, an interrupted retrieval leaves the
+            # external binary (preprocess62/pcxs24/invers26) running as an orphan.
+            p.kill()
+            p.wait()
+            if isinstance(exc, Exception):
+                raise
+            # exc is a BaseException that is not an Exception - KeyboardInterrupt or
+            # SystemExit (2026-11-13). multiprocessing.pool.worker() (CPython's own
+            # pool.py) wraps each task in `except Exception as e:`, not
+            # `except BaseException` - a bare re-raise of a KeyboardInterrupt here sails
+            # straight past that handler without ever calling put((job, i, result)) to
+            # report back to the main process. That leaves the main process's internal
+            # result_handler thread blocked forever on the output queue waiting for a
+            # result that will never arrive - and Pool.terminate() (invoked either by a
+            # `with` block's __exit__ or, just as surely, by the atexit finalizer every
+            # Pool registers at construction) then hangs forever trying to .join() that
+            # same thread with no timeout. Confirmed via a real stuck job, 2026-11-13:
+            # the external binary and the worker process both died correctly (confirmed
+            # zombie), but gbp_main.py itself never returned to the shell. Wrapping this
+            # in a plain Exception lets worker() report the failure through the queue
+            # normally, so pool.map() raises promptly in the main thread with nothing
+            # left for Pool.terminate() to hang on. Ordinary (non-interrupt) exceptions
+            # are untouched above - still a bare re-raise, same as before.
+            raise RuntimeError(f"External program interrupted and killed: {exc}") from exc
         out = out.decode("utf-8")
         err = err.decode("utf-8")
         return (out, err, return_value)

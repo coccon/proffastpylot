@@ -194,9 +194,13 @@ class Preparation:
                     self.instrument_args[key] = "F"
 
         # define full path <analysis>/<site>_<instrument_nr>
-        self.analysis_instrument_path = os.path.join(
-            self.analysis_path, f"{self.site_name}_{self.instrument_number}"
-        )
+        # (unless already given explicitly in the input file/dict - lets a caller like
+        # gbp_lib3 fully control this path instead of the default site_name/instrument_number
+        # naming below)
+        if args.get("analysis_instrument_path") is None:
+            self.analysis_instrument_path = os.path.join(
+                self.analysis_path, f"{self.site_name}_{self.instrument_number}"
+            )
 
         # path to the PROFFAST executables
         if args.get("proffast_path") is None:
@@ -264,14 +268,17 @@ class Preparation:
                 "or ggg2014 mapfiles provided by Caltech!"
             )
 
-        dt_format = "%y%m%d"
-        result_foldername = "{}_{}_{}-{}".format(
-            self.site_name,
-            self.instrument_number,
-            self.meas_dates[0].strftime(dt_format),
-            self.meas_dates[-1].strftime(dt_format),
-        )
-        self.result_folder = os.path.join(self.result_path, result_foldername)
+        # (unless already given explicitly in the input file/dict - same override pattern as
+        # analysis_instrument_path above)
+        if args.get("result_folder") is None:
+            dt_format = "%y%m%d"
+            result_foldername = "{}_{}_{}-{}".format(
+                self.site_name,
+                self.instrument_number,
+                self.meas_dates[0].strftime(dt_format),
+                self.meas_dates[-1].strftime(dt_format),
+            )
+            self.result_folder = os.path.join(self.result_path, result_foldername)
 
         # path to the logfiles of the processes
         self.logfile_folder = os.path.join(self.result_folder, "logfiles")
