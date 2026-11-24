@@ -36,7 +36,6 @@ from functools import partial
 from copy import deepcopy
 import codecs
 from prfpylot.output.nc_cf_writer import NcWriter
-from prfpylot.output.hdf_geoms_writer import GeomsGenWriter
 
 
 class Pylot(FileMover):
@@ -74,6 +73,9 @@ class Pylot(FileMover):
 
         # additionally generate hdf output
         if self.geomsgen_inputfile is not None:
+            # Import h5py via the GEOMS writer after netCDF4 has loaded.
+            from prfpylot.output.hdf_geoms_writer import GeomsGenWriter
+
             geoms_out_path = os.path.join(self.result_folder, "output_hdf_geoms")
             geoms_writer = GeomsGenWriter(self.geomsgen_inputfile, geoms_out_path=geoms_out_path)
             geoms_writer.generate_geoms_files()

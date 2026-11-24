@@ -31,6 +31,9 @@ import prfpylot
 from prfpylot.prepare import TimeHandler
 import yaml
 import inspect
+import logging
+from contextlib import suppress
+from uuid import uuid4
 
 
 class NcWriter(object):
@@ -38,6 +41,7 @@ class NcWriter(object):
     Create netcdf files from PROFFAST output following the cf conventions.
     """
 
+    logger = logging.getLogger(__name__)
     cftime_unit = "days since 1990-01-01 00:00:00"
     cftime_calendar = "standard"
     sza = [
@@ -91,13 +95,31 @@ class NcWriter(object):
         filename = self.get_output_filename()
         if path is None:
             path = os.path.join(self.path_results, filename)
+        attempt_prefix = os.path.join(
+            os.path.dirname(os.path.abspath(path)), f"netcdf-attempt-{uuid4().hex}"
+        )
+        primary_path = f"{attempt_prefix}-primary.nc"
+        output_path = primary_path
         try:
-            ds.to_netcdf(path)
-        except RuntimeError:
             try:
-                ds.to_netcdf(path, engine="scipy")
-            except ModuleNotFoundError:
-                self.logger.warning("Could not write netCDF output.")
+                ds.to_netcdf(output_path)
+            except RuntimeError:
+                # A failed HDF5 close can leave the original file open until shutdown.
+                output_path = f"{attempt_prefix}-scipy.nc"
+                try:
+                    ds.to_netcdf(output_path, engine="scipy")
+                except ModuleNotFoundError:
+                    self.logger.warning(
+                        "Could not write netCDF output. Attempt file prefix: %s", attempt_prefix
+                    )
+                    return
+            os.replace(output_path, path)
+        except Exception:
+            self.logger.error("NetCDF attempt file prefix: %s", attempt_prefix)
+            raise
+        if output_path != primary_path:
+            with suppress(FileNotFoundError):
+                os.unlink(primary_path)
 
     def create_dataset(self):
         """Combine all proffast output in one ds.
