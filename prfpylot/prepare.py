@@ -965,6 +965,63 @@ class Preparation:
         spectra_path = os.path.dirname(full_path)
         return spectra_path
 
+    def _load_raw_measfile_names(self, meas_day_str):
+        """Return {"YYMMDD_HHMMSS": raw_measfile_basename} for one
+        measurement-day directory's own ``cal/logfile.dat`` (2026-11-23).
+
+        ``logfile.dat`` (preprocess62's own per-measurement QC/diagnostics
+        file) is the only place that links a measurement's two names: the
+        raw interferogram's own sample-number name (e.g. ``260910SN.22``,
+        this function's return value) and the processed spectrum's
+        clock-time name (e.g. ``260910_071535SN.BIN``, built here from
+        logfile.dat's own ``YYMMDDlocal``+``HHMMSSlocal`` columns to match
+        :meth:`get_spectra`'s own glob convention exactly). Used by
+        :meth:`get_spectra_pT_input` to carry the raw name through into
+        invers's own per-spectrum input, alongside the clock-time name it
+        already carries - so a companion output file invers writes can be
+        joined against either naming convention later.
+
+        Column positions are taken from the end of each row
+        (``YYMMDDlocal``, ``HHMMSSlocal``, ``measfile`` are the last 3
+        columns) rather than fixed indices - robust against QC columns
+        being added/removed earlier in the row, as has already happened at
+        least once.
+
+        Returns an empty dict (logged at debug, not an error) if the file
+        is missing - the caller degrades to leaving the raw name blank for
+        that day, same as invers26.f90's own backward-compatible
+        blank-field handling (read_specnames()).
+
+        Parameters:
+            meas_day_str (str): measurement-day folder name, ``YYMMDD``
+                (the spectrum filename's own date prefix - may differ from
+                the local date this is called for, if spectra from two
+                measurement days belong to one local date).
+
+        Returns:
+            raw_names (dict): ``{"YYMMDD_HHMMSS": raw_measfile_basename}``
+        """
+        logfile_path = os.path.join(
+            self.analysis_instrument_path, meas_day_str, "cal", "logfile.dat"
+        )
+        raw_names = {}
+        try:
+            with open(logfile_path) as f:
+                lines = f.readlines()
+        except FileNotFoundError:
+            self.logger.debug(
+                f"[_load_raw_measfile_names]: no logfile.dat at {logfile_path} - raw "
+                "interferogram names will be left blank for this day."
+            )
+            return raw_names
+        for line in lines[2:]:  # first 2 lines are the format/header comment
+            parts = line.split()
+            if len(parts) < 3:
+                continue
+            yymmddlocal, hhmmsslocal, measfile = parts[-3], parts[-2], parts[-1]
+            raw_names[f"{yymmddlocal}_{hhmmsslocal}"] = os.path.basename(measfile)
+        return raw_names
+
     def get_spectra_pT_input(self, local_date):
         """Return invers formatted pT infos for given local date.
 
@@ -973,7 +1030,12 @@ class Preparation:
         The list is split based on the filename of the spectra,
         since the filename refers to measurement time.
 
-        The string has the format `YYMMDD_HHMMSSSN.BIN, pressure, T_PBL`
+        The string has the format
+        `YYMMDD_HHMMSSSN.BIN, pressure, T_PBL, raw_measfile_name`
+        (the 4th field was added 2026-11-23 - see
+        :meth:`_load_raw_measfile_names` - and is blank when no matching
+        logfile.dat row was found, which invers26.f90's own
+        read_specnames() tolerates).
 
         This function replaces the pt_intraday.inp file from older PROFFAST
         versions.
@@ -1014,6 +1076,7 @@ class Preparation:
         skipped_spectra = []
 
         spectra_pT_input = []
+        raw_names_cache = {}
         for sublist in split_spectra_list:
             temp_pT_input = []
             for spec in sublist:
@@ -1032,7 +1095,16 @@ class Preparation:
                     )
                     skipped_spectra.append(os.path.basename(spec))
                     continue
-                temp_pT_input.append(f"{os.path.basename(spec)}, {p}, 0.0")
+                spec_basename = os.path.basename(spec)
+                meas_day_str = spec_basename[:6]
+                if meas_day_str not in raw_names_cache:
+                    raw_names_cache[meas_day_str] = self._load_raw_measfile_names(meas_day_str)
+                # clocktime_key: "YYMMDD_HHMMSS" prefix of spec_basename, e.g.
+                # "260910_071535" out of "260910_071535SN.BIN" - matches the
+                # YYMMDDlocal_HHMMSSlocal key _load_raw_measfile_names() builds.
+                clocktime_key = spec_basename[:13]
+                raw_name = raw_names_cache[meas_day_str].get(clocktime_key, "")
+                temp_pT_input.append(f"{spec_basename}, {p}, 0.0, {raw_name}")
             spectra_pT_input.append(temp_pT_input)
 
         return spectra_pT_input, skipped_spectra

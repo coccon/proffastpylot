@@ -1,3 +1,21 @@
+## commit 2026-11-24
+
+Thread raw interferogram filename through to invers' specname file
+
+  prepare.py: get_spectra_pT_input() now reads logfile.dat's raw
+  measfile name per spectrum (_load_raw_measfile_names()) and appends it
+  as a 4th comma-separated field, keyed by clock-time name. Gives
+  invers26.f90's read_specnames() (and the new sampled-location CSV's
+  specname_raw column) the raw sample-number-form name alongside the
+  processed clock-time name - same join-key fix ftir_db_suite's airmass
+  companion file got the same week, needed because filename_spc (the DB
+  join key) only matches the clock-time name.
+
+  Note: the Fortran-side work this session (percentile levels, raytrace,
+  ground-track geodesy, the sampled-location CSV writer, and the new
+  prf/docs/ reference doc + change_log.md entry) all lives under prf/,
+  which is gitignored in this checkout - nothing to commit there.
+
 
 ## commit 2026-11-14
 
